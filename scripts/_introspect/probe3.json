@@ -1,0 +1,13 @@
+{
+ "ffmpeg_first": "bpy_struct: item.attr = val: enum \"FFMPEG\" not found in ('AVIF', 'JPEG', 'OPEN_EXR', 'PNG', 'WEBP', ",
+ "looks_agx": [
+  "NONE"
+ ],
+ "looks_pbrneutral": [
+  "NONE"
+ ],
+ "t_eevee_64spp_960x540": 0.65,
+ "t_cycles_gpu_128spp": 13.06,
+ "t_cycles_gpu_512spp": 3.23,
+ "t_cycles_cpu_128spp": 5.32
+}

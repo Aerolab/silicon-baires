@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# Run a Python script inside headless Blender.
+#
+#   ./bl scripts/something.py [args...]
+#   ./bl                      -> open the GUI with the newest .blend in renders/
+#
+# Exists so nobody has to remember the long binary path or the flags, and so the
+# same command works on any machine.
+set -euo pipefail
+
+BLENDER="${BLENDER_BIN:-}"
+if [[ -z "$BLENDER" ]]; then
+  for c in \
+    "/Applications/Blender.app/Contents/MacOS/Blender" \
+    "$HOME/Applications/Blender.app/Contents/MacOS/Blender" \
+    "$(command -v blender 2>/dev/null || true)"
+  do
+    if [[ -n "$c" && -x "$c" ]]; then BLENDER="$c"; break; fi
+  done
+fi
+
+if [[ -z "$BLENDER" ]]; then
+  echo "Blender not found. Install it or export BLENDER_BIN=/path/to/binary" >&2
+  exit 127
+fi
+
+cd "$(dirname "$0")"
+
+if [[ $# -eq 0 ]]; then
+  latest=$(ls -t renders/*.blend 2>/dev/null | head -1 || true)
+  [[ -n "$latest" ]] && exec "$BLENDER" "$latest" || exec "$BLENDER"
+fi
+
+script="$1"; shift
+exec "$BLENDER" --background --python "$script" -- "$@"

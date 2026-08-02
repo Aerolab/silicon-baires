@@ -1,0 +1,20 @@
+{
+ "build_ffmpeg": true,
+ "build_openimagedenoise": null,
+ "build_openvdb": true,
+ "has_media_type": true,
+ "media_types": [
+  "IMAGE",
+  "MULTI_LAYER_IMAGE",
+  "VIDEO"
+ ],
+ "ffmpeg_after_video": true,
+ "looks_agx_ok": [
+  "None",
+  "AgX - Punchy",
+  "AgX - Base Contrast",
+  "AgX - Medium High Contrast",
+  "AgX - High Contrast",
+  "AgX - Greyscale"
+ ]
+}
