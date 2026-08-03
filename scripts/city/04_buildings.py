@@ -41,6 +41,9 @@ FAMILIES = [
 # cells that get something other than a plain low-rise campus
 TALL = {(1, 2): 18, (7, 6): 12, (2, 7): 10, (7, 2): 8, (1, 5): 9}
 LANDMARKS = {(6, 1), (1, 6), (7, 4)}     # step 06 owns these plots
+# the blocks the title stands on. Step 08 builds the letters here as real
+# buildings, so step 04 builds nothing: see build_campus().
+CAMPUS = {(4, 4), (4, 5), (5, 4), (5, 5)}
 GROUND_INSET = 0.6
 
 
@@ -59,6 +62,13 @@ def footprint(kind, w, d):
         return [(0, d / 4, w, d / 2), (0, -d / 4, w / 2, d / 2)]
     if kind == "bar":
         return [(0, 0, w, d * 0.55)]
+    # twins: two wings with a slot between them. One slab per block held the
+    # title up fine and turned the middle of the frame into four blank boxes;
+    # a 4 m slot costs almost no roof and gives the campus back its facades.
+    if kind == "twinx":
+        return [(-w / 4 - 1, 0, w / 2 - 2, d), (w / 4 + 1, 0, w / 2 - 2, d)]
+    if kind == "twiny":
+        return [(0, -d / 4 - 1, w, d / 2 - 2), (0, d / 4 + 1, w, d / 2 - 2)]
     return [(0, 0, w, d)]
 
 
@@ -87,7 +97,8 @@ def mullions(m, ox, oy, w, d, z0, h, material, xform, pitch=3.0):
                    xform)
 
 
-def wing(m, ox, oy, w, d, floors, style, fam, xform, r, deep=False):
+def wing(m, ox, oy, w, d, floors, style, fam, xform, r, deep=False,
+         deck=None):
     conc, glass = mat(fam[0]), mat(fam[1])
     # ground floor: recessed glass with an entrance canopy poking out. The
     # comparison against the reference showed my facades had 0.2-0.5 m of
@@ -140,8 +151,8 @@ def wing(m, ox, oy, w, d, floors, style, fam, xform, r, deep=False):
 
     # parapet ring and roof plate. The deck is always a light concrete: in the
     # reference roofs read pale whatever colour the facade is.
-    m.quad(ox, oy, w, d, z + 0.02,
-           mat("Roof Dark" if r.random() < 0.45 else "Roof Deck"), xform)
+    pick = deck or ("Roof Dark" if r.random() < 0.45 else "Roof Deck")
+    m.quad(ox, oy, w, d, z + 0.02, mat(pick), xform)
     facade_ring(m, ox, oy, w, d, z, 0.85, 0.55, mat("Concrete Cool"), xform)
     return z + 0.85
 
@@ -244,6 +255,21 @@ def place_on_lot(m, kit, coll, cx, cy, size, lift, kind, r):
     return tops
 
 
+def build_campus(m, kit, coll, ccoll, lots, r):
+    """These four blocks are left empty on purpose.
+
+    They are the blocks the title stands on, and since step 08 builds the
+    letters as real buildings there is nothing for step 04 to put here: an
+    ordinary office on this lot either hides a letter or stands inside one.
+    The ground stays as step 03 laid it and step 05 plants it, which is what
+    the reference shows around its own title buildings.
+
+    An earlier version filled these lots with a seven-floor campus, back when
+    the title was flat plates that needed a roof to lie on. That is gone.
+    """
+    print(f"  campus: {len(CAMPUS)} blocks left clear for the title")
+
+
 def build_towers(m, kit, coll, lots, r):
     """Only on lots that survived. A tower on a dropped cell stands alone in
     the middle of the road, which is exactly what happened the first time."""
@@ -273,7 +299,7 @@ def main():
     pbrmat("Roof Deck", "#a8a292", 0.88)
     pbrmat("Roof Dark", "#2b2b28", 0.90)
 
-    for name in ("BUILDINGS", "ROOFPROPS"):
+    for name in ("BUILDINGS", "ROOFPROPS", "CAMPUSROOF"):
         if name in bpy.data.collections:
             c = bpy.data.collections[name]
             for ob in list(c.objects):
@@ -281,6 +307,9 @@ def main():
             bpy.data.collections.remove(c)
     bcoll = collection("BUILDINGS")
     pcoll = collection("ROOFPROPS")
+    # its own collection so step 05 can leave these roofs alone: the title
+    # hangs half a metre over them and a person up there stands through a letter
+    ccoll = collection("CAMPUSROOF")
 
     r = rng(90210)
     m = Mesh()
@@ -288,11 +317,12 @@ def main():
     lots = json.loads((R / "city_lots.json").read_text())["lots"]
     for lot in lots:
         i, j = int(lot["key"][0]), int(lot["key"][1])
-        if (i, j) in TALL or (i, j) in LANDMARKS:
+        if (i, j) in TALL or (i, j) in LANDMARKS or (i, j) in CAMPUS:
             continue
         place_on_lot(m, kit, pcoll, lot["x"], lot["y"], lot["size"],
                      lot["lift"], lot["kind"], r)
 
+    build_campus(m, kit, pcoll, ccoll, lots, r)
     build_towers(m, kit, pcoll, lots, r)
     m.build("buildings", bcoll)
 

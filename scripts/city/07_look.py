@@ -18,8 +18,10 @@ R = ROOT / "renders"
 
 # Measured against the reference with a car as the ruler: it runs about 14 px
 # per metre, so its frame spans roughly 140 m. The first pass was 590 m, four
-# times too wide, which is why every piece of detail read as a speck.
-CAM_WIDTH = 210.0
+# times too wide, which is why every piece of detail read as a speck. Tightened
+# again from 210 when the title went on the grid: the word is pinned to its
+# block now, so the frame is what sizes it.
+CAM_WIDTH = 170.0
 FOCUS_D = 1450.0           # camera sits this far out; focus on the middle
 F_STOP = 0.55              # unphysical on purpose: this is the miniature cheat
 BLUR_MAX = 13.0            # pixels at 1600 wide; scaled to the real width below

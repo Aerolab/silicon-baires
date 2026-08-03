@@ -25,3 +25,6 @@ refs/
 
 # .agents/skills/ IS tracked: .claude/skills/threejs-* are symlinks into it, so
 # a clone without those files would end up with broken skills.
+
+# Harness scratch, not project content.
+tasks/

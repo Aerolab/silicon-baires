@@ -186,3 +186,47 @@ bpy.ops.export_scene.gltf(
 
 Available formats: `export_scene.gltf`, `export_scene.fbx`. Build has
 `codec_ffmpeg=True` and `openvdb=True`.
+
+## Text objects
+
+Measured against the installed binary, building a title out of letter-shaped
+buildings.
+
+`curve.offset` **shrinks or grows the outline perpendicular to its own contour,
+in metres, independent of `size`.** Measured on a "B": at size 10 an offset of
+-0.5 takes the glyph from 4.666 x 5.590 to 3.666 x 4.590, and at size 25 from
+11.665 x 13.975 to 10.665 x 12.975. Exactly 0.5 m off each side both times.
+
+That is the only way to inset a glyph *perpendicular to its own edge*. Scaling
+shrinks toward a centre, which is a different shape. It is what makes a facade
+band possible on a letter: spandrel at offset 0, glass at offset -0.75, per
+floor.
+
+Push it too far and the outline self-intersects — at size 10 an offset of -1.0
+already produces garbage (the height stops shrinking and the vertex count
+jumps). Keep the offset small against the cap height.
+
+`curve.space_character` is the tracking multiplier, and advance width is affine
+in it, so two samples solve for any target width. Below about 0.88 a Black
+weight closes up and adjacent letters weld into one another.
+
+`curve.extrude` extrudes symmetrically about the object origin and caps both
+ends, so a slice from z0 to z1 is built with `extrude=(z1-z0)/2` and then moved
+to `(z0+z1)/2`.
+
+Text objects have no usable bounding box until they are evaluated. Go through
+`bpy.data.meshes.new_from_object(ob.evaluated_get(depsgraph))`, and note that
+`ob.bound_box` is **cached**: after editing `mesh.vertices` in place it still
+reports the pre-edit extents, silently, and anything framing against it lands
+in the wrong place.
+
+## bpy_prop_collection
+
+`mesh.vertices[::step]` raises `TypeError: bpy_prop_collection[slice]: slice
+steps not supported`. Use `range(0, len(vs), step)`.
+
+Worth knowing because **a Python exception in a background script does not
+change Blender's exit code**: `./bl script.py` prints the traceback and exits 0.
+A step that died half way looks exactly like a step that worked, and the file
+it was supposed to save is simply the previous one. Check the printed output,
+not `$?`.

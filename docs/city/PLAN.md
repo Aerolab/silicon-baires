@@ -1,8 +1,9 @@
 # Build plan — "toy valley" city
 
 Goal: build a city in the visual language of the *Silicon Valley* title sequence and
-render a hero frame from a helicopter-style tilt-shift camera. **No company logos and
-no title typography** — the subject is the city itself.
+render a hero frame from a helicopter-style tilt-shift camera. **No company logos.**
+The title was out of scope at first and is now built, as buildings: see the fourth
+pass below.
 
 Read `STYLE-BIBLE.md` first. This document is about *how the work is organised*.
 
@@ -188,11 +189,12 @@ rebuilding anything.
 |---|---|---|
 | **M0** ✅ | Palette, asset kit (39 assets), sun/sky and hero camera | `00_setup.py`, `02_kit.py`. Camera had to become orthographic: a 150 mm lens at 1450 m still leaned verticals 6.5°, measured. |
 | **M1** ✅ | Site, buildings, facades, roofs | `03_ground.py`, `04_buildings.py` |
-| **M2** ✅ | 40 grid blocks + a circus of 8 sector blocks and 4 curved islands | `03_ground.py` |
+| **M2** ✅ | 81 blocks on a straight grid, street hierarchy, varied block sizes | `03_ground.py`. The curved arterial of the first two passes was removed: see the third pass below. |
 | **M3** ✅ | Trees, street furniture, traffic, crowds | `05_life.py` — 1522 trees, 456 lights and signals, ~1000 vehicles, ~660 people, all instanced |
 | **M4** ✅ | Stadium, curved building, parking structure, construction site with lattice cranes | `06_landmarks.py` |
 | **M5** ✅ | Depth of field, grain, final render | `07_look.py`. The Defocus node does nothing on an orthographic camera, so the blur is driven off the Z pass into a variable Blur. |
 | **M6** ✅ | Second pass against the reference | A side-by-side critique found six faults; all six fixed. See below. |
+| **M7** ✅ | The title, as buildings | `08_title.py`. Out of the original scope, and the thing this build got wrong most often: three times, and every wrong version measured well against the reference. See the fourth pass. |
 
 ## Second pass: what the comparison against the reference changed
 
@@ -201,7 +203,7 @@ reference. The critique found six faults, in order of impact:
 
 1. **The shot was four times too wide.** Measured with a car as a ruler: the
    reference runs ~14 px per metre, so its frame spans ~140 m. Ours spanned
-   590 m. Now 190 m. This alone explains most of the "not enough detail"
+   590 m. Now 170 m. This alone explains most of the "not enough detail"
    complaints: the detail existed, it was just sub-pixel.
 2. **The road was twice as bright as it should be, and the wrong hue.** 0.38
    luminance and cool grey against 0.18 and warm. The frame had 0.3 % of pixels
@@ -244,6 +246,73 @@ rotated +90 deg about Y instead of -90, which sends +X to -Z. The mast ran
 underground and only the jib was visible, floating. In an orthographic view a
 horizontal jib looks like a diagonal boom, which is why it read as plausible.
 
+## Fourth pass: the title
+
+`scripts/city/08_title.py`, spiked first in `09_spike_title.py`.
+
+**The letters are buildings.** The red in the reference is the roof of a
+building whose plan is the letterform, standing on the ground: under the S of
+SILICON there is a curved glass facade following the curve of the S. Each
+letter here carries the city's own banded facade — a concrete spandrel at the
+letter outline, a glass band inset 0.75 m above it, per floor, with a red roof
+and a near-black parapet. Blender's font curves take an outline offset in
+metres, which is what makes a facade band on a letter possible; scaling shrinks
+toward a centre and cannot do it.
+
+The first three attempts at this step got it wrong in the same way, and the
+error survived two rounds of review because it measured well: flat red plates
+lying on the roofs of a campus. It matched the reference's bounding box to
+within 0.005 and looked like a caption.
+
+**The baseline goes on the street grid.** The measurement that settles it:
+in the window of frame beside SILICON the city's edges run at −27° and SILICON
+runs at −25.6°; at the bottom of frame the city runs at −13° and VALLEY at
+−13.5°. Both words are parallel to the streets. Their angles differ from each
+other only because that render is perspective and parallel lines converge.
+
+The letters themselves are ordinary letters: baseline along +Y, letter vertical
+along −X, both city axes, and `plan()` is a plain rotation.
+
+Two things were tried here and both were wrong, in opposite directions. The
+first rotated the words 105° off the grid, on the strength of a real piece of
+geometry — at 135° a shape in the ground plane projects with no shear at all —
+and produced type dropped onto a city. The second kept the baseline on the grid
+but pre-sheared the glyphs 45° in plan so their stems would come out vertical
+on screen. That one is seductive because it looks right in the hero frame: it
+buys upright type by making the buildings parallelograms, to flatter a single
+camera. Both grid axes project to ±atan(sin e) = ±31.6°, so a letter really
+does read as a 63° lozenge from here, and that is what a letter-shaped building
+looks like from a fixed oblique view.
+
+**Making room for it** is a superblock. The footprint is the word itself, H
+across by W along, so it wants one block wide by two long.
+`03_ground.py` merges cells (4,4) and (4,5) into one 58 × 140 m block and the
+streets run around it, which is how the reference does it and how a real campus
+does it. Merging four, which is where this started, left half the site as empty
+paving. The internal streets take their
+markings, lights, signals and traffic with them — `in_super()` in steps 03 and
+05 is what keeps a bus from driving through a letter. Step 04 builds nothing on
+those cells at all.
+
+**As built**, so the numbers are checkable: BUENOS 103.3 m long, AIRES 76.1 m,
+both at a 20 m cap and 0.93 letterspacing, 8 m of leading, roofs at 24.5 m.
+Footprint x −26.0 to 22.0 and y −12.7 to 90.7, inside a block of x −31 to 27
+and y −31 to 109. Roof box 0.554 × 0.615 of frame against the reference's
+0.642 × 0.437, in a 170 m frame.
+
+`clear_ground()` in step 08 removes whatever the earlier steps left standing
+inside the letters, since they run first and know nothing about where the words
+land. It must never touch the KIT masters: they live near the origin, the title
+lands on top of them, and deleting one takes every instance of that asset in
+the city with it. That is why step 08 has to run after step 05, never twice in
+a row over a title that has moved.
+
+**For the camera move**, `96_check_title_move.py` renders the same frame from
+several azimuths and elevations. Its earlier finding — that the lean unwinds to
+nothing at azimuth 20 — belonged to the off-grid version and no longer holds:
+the shear in `plan()` is tuned to one elevation and one azimuth, so moving the
+camera puts the lean back. Re-run it before designing the move.
+
 ## Verification
 
 `scripts/city/98_check_floating.py` — two tests, because the two failure modes
@@ -259,9 +328,26 @@ it by design. Merged building meshes are deliberately out of scope.
 it after any structural change — the close-ups and the colour metrics both
 looked fine while the layout was destroyed, because neither measures geometry.
 
+`scripts/city/97_check_title.py` compares the title in a render against the
+same measurements taken off the reference frame: coverage, bounding box,
+centre, face colour, ink inside its own box. It runs on the isolation pass
+that step 08 renders, because the city contains other red things (a
+construction frame, cars, a rooftop sign) and a colour threshold counts all of
+them without saying so.
+
 Still open: saturation sits at 0.20 against the reference's 0.334. The
 reference fills its frame with foliage, coloured buildings and props; ours
 still shows a lot of pale roof and asphalt.
+
+Also open, and probably not fixable here: the title face renders at
+(0.809, 0.198, 0.102) against the reference's (0.928, 0.107, 0.085) — the
+right hue, a little dark and twice as green. The sweep in the scratchpad shows
+this is AgX Punchy, not a bad base colour: brightness and purity trade off
+against each other, and every candidate lands on the same curve. The clean fix
+is grading the title after the view transform, which the compositor cannot do
+because it runs before it. Worth noting that the reference is not consistent
+with itself either — its own wide shot is a much more orange red than the
+close-up we measured, and ours sits between the two.
 | **M6** | *(optional)* camera move, or `.glb` export for the browser | — |
 
 M1 carries the whole risk. If the block does not look right, nothing after it will, and
@@ -295,8 +381,9 @@ The city file itself is edited one step at a time, in order.
 
 - **Deliverable: one hero still frame**, 2560 × 1440, Cycles. Built so an animated
   camera move is a later addition, not a rebuild.
-- **No logos, no title text.** Where the original has a logo, we put an abstract
-  signage volume so the silhouette still works.
+- **No logos.** Where the original has a logo, we put an abstract signage volume so
+  the silhouette still works. The **title is built**, though it was not in the
+  original scope: BUENOS AIRES, as buildings shaped like the letters.
 - **A fictional city in that style**, not a shot-for-shot copy of a specific frame.
 - **6 × 6 blocks**, camera covering roughly a third — enough to fill the frame edge to
   edge with depth behind.

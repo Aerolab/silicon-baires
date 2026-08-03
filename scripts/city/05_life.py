@@ -20,6 +20,17 @@ TREES = ["Tree0", "Tree1", "Tree2", "Tree3", "Conifer0", "Conifer1"]
 CARS = ["CarRed", "CarWhite", "CarTeal", "CarBlue", "CarDark", "CarSilver"]
 PEOPLE = [f"Person{i}" for i in range(8)]
 AVENUE = 22.0
+SUPER = None          # set from the JSON: the block the title stands on
+
+
+def in_super(x, y, pad=0.0):
+    """The two streets that used to cross the title block are gone, so nothing
+    that belongs to a street may be placed there any more: a traffic light in
+    the middle of a lawn, or a bus driving through a letter."""
+    if SUPER is None:
+        return False
+    x0, x1, y0, y1 = SUPER
+    return x0 - pad <= x <= x1 + pad and y0 - pad <= y <= y1 + pad
 
 
 def street_trees(kit, coll, lots, r):
@@ -61,8 +72,12 @@ def planting(kit, coll, lots, r):
         kind, lift = lot["kind"], lot["lift"]
         cx, cy = lot["x"], lot["y"]
         w, d = lot["size"]
+        # counts were fixed per lot, which is fine while every block is about
+        # 60 m square and wrong the moment one of them is the 140 m superblock
+        # the title stands on: it came out as a bare lawn
+        n = max(1.0, w * d / 3600.0)
         if kind == "park":
-            clump(kit, coll, cx, cy, w * 0.42, d * 0.42, lift, 34, r)
+            clump(kit, coll, cx, cy, w * 0.42, d * 0.42, lift, int(34 * n), r)
             for _ in range(8):
                 instance(kit["Shrub"], coll,
                          (cx + r.uniform(-w / 3, w / 3),
@@ -74,14 +89,14 @@ def planting(kit, coll, lots, r):
                           cy + r.uniform(-d / 3, d / 3), lift),
                          r.uniform(0, 6.28))
         elif kind == "plaza":
-            clump(kit, coll, cx, cy, w * 0.36, d * 0.36, lift, 12, r)
-            for _ in range(3):
+            clump(kit, coll, cx, cy, w * 0.36, d * 0.36, lift, int(12 * n), r)
+            for _ in range(int(3 * n)):
                 instance(kit["Bench"], coll,
                          (cx + r.uniform(-w / 3, w / 3),
                           cy + r.uniform(-d / 3, d / 3), lift),
                          r.uniform(0, 6.28))
         elif kind == "parking":
-            clump(kit, coll, cx, cy, w * 0.42, d * 0.42, lift, 8, r)
+            clump(kit, coll, cx, cy, w * 0.42, d * 0.42, lift, int(8 * n), r)
 
 
 def lights_and_signals(kit, coll, data, r):
@@ -100,6 +115,8 @@ def lights_and_signals(kit, coll, data, r):
                         x, y = ((b + t, off) if axis == 0 else (off, b + t))
                         rot = (math.pi / 2 if axis == 0 else 0.0)
                         rot += math.pi if side > 0 else 0.0
+                        if in_super(x, y, -1.0):
+                            continue
                         instance(kit["StreetLight"], coll, (x, y, 0.0), rot)
                         n += 1
 
@@ -110,6 +127,8 @@ def lights_and_signals(kit, coll, data, r):
             for k, (dx, dy) in enumerate(((1, 1), (-1, -1))):
                 x = sx + dx * ((wx - walk * 2) / 2 + 1.4)
                 y = sy + dy * ((wy - walk * 2) / 2 + 1.4)
+                if in_super(x, y, -1.0):
+                    continue
                 instance(kit["TrafficLight"], coll, (x, y, 0.0),
                          math.pi * (0.5 if k == 0 else 1.5))
                 n += 1
@@ -132,6 +151,8 @@ def traffic(kit, coll, data, r):
                     x, y = ((pos, s + lane) if axis == 0 else (s + lane, pos))
                     name = r.choice(["Bus", "Truck"]) if r.random() < 0.08 \
                         else r.choice(CARS)
+                    if in_super(x, y, -1.0):
+                        continue
                     rot = 0.0 if axis == 0 else math.pi / 2
                     if direction < 0:
                         rot += math.pi
@@ -189,14 +210,19 @@ def crowds(kit, coll, lots, data, r):
                 continue
             for _ in range(r.randint(3, 9)):
                 a, dd = r.uniform(0, 6.28), r.uniform(9.0, 16.0)
-                instance(kit[r.choice(PEOPLE)], coll,
-                         (sx + dd * math.cos(a), sy + dd * math.sin(a), 0.0),
+                px, py = sx + dd * math.cos(a), sy + dd * math.sin(a)
+                if in_super(px, py, -1.0):
+                    continue
+                instance(kit[r.choice(PEOPLE)], coll, (px, py, 0.0),
                          r.uniform(0, 6.28))
                 n += 1
     return n
 
 
 def rooftop_people(kit, coll, r):
+    """ROOFPROPS only. CAMPUSROOF is deliberately left empty: the title plates
+    sit half a metre over those parapets and anyone standing there would be
+    speared by a letter, which this camera hides completely."""
     n = 0
     for ob in list(bpy.data.collections["ROOFPROPS"].objects):
         if r.random() < 0.10:
@@ -214,6 +240,8 @@ def main():
     kit = {ob.name: ob for ob in bpy.data.collections["KIT"].objects}
     data = json.loads((R / "city_lots.json").read_text())
     lots = data["lots"]
+    global SUPER
+    SUPER = data.get("superblock")
 
     for name in ("NATURE", "FURNITURE", "TRAFFIC", "PEOPLE"):
         if name in bpy.data.collections:

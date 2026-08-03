@@ -20,7 +20,7 @@ R = ROOT / "renders"
 BLOCK, PITCH, HALF = 64.0, 76.0, 4.0
 
 CELLS = {"stadium": (6, 1), "blob": (1, 6), "garage": (7, 4)}
-SITE = [(4, 5), (2, 0)]
+SITE = [(5, 7), (2, 0)]     # (4, 5) now carries the title
 
 
 def cell(i, j):

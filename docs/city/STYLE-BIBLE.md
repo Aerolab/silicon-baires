@@ -2,7 +2,8 @@
 
 Derived by zooming into the reference frames (`refs/frames`, `refs/crops`), not from
 memory. The original sequence was made by yU+co for HBO. We are reproducing the
-**look and the city**, not the branding: no company logos, no title type.
+**look and the city**, not the branding: no company logos. The title itself is
+built, as buildings — section 10.
 
 Everything below is a rule to build against. When a render disagrees with this
 document, the render is wrong until proven otherwise.
@@ -34,7 +35,7 @@ from sampling pixels.
 
 | | Reference | Where we landed |
 |---|---|---|
-| Scale | ~14 px per metre → **the frame spans ~140 m** | 210 m |
+| Scale | ~14 px per metre → **the frame spans ~140 m** | 170 m |
 | Mean luminance | 0.498 | 0.47 |
 | Pixels below 0.25 | **15.7 %** | 15.5 % |
 | Green coverage | **17.3 %** | 15.1 % |
@@ -58,12 +59,13 @@ coloured buildings and props; ours still shows a lot of pale roof and asphalt.
 Read off the frames:
 
 - **Verticals are perfectly parallel.** No convergence anywhere in frame, left or
-  right edge included. That means orthographic, or perspective with camera shift.
-  Perspective + shift is the right pick: it keeps a little depth cue that pure ortho
-  loses.
+  right edge included. The first pass tried perspective with a camera shift and
+  measured 6.5° of lean at 150 mm from 1450 m, so the camera is **orthographic**.
+  The reference itself is not: its two title lines sit at different leans, which
+  only perspective explains. We take the parallel verticals and give up that cue.
 - **Long lens, far away.** Near and far buildings are nearly the same apparent scale.
-  Estimate: 100–135 mm equivalent, camera several hundred metres out.
-- **Elevation ~35–40°**, **azimuth ~45°** so every building shows exactly two faces.
+- **Elevation 38°**, **azimuth 45°** so every building shows exactly two faces.
+  Measured off the reference at 35°, from the ±30° screen angle of its grid edges.
   Every straight street runs diagonally across frame; nothing is axis-aligned to the
   image.
 - **Depth of field is shallow and it is the whole trick.** A band across the middle is
@@ -141,9 +143,13 @@ slabs at different heights.
 
 - Wide, **dark asphalt** with an off-white solid edge line on both sides and lane
   separators. Crosswalks are full zebra bars on all four arms of an intersection.
-- The network is a **rotated orthogonal grid cut by big sweeping curved arterials**
-  (radii of 60–150 m) and one or two roundabouts. Those curves are what stop the city
-  reading as a spreadsheet, and they are the hardest part to build.
+- The network is a **strictly rectangular grid** with a hierarchy: 12 m local
+  streets, 22 m avenues every third or fourth line, and block sizes that vary
+  52–76 m per row and column. That variation is what stops it reading as a
+  spreadsheet. Curved arterials were tried and dropped: a curve meeting an
+  orthogonal grid leaves a block that merely touches the corridor losing its
+  whole 64 m footprint to clear a 12 m verge, and the result was two enormous
+  empty roads with one building stranded between them.
 - Sidewalk is a raised slab that follows the road, with the kerb face visible.
 - Street furniture: streetlights (pole + curved arm + flat head), traffic lights (pole
   + long cantilever arm + 2 signal boxes), signposts, occasional bus shelters.
@@ -176,10 +182,59 @@ slabs at different heights.
   desaturated. `AgX` will fight the saturated greens; test `Khronos PBR Neutral` and
   `AgX - Punchy` before committing.
 
-## 10. The failure modes to watch for
+## 10. The title
 
-1. **Grid syndrome** — everything on the same axis at the same height. Fix: curved
-   arterials, varied block sizes, height variety, rotated hero buildings.
+Ours says BUENOS AIRES. The construction is the reference's; the words are not.
+
+- **The letters are the buildings.** Not an overlay, not a billboard, and not
+  plates resting on roofs either — that was a wrong reading that survived two
+  rounds of review because it measured well. Zoom into the S of SILICON: there
+  is a curved glass facade directly under it, following the curve of the S. The
+  red is the roof of a building whose plan is the letterform, standing on the
+  ground and taking up real space.
+- They carry **the same banded facade as the rest of the city**, which is what
+  makes them read as architecture and not as type dropped in. Blender's font
+  curves take an outline offset in metres, so a letter can be shrunk
+  perpendicular to its own contour: that is a facade band, and scaling cannot
+  do it.
+- **The baseline runs along a street.** Measured, not assumed: in the window of
+  frame beside SILICON the city's own edges run at −27° and SILICON runs at
+  −25.6°; at the bottom of frame the city runs at −13° and VALLEY at −13.5°.
+  The two words are parallel to the grid and differ from each other only
+  because that render is perspective and its lines converge.
+- **The letters are ordinary letters.** Baseline along one city axis, the
+  letter's own vertical along the other. Both grid axes project to ±atan(sin
+  *e*) = ±31.6°, so from this camera a letter reads as a 63° lozenge rather
+  than as upright type. That is what a letter-shaped building looks like from
+  a fixed oblique view and it is not a defect to correct.
+- **Do not pre-shear the plan to flatter the camera.** It was tried: shearing
+  the glyph 45° in plan puts its stem exactly vertical on screen, and it works,
+  and it is wrong. It makes the buildings parallelograms in order to please one
+  viewpoint, and every other viewpoint pays for it.
+- **The title occupies its own block and the streets run around it.** With the
+  baseline on the grid the footprint is *a·H* across by *W + a·H* along, which
+  is one block wide by two long — not four. Four leaves half the site as empty
+  paving.
+- **One letterspacing value, both words, and the same cap height.** Solving the
+  spacing per word so that both span the same width opens the shorter word to
+  nearly double the gaps, to cover for having a letter fewer. The short word is
+  simply shorter and centred under the long one. Below about 0.88 of the
+  default advance, a Black weight closes up and the letters weld together.
+- They are *not* staggered along the baseline: shifting the second word back
+  also lifts it on screen by sin *e* times the shift, which eats the clearance
+  between the lines and they collide.
+- **The roof is red, the parapet is a dark cut edge.** Carrying the face red
+  down the side reads as inflated plastic.
+- **Signal red**, `#ED1B16` measured off the reference frame. AgX Punchy will not
+  give you both that brightness and that purity: pick the base colour against the
+  render, not against the swatch.
+- The letter buildings are **squat**: about 25 m tall against a 22 m cap height.
+  Taller and each letter becomes a tower and the word stops reading from above.
+
+## 11. The failure modes to watch for
+
+1. **Grid syndrome** — everything on the same axis at the same height. Fix: street
+   hierarchy, varied block sizes, height variety, rotated hero buildings.
 2. **Empty roofs** — the single fastest way to look unfinished from this camera angle.
 3. **Realistic trees** — breaks the toy contract instantly.
 4. **Black shadows** — kills the "brightly lit model" read.

@@ -51,12 +51,25 @@ title sequence: `renders/city.blend`, built by the numbered scripts in
 
 ```bash
 ./bl scripts/city/03_ground.py     # each script opens city.blend, adds its layer, saves
+./bl scripts/city/05_life.py       # always before 08: it restores what 08 deletes
+./bl scripts/city/08_title.py      # BUENOS AIRES, built as buildings
 ./bl scripts/city/07_look.py final # the final Cycles frame
+```
+
+Three standing checks, because none of these failures raise an exception:
+
+```bash
+./bl scripts/city/98_check_floating.py          # nothing buried, nothing hovering
+./bl scripts/city/96_check_title_move.py        # the title from other angles
+python3 scripts/city/97_check_title.py renders/city_08_title_only.png
 ```
 
 Read `docs/city/STYLE-BIBLE.md` before touching the look, and `docs/city/PLAN.md`
 for how the build is organised and which decisions were already settled (roads as
-negative space, orthographic camera, depth of field from the Z pass).
+negative space, orthographic camera, depth of field from the Z pass, the title
+built as buildings on the street grid). Both documents record the attempts that
+were wrong as well as the one that stuck — the title was got wrong three times,
+and every wrong version measured well.
 
 The `.blend` is the deliverable, not the scripts. There is no city generator and
 there should not be one: when a building looks wrong, fix that building.

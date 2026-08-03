@@ -34,18 +34,31 @@ AVENUES_X = {2, 6}            # which street indices are wide, per axis
 AVENUES_Y = {3, 7}
 BLOCK_SIZES = [64.0, 52.0, 76.0, 64.0, 58.0, 70.0, 64.0, 54.0, 72.0]
 
+# The cells that merge into the block the title stands on. Two, not four: with
+# the baseline on the street grid the word's footprint measures a*H across and
+# W + a*H along, so it wants one block wide by two long, and four left half the
+# block as empty paving.
+SUPER = {(4, 4), (4, 5)}
+SUPER_KEY = (4, 4)
+SUPER_LIFT = 0.55
+
 SPECIAL = {
     (0, 7): "park", (7, 7): "park", (1, 0): "construction",
     (2, 0): "construction", (6, 1): "std", (1, 6): "std", (7, 4): "std",
-    (3, 1): "park", (5, 7): "plaza",
+    (3, 1): "park",
+    # the construction site used to sit at (4, 5), which is dead centre of the
+    # hero frame and therefore dead centre under the title. A word hanging
+    # over an excavation reads as a caption, not as part of the city.
+    (5, 7): "construction",
     # the hero camera looks at the origin, so the middle of the grid has to be
     # built up: a park there fills the whole frame with trees
     (4, 4): "std", (3, 4): "plaza", (4, 3): "std", (3, 3): "std",
     (5, 4): "plaza",
-    # (4, 5) is the construction site step 06 builds on. It has to be marked
-    # here or step 04 fills it with finished buildings and the crane ends up
-    # standing on a roof.
-    (4, 5): "construction",
+    # (4, 5) carries the title now, so it is built up like the rest of the
+    # campus. Keeping the key here and only changing its value matters: the
+    # kinds of every other lot come out of one RNG stream, and adding or
+    # removing a key shifts all of them.
+    (4, 5): "std",
 }
 
 
@@ -106,16 +119,56 @@ def build_sheet(m):
     m.quad(0, 0, CITY * 1.3, CITY * 1.3, 0.0, mat("Asphalt"))
 
 
+def super_bounds():
+    """The two cells the title stands on, merged into one block.
+
+    The title takes up real ground, and a word longer than a block otherwise
+    crosses a street, which puts letters growing out of the asphalt. The
+    reference solves it the way a real campus does: the title occupies one
+    block and the streets run around it, so the street between these two cells
+    is removed and they become one.
+
+    Two, not four. With the baseline on the street the footprint is the word
+    itself, its cap height across by its length along, which wants one block
+    wide by two long. Four left half the site as empty paving.
+    """
+    (i0, j0), (i1, j1) = min(SUPER), max(SUPER)
+    x0 = BX[i0][0] - BX[i0][1] / 2
+    x1 = BX[i1][0] + BX[i1][1] / 2
+    y0 = BY[j0][0] - BY[j0][1] / 2
+    y1 = BY[j1][0] + BY[j1][1] / 2
+    return x0, x1, y0, y1
+
+
+def in_super(x, y, pad=0.0):
+    x0, x1, y0, y1 = super_bounds()
+    return x0 - pad <= x <= x1 + pad and y0 - pad <= y <= y1 + pad
+
+
 def build_blocks(m, r):
     lots = {}
     for i, (cx, bw) in enumerate(BX):
         for j, (cy, bd) in enumerate(BY):
             kind = pick_kind(i, j, r)
+            # the RNG is consumed either way: the kinds of every other lot come
+            # out of this one stream and skipping a draw shifts all of them
             lift = round(r.uniform(0.30, 0.85), 2)
+            if (i, j) in SUPER:
+                continue
             m.slab(cx, cy, bw, bd, 0.0, lift, mat("Sidewalk"))
             iw, idp = bw - WALK * 2, bd - WALK * 2
             m.quad(cx, cy, iw, idp, lift + 0.02, surface_mat(kind))
             lots[(i, j)] = (cx, cy, [iw, idp], lift, kind)
+
+    x0, x1, y0, y1 = super_bounds()
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    bw, bd = x1 - x0, y1 - y0
+    lift = SUPER_LIFT
+    m.slab(cx, cy, bw, bd, 0.0, lift, mat("Sidewalk"))
+    m.quad(cx, cy, bw - WALK * 2, bd - WALK * 2, lift + 0.02,
+           surface_mat("plaza"))
+    lots[SUPER_KEY] = (cx, cy, [bw - WALK * 2, bd - WALK * 2], lift, "plaza")
+    print(f"  superblock {bw:.0f} x {bd:.0f} m at ({cx:.0f}, {cy:.0f})")
     return lots
 
 
@@ -123,6 +176,12 @@ def build_blocks(m, r):
 def build_markings(m):
     mk = mat("Marking")
     rr = rng(5150)
+
+    def paint(cx, cy, ww, hh):
+        # the two streets that used to cross the superblock are gone; their
+        # centre lines and zebras would otherwise still be painted across it
+        if not in_super(cx, cy, -WALK):
+            m.quad(cx, cy, ww, hh, MARK_Z, mk)
 
     for axis in (0, 1):
         streets, widths = (SX, WX) if axis == 0 else (SY, WY)
@@ -136,14 +195,14 @@ def build_markings(m):
                     d = b - (size - 8) / 2 + k * 7.0
                     cx, cy = (d, s) if axis == 0 else (s, d)
                     ww, hh = (3.2, 0.14) if axis == 0 else (0.14, 3.2)
-                    m.quad(cx, cy, ww, hh, MARK_Z, mk)
+                    paint(cx, cy, ww, hh)
                 if avenue:                             # plus two lane dividers
                     for side in (-1, 1):
                         o = side * carriage / 4
                         cx, cy = ((b, s + o) if axis == 0 else (s + o, b))
                         ww, hh = ((size - 8, 0.12) if axis == 0
                                   else (0.12, size - 8))
-                        m.quad(cx, cy, ww, hh, MARK_Z, mk)
+                        paint(cx, cy, ww, hh)
 
     for sx, wx in zip(SX, WX):                          # zebras, not everywhere
         for sy, wy in zip(SY, WY):
@@ -161,7 +220,7 @@ def build_markings(m):
                             k * (across - 1.6) / max(n - 1, 1)
                         cx, cy = (base, o) if axis == 0 else (o, base)
                         ww, hh = (2.2, 0.5) if axis == 0 else (0.5, 2.2)
-                        m.quad(cx, cy, ww, hh, MARK_Z, mk)
+                        paint(cx, cy, ww, hh)
 
 
 def build_parking(m, lots):
@@ -226,6 +285,7 @@ def main():
                  for (i, j), (cx, cy, size, lift, kind) in lots.items()],
         "streets_x": SX, "streets_y": SY, "widths_x": WX, "widths_y": WY,
         "blocks_x": BX, "blocks_y": BY, "walk": WALK,
+        "superblock": list(super_bounds()),
     }))
     print(f"\n  lots: {len(lots)}   city {CITY:.0f} m")
     u, t = counts()
