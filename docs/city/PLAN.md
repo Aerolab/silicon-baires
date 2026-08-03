@@ -509,6 +509,24 @@ arms set into the paving in a ring around the Obelisco. They are 2 m discs,
 14 px each, and a ring of them is more legible from above than any paving
 texture, because a ring is a shape.
 
+**The parapet letters are facade letters.** Zooming into the Google building
+settles it: the roof-edge band runs above the word and the letters cast their
+shadow down the wall. They were built standing on top of the parapet, which
+reads against the sky instead of against pale concrete and throws away the
+contrast that makes them legible. Now mounted on the wall, tops 0.7 m under the
+roof edge.
+
+That change is also what got the signs tested at all. They were a whole class of
+object built in the fifth pass and never added to `99_check_overlap.py`, and the
+moment they were, **22 of them were inside their own buildings**: 0.45 m of
+projection is the real projection of a letter, but this city's facades carry a
+shade frame that already stands 0.45 m proud. Then a further round, because a
+lot carries up to four separate buildings and a long word runs off the end of
+the wing it is mounted on and into the next one — which needs a second pass,
+since when a sign is planned the buildings after it in the loop do not exist
+yet. One word had to be dropped for want of room. **Anything built and not
+added to the check is untested, and it will be wrong.**
+
 **Confirmed, no change needed:** the jacarandá colour (blue-violet tending to
 indigo — the common error is pinkish lilac, and ours was already right), the
 colectivo two-tone-plus-stripe scheme and its dominant combinations, the

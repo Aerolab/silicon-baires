@@ -281,7 +281,34 @@ def roof_props(kit, coll, cx, cy, w, d, top, rot, r, big, siblings=(),
     return placed
 
 
-def plan_sign(bx, by, w, d, top, floors, r, signs):
+def sign_fits(sol, bx, by, length, top, h):
+    """The longest word that clears whatever else is standing there.
+
+    A lot carries up to four separate buildings and the word is mounted on one
+    wall of one of them, so a long word runs off the end of its own wing and
+    into the next building along.
+
+    The query has to sit where the letters actually are and no closer: they
+    span 0.6 to 1.5 m outside the wall, and this building's own published box
+    already reaches 0.45 m out. Sampling at 1.05 with 0.4 of clearance leaves
+    0.65 and finds only somebody else's building. The first version sampled at
+    1.0 with 0.6, which reaches back to 0.4, inside the sign's own building -
+    so it refused all twenty of them and the count going to zero is the only
+    reason anyone noticed.
+    """
+    for trial in (length, length * 0.8, length * 0.6):
+        clear = True
+        for k in range(9):
+            t = -trial / 2 + trial * k / 8
+            if sol.hit(bx + t, by + 1.05, top - h / 2, 0.4) is not None:
+                clear = False
+                break
+        if clear:
+            return trial
+    return None
+
+
+def plan_sign(bx, by, w, d, top, floors, r, signs, sol=None):
     """Reserve a place for a company sign, and record where it is.
 
     Step 04 decides, step 10 builds. It has to be this way round: this step
@@ -313,16 +340,25 @@ def plan_sign(bx, by, w, d, top, floors, r, signs):
         # on -y, where they were geometrically perfect and permanently behind
         # the building. Turned through pi the word also runs along world -x,
         # which is screen-right from here, so it reads forwards.
-        length = min(w * 0.62, 26.0)
+        # 0.55 and 22, not 0.62 and 26: an L or a U is several wings and the
+        # word was running off the end of the one it is mounted on and into
+        # the next one along
+        length = min(w * 0.55, 22.0)
+        if sol is not None:
+            length = sign_fits(sol, bx, by + d / 2, length, top, 4.6)
+            if length is None:
+                return None
         rec = dict(kind=kind, x=bx, y=by + d / 2, z=top, rot=math.pi,
                    w=length, h=min(4.6, length * 0.26))
         keep = (0.0, d / 2 - 2.0, length + 2.0, 5.0)
     elif kind == "roofmark":
         # a flat panel lying on the deck, like the orange square in the
         # reference: the only type that costs no height at all
-        side = min(w, d) * 0.42
-        rec = dict(kind=kind, x=bx + r.uniform(-w * 0.12, w * 0.12),
-                   y=by + r.uniform(-d * 0.12, d * 0.12), z=top - 0.83,
+        # same reason: a panel that drifts far enough off centre ends up
+        # sitting across a neighbouring wing's parapet
+        side = min(w, d) * 0.36
+        rec = dict(kind=kind, x=bx + r.uniform(-w * 0.07, w * 0.07),
+                   y=by + r.uniform(-d * 0.07, d * 0.07), z=top - 0.83,
                    rot=r.choice([0.0, math.pi / 2]), w=side, h=side)
         keep = (rec["x"] - bx, rec["y"] - by, side + 2.0, side + 2.0)
     else:
@@ -388,7 +424,7 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r):
         # inside a cell and the cell's own +y edge is thin air over one of
         # them: the first version hung a word off the end of a building.
         hx, hy, hw, hd = max(wings, key=lambda s: s[2] * s[3])
-        keep = plan_sign(bx + hx, by + hy, hw, hd, top, floors, r, signs)
+        keep = plan_sign(bx + hx, by + hy, hw, hd, top, floors, r, signs, sol)
         if keep is not None:
             keep = (keep[0] + hx, keep[1] + hy, keep[2], keep[3])
         for (ox, oy, ww, dd) in wings:
@@ -433,7 +469,7 @@ def build_towers(m, kit, coll, sol, signs, lots, r):
         sol.add(cx, cy, w + 0.9, d + 0.9, 0.0, 0.0, top)
         # a tower always gets a sign: in the reference the tall buildings are
         # exactly the ones that carry a name
-        keep = plan_sign(cx, cy, w, d, top, floors, r, signs)
+        keep = plan_sign(cx, cy, w, d, top, floors, r, signs, sol)
         roof_props(kit, coll, cx, cy, w, d, top - 0.83, 0.0, r, True,
                    keep=keep)
 
@@ -477,6 +513,24 @@ def main():
     build_campus(m, kit, pcoll, ccoll, lots, r)
     build_towers(m, kit, pcoll, sol, signs, lots, r)
     m.build("buildings", bcoll)
+
+    # Second pass over the words. A sign is planned in the same loop that
+    # publishes the buildings, so when it is planned the buildings that come
+    # after it do not exist yet and it cannot see the one it is about to run
+    # into. Re-checking here, with everything published, is the whole fix.
+    dropped = 0
+    for rec in list(signs):
+        if rec["kind"] != "parapet":
+            continue
+        fit = sign_fits(sol, rec["x"], rec["y"], rec["w"], rec["z"], rec["h"])
+        if fit is None:
+            signs.remove(rec)
+            dropped += 1
+        else:
+            rec["w"] = fit
+    if dropped:
+        print(f"  {dropped} words dropped: no room once every building was in")
+
     sol.merge_into(R / "city_solids.json", "buildings")
     (R / "city_signs.json").write_text(json.dumps(signs, indent=1))
     kinds = {}

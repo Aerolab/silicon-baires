@@ -254,10 +254,17 @@ Ours says BUENOS AIRES. The construction is the reference's; the words are not.
 We are not reproducing the branding, so the companies are invented. What is
 reproduced is how a logo is physically mounted, because that is what shows.
 
-- **Parapet letters.** Individual extruded letters standing on the roof edge and
-  projecting about 0.45 m past the facade, cap height ~4.2 m, extruded ~0.9 m.
-  They break the roofline, which is why they read from furthest away. Put them
-  on a wall the camera can see: from azimuth 45 that means +x or +y.
+- **Facade letters.** Individual extruded letters mounted **on the wall**,
+  hanging just under the roof edge, cap height ~4.2 m, extruded ~0.9 m. Zoom
+  into the Google building: the roof-edge band runs *above* the letters and
+  they cast their shadow down the facade. They were first built standing on top
+  of the parapet, which is wrong and costs them everything — on the parapet
+  they read against the sky and the roof; on the wall they read against pale
+  concrete, and that contrast is the whole point.
+  Put them on a wall the camera can see: from azimuth 45 that means +x or +y.
+  And they have to stand clear of whatever else the facade already carries —
+  ours has a shade frame 0.45 m proud, so 0.45 m of projection put every letter
+  inside it.
 - **Roofmark.** A flat panel lying on the deck, about 0.42 of the smaller roof
   dimension, with a single flat mark on it. Costs no height at all and is the
   commonest type in the reference.

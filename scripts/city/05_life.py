@@ -344,10 +344,15 @@ def rooftop_people(kit, coll, r):
     for ob in list(bpy.data.collections["ROOFPROPS"].objects):
         if r.random() < 0.10:
             for _ in range(r.randint(1, 3)):
-                instance(kit[r.choice(PEOPLE)], coll,
-                         (ob.location.x + r.uniform(-2.0, 2.0),
-                          ob.location.y + r.uniform(-2.0, 2.0), ob.location.z),
-                         r.uniform(0, 6.28))
+                px = ob.location.x + r.uniform(-2.0, 2.0)
+                py = ob.location.y + r.uniform(-2.0, 2.0)
+                name, rot = r.choice(PEOPLE), r.uniform(0, 6.28)
+                # a roof carries signs and cupolas now, and standing inside
+                # one of those is the same error as standing inside a wall
+                if SOLIDS.hit(px, py, ob.location.z, 0.4,
+                              tags=("signs", "porteno")) is not None:
+                    continue
+                instance(kit[name], coll, (px, py, ob.location.z), rot)
                 n += 1
     return n
 

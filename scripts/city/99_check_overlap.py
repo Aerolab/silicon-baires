@@ -43,7 +43,7 @@ R = ROOT / "renders"
 EPS = 0.05                       # lift before testing: contact is not overlap
 SUPPORTS = ("buildings", "landmarks", "porteno")
 LOOSE = ("NATURE", "FURNITURE", "TRAFFIC", "PEOPLE", "ROOFPEOPLE",
-         "ROOFPROPS", "LANDMARK_PROPS")
+         "ROOFPROPS", "LANDMARK_PROPS", "SIGNS")
 # ROOFPROPS and LANDMARK_PROPS stand inside a building footprint on purpose -
 # that is what a roof is - so the rectangle test would report every one of them
 # FURNITURE is not in this list. A traffic light is a 6 m arm cantilevered

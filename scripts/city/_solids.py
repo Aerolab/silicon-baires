@@ -75,12 +75,17 @@ class Solids:
                                 int((cy + ey) // self.CELL) + 1):
                     self._grid.setdefault((gi, gj), []).append(idx)
 
-    def hit(self, x, y, z=None, pad=0.0):
+    def hit(self, x, y, z=None, pad=0.0, tags=None):
         """The box this point is inside, or None.
 
         `pad` grows every footprint outwards, which is how a caller asks for
         clearance: a tree is not a point, so it is queried with its own canopy
         radius and stays that far off the wall.
+
+        `tags` narrows the query to some of the layers. Somebody standing on a
+        roof is inside the building's own footprint by definition, so asking
+        "is this person inside anything" always says yes; asking "is this
+        person inside a sign or a cupola" is the question that means something.
         """
         if self._grid is None:
             self._build_grid()
@@ -97,6 +102,8 @@ class Solids:
                 seen.update(self._grid.get((gi, gj), ()))
         for idx in seen:
             cx, cy, w, d, rot, z0, z1, tag = self.boxes[idx]
+            if tags is not None and tag not in tags:
+                continue
             # pad is a clearance in plan and deliberately does not apply here:
             # a rooftop unit standing at z1 belongs to the building, and the
             # question being asked is always "is this thing inside the walls"

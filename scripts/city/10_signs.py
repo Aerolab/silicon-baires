@@ -7,9 +7,15 @@ built now if it is ever going to be swapped for artwork later.
 
 Three mountings, all read off the reference frames:
 
-  parapet   individual extruded letters standing on the roof edge, projecting
-            out past the facade. This is the Google one, and it is the type
-            that reads from furthest away because it breaks the roofline.
+  parapet   individual extruded letters mounted on the facade wall, hanging
+            just under the roof edge and projecting out from it. This is the
+            Google one. Note where they are: NOT standing on top of the
+            parapet, which is how this was built first. In the reference the
+            letters sit on the wall with the roof-edge band running above them
+            and they cast their shadow down the facade, which is where all
+            their contrast comes from - pale wall behind saturated letter.
+            Standing them on the parapet puts them against the sky and the
+            roof, and they lose it.
   roofmark  a flat panel lying on the deck with a mark on it, costing no
             height at all. The orange square with the white B.
   mast      a large disc on a pole, standing clear of everything and turned to
@@ -40,7 +46,14 @@ R = ROOT / "renders"
 FONT = "/Users/bilune/Library/Fonts/PPMonumentNormal-Black.otf"
 CAP = 4.2                 # letter height on a parapet, metres
 DEPTH = 0.9               # how far a letter is extruded
-PROUD = 0.45              # how far it stands out past the facade
+PROUD = 1.05              # how far it stands off the wall. 0.45 was the real
+                          # projection of a letter and it was wrong here: this
+                          # city's own facades carry a shade frame that already
+                          # stands 0.45 m proud, so the letters were cutting
+                          # into it. All twenty parapet signs failed the
+                          # overlap check the first time they were tested
+                          # against a building at all.
+DROP = 0.7                # how far under the roof edge the letter tops sit
 MAST = 0.55               # mast height as a fraction of the disc diameter
 
 
@@ -160,9 +173,10 @@ def build(rec, coll):
     x = Matrix.Rotation(rec["rot"], 4, "Z")
 
     if kind == "parapet":
-        # the letters stand on the parapet and lean out past the wall, which
-        # is what makes them catch the light against the facade behind
-        letters(m, rec, face, x @ Matrix.Translation(Vector((0, -PROUD, 0))))
+        # down the wall, so the tops clear the roof edge by DROP and the whole
+        # word reads against the facade rather than against the sky
+        letters(m, rec, face,
+                x @ Matrix.Translation(Vector((0, -PROUD, -CAP - DROP))))
     elif kind == "roofmark":
         s = rec["w"]
         m.slab(0, 0, s, s, 0.0, 0.10, face, x)
