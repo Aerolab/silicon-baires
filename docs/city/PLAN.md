@@ -488,9 +488,18 @@ that step 08 renders, because the city contains other red things (a
 construction frame, cars, a rooftop sign) and a colour threshold counts all of
 them without saying so.
 
-Still open: saturation sits at 0.20 against the reference's 0.334. The
-reference fills its frame with foliage, coloured buildings and props; ours
-still shows a lot of pale roof and asphalt.
+**Closed, and worth recording how.** Saturation sat at 0.20 against a stated
+0.334 for a long time. It is 0.283 now and nobody graded anything: the
+jacarandás, the taxis and the company signs put the chroma into the frame.
+Colour here comes from what is in the shot.
+
+**And the target was never one number.** Measured the same way across all four
+reference frames, the fraction of pixels below 0.25 luminance runs 11.1, 16.0,
+35.1, 35.2 %, and mean saturation runs 0.220 to 0.336. An earlier pass took
+15.7 % off one frame and wrote it down as *the* reference; a later critique took
+35.2 % off a different one and concluded we were 22 points too bright. Ours sits
+inside the range on every measure except green coverage, which is 28.5 % against
+21.9–26.2 % — a little heavy, and the trees are why.
 
 Also open, and probably not fixable here: the title face renders at
 (0.809, 0.198, 0.102) against the reference's (0.928, 0.107, 0.085) — the

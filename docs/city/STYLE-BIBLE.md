@@ -33,13 +33,25 @@ realistic kill it too.
 Not estimated. A car is 4.4 m long, so it works as a ruler, and the rest came
 from sampling pixels.
 
+**The reference does not agree with itself, and one frame is not the target.**
+Measured the same way across all four frames, Rec.709 luma on sRGB:
+
+| | frame 1 | frame 2 | frame 3 | frame 4 | ours |
+|---|---|---|---|---|---|
+| Mean luminance | 0.414 | 0.406 | 0.498 | 0.476 | **0.439** |
+| Pixels below 0.25 | 35.2 % | 35.1 % | 16.0 % | 11.1 % | **13.1 %** |
+| Mean saturation | 0.336 | 0.316 | 0.335 | 0.220 | **0.283** |
+| Green coverage | 22.4 % | 23.6 % | 21.9 % | 26.2 % | **28.5 %** |
+
+The dark-pixel fraction runs from 11 % to 35 % across four frames of the same
+sequence. An earlier pass took 15.7 % off one frame and wrote it down as *the*
+number; a critique later took 35.2 % off a different one and called us 22 points
+too bright. Both are one frame. We sit inside the range on every row except
+green, which is now a little high.
+
 | | Reference | Where we landed |
 |---|---|---|
 | Scale | ~14 px per metre → **the frame spans ~140 m** | 170 m |
-| Mean luminance | 0.498 | 0.47 |
-| Pixels below 0.25 | **15.7 %** | 15.5 % |
-| Green coverage | **17.3 %** | 15.1 % |
-| Mean saturation | **0.334** | 0.20 |
 | Road luminance | **0.18**, and warm (0.20, 0.18, 0.14) | 0.19 warm |
 
 Two of these were badly wrong on the first pass and are worth remembering:
@@ -48,11 +60,13 @@ Two of these were badly wrong on the first pass and are worth remembering:
   Every piece of detail was then sub-pixel, which reads as "not enough detail"
   when the real fault is the lens.
 - **The road carries the whole value structure.** At 0.38 luminance and cool
-  grey, the frame had 0.3 % dark pixels against the reference's 15.7 %, and
-  nothing else could compensate.
+  grey, the frame had 0.3 % dark pixels where every reference frame has between
+  11 % and 35 %, and nothing else could compensate.
 
-Saturation is still the open gap. The reference fills its frame with foliage,
-coloured buildings and props; ours still shows a lot of pale roof and asphalt.
+Saturation was the long-standing gap, at 0.20 against 0.22–0.34. The jacarandás,
+the taxis and the company signs closed most of it without anyone grading
+anything: it is 0.283 now. Chroma in this frame comes from what is in it, not
+from the view transform.
 
 ## 2. Camera
 
