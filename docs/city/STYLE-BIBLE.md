@@ -368,7 +368,7 @@ are all invisible from here. Silhouette and colour are what is left.
 | **Colectivos**, flat two-tone per line | a small bright rectangle among the cars |
 | **The Obelisco**, 67.5 m on a 6.8 m base | taller than every building here, so it is the only vertical in frame |
 | **Cúpulas** on corner buildings, oxidised `#4a6b63` | a dome is a silhouette, not a texture |
-| **Floralis Genérica**, 23 m, 32 m across, over a 44 m pool | the only polished thing in the city, and the pool is what makes its plaza read |
+| **Floralis Genérica**, six 20 m petals and four stamens, 32 m across, over a 44 m pool | the only polished thing in the city, and the pool is what makes its plaza read |
 
 The monument numbers are sourced, not remembered, and two were wrong the first
 time. The Obelisco is 67.5 m of which **63 m is shaft**, from the base to a
@@ -389,6 +389,30 @@ as a taxi rank that was not there.
 
 **Jacarandá is blue-violet, tending to indigo.** The common mistake is pinkish
 lilac. If it comes out pink it is wrong.
+
+**The Floralis is a flower or it is a star, and that is decided by the petal.**
+The first version was two straight tapers per petal and it read as a
+six-pointed star from every angle — which is what a flat blade always reads as,
+whatever the file calls it. Three cheap changes fix it and all three are needed:
+
+- **The spine curves**, opening early and rising into the tip. Out first, up
+  second. Climbing first and opening late puts most of the petal's length near
+  the axis and gives a closed cup with pinched tips.
+- **The width varies** — nothing at the root, widest at about 40 % out, a point
+  at the tip. Constant taper is a knife.
+- **The petal is dished**, so the edges lift off the spine. This is the one
+  that earns its keep at 40 px: a flat facet is a single value, a dished one is
+  a gradient, and it is the only thing on the object that is not a hard edge.
+
+**And there are four stamens.** They were missing entirely, and they are what
+makes it *that* flower rather than a generic metal one. They have to clear the
+petals by real height — at 2 m of overhang they are a smudge in the middle of
+the bowl from the hero angle.
+
+The stem height is not free. A 20 m petal reaching 16 m out and 23 m up has to
+start around 9.5 m or the arithmetic does not close: the straight line from a
+5 m root to the tip is already 23 m. That is why the real flower sits up in the
+air on a stalk, and getting it wrong makes a desk ornament.
 
 **The real proportions, for reference, since ours are deliberately not them.**
 Jacarandá is only 3.6 % of the city's 432,000 street trees; fresno americano is

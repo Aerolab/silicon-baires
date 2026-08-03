@@ -15,11 +15,16 @@ THE CUPOLAS. Domes on the corners of buildings on street corners. This is the
 one eye-level Buenos Aires detail that survives being seen from above, because
 a dome is a silhouette rather than a texture, and downtown is full of them.
 
-FLORALIS GENERICA. Six steel petals, 23 m tall, 32 m across, over a 44 m pool.
-It reads as a large bright metal star, which nothing else in the city does. It
-goes at the far end of the city from the Obelisco: in Buenos Aires they are
-four kilometres apart and putting them on adjacent blocks made a souvenir
-shelf out of the middle of the frame.
+FLORALIS GENERICA. Six steel petals of 20 m and four stamens, 23 m to the tips
+and 26 above them, over a 44 m pool. It is the only polished thing in the city.
+It goes at the far end from the Obelisco: in Buenos Aires they are four
+kilometres apart and putting them on adjacent blocks made a souvenir shelf out
+of the middle of the frame.
+
+The petals are dished leaves on curved spines, not flat tapers - see blade().
+Flat, and whatever you call it, it reads as a six-pointed star. And the stamens
+were simply missing: they are what makes it that flower rather than a generic
+metal one.
 
 Everything here publishes its footprint, so step 05 keeps its trees out of it.
 Run it before step 05 for that reason.
@@ -59,11 +64,21 @@ FLORALIS = (2, 7)
 # 7 x 7 m in one place and 6.80 m per side in another. 6.8 is used here and the
 # difference is 3 mm on screen.
 OB_H, OB_SHAFT, OB_BASE, OB_TOP, OB_TIP = 67.5, 63.0, 6.8, 3.5, 0.40
-# 23 m tall, 32 m across with the petals open, standing over a 44 m pool.
-# The first pass had it at 20 m across over a 14 m pool, which made it a
-# sculpture on a lawn instead of the thing that fills its own plaza.
+# Sourced: six petals of 20 m and four stamens, about 23 m to the top of the
+# petals and 25 to the stamens, 18 tonnes, over a 44 m pool. An early pass had
+# it 20 m across over a 14 m pool, which made it a sculpture on a lawn instead
+# of the thing that fills its own plaza.
+#
+# The stem height is not a free choice. A 20 m petal reaching 16 m out and
+# 23 m up has to start at about 9.5 m, or the arithmetic does not close: the
+# straight line from a 5 m root to the tip is already 23 m long. That is why
+# the real flower sits up in the air on a stalk rather than opening off the
+# ground, and getting it wrong is what made the first version look like a
+# desk ornament.
 FLOR_H, FLOR_D, FLOR_POOL, PETALS = 23.0, 32.0, 44.0, 6
-FLOR_LEAN = math.radians(52)
+FLOR_STEM = 9.5               # where the petals start
+FLOR_STAM = 26.5              # the stamens finish well above the petals
+FLOR_PETAL_W = 7.2            # widest point of a petal
 
 
 def taper(m, cx, cy, z0, z1, w0, w1, material, xform=None):
@@ -140,26 +155,101 @@ def plaza(m, cx, cy, w, d, lift):
                        xform=Matrix.Translation(Vector((cx, cy, 0))))
 
 
+def blade(m, material, r0, z0, r1, z1, width, xform,
+          segs=10, across=4, dish=0.55, thick=0.30):
+    """One petal: a dished leaf on a curved spine, not a flat triangle.
+
+    Three things make it a petal rather than a blade, and all three are cheap:
+
+    THE SPINE CURVES. The centre line leaves the stem steeply and flattens as
+    it opens, so the silhouette is a curve. Two straight tapers - which is what
+    this was - give a six-pointed star, and a star is what a flat blade always
+    reads as from above whatever it is called.
+
+    THE WIDTH VARIES. Nothing at the root, widest at about 40 % of the way out,
+    a point at the tip. A constant-taper blade is a knife.
+
+    IT IS DISHED. The edges lift off the spine, so the petal is a shallow
+    trough and catches the sun differently along its length. This is the one
+    that does the work at 40 px: a flat facet is one value, a dished one is a
+    gradient, and it is the only thing on this object that is not a hard edge.
+    """
+    def spine(t):
+        # 1.05 and 1.32, not 1.35 and 1.6. The first pair climbed fast and
+        # opened late, so most of the petal's length sat near the axis and the
+        # flower read as a closed cup with the tips pinched in. These open the
+        # petal early and let it rise into the tip, which is the profile of the
+        # real one: out first, up second.
+        return (r0 + (r1 - r0) * t ** 1.05,
+                z0 + (z1 - z0) * (1.0 - (1.0 - t) ** 1.32))
+
+    def half(t):
+        return max(0.06, width * 0.5 * math.sin(math.pi * t ** 0.75) ** 0.85)
+
+    verts, faces = [], []
+    stride = 2 * (across + 1)
+    for i in range(segs + 1):
+        t = i / segs
+        r, z = spine(t)
+        ra, za = spine(max(0.0, t - 0.02))
+        rb, zb = spine(min(1.0, t + 0.02))
+        dr, dz = rb - ra, zb - za
+        n = math.hypot(dr, dz) or 1.0
+        nr, nz = -dz / n, dr / n            # normal, in the radial plane
+        hw = half(t)
+        for layer in (0, 1):
+            for k in range(across + 1):
+                u = -1.0 + 2.0 * k / across
+                d = dish * hw * u * u - (thick if layer else 0.0)
+                verts.append((r + nr * d, hw * u, z + nz * d))
+    for i in range(segs):
+        for k in range(across):
+            a = i * stride + k
+            b = (i + 1) * stride + k
+            faces.append((a, a + 1, b + 1, b))                     # top
+            faces.append((b + across + 1, b + across + 2,
+                          a + across + 2, a + across + 1))         # underside
+        for k, flip in ((0, True), (across, False)):               # the edges
+            a = i * stride + k
+            b = (i + 1) * stride + k
+            q = (a, b, b + across + 1, a + across + 1)
+            faces.append(q if flip else tuple(reversed(q)))
+    m._add(verts, faces, material, xform)
+
+
 def floralis(m, cx, cy, lift):
-    """Six petals on a stem, opened. Steel: the only polished thing in the
-    city, which is what makes it read at this size."""
+    """Six petals and four stamens, opened. Steel: the only polished thing in
+    the city, which is what makes it read at this size.
+
+    Sourced: six petals of 20 m and four stamens, about 23 m overall, over a
+    44 m pool. The stamens were simply missing before, and they are the part
+    that stops it from being a flower-shaped thing and makes it that flower -
+    four thin verticals standing up out of the middle of the bowl.
+    """
     steel = mat("Steel Bright")
     z = lift
     m.cyl((cx, cy, z), FLOR_POOL / 2, 0.4, mat("Water"), segs=32)
-    m.cyl((cx, cy, z + 0.4), 1.3, FLOR_H * 0.40, steel, segs=10, top=0.9)
-    base = z + FLOR_H * 0.40
-    # the petal leans out and the spread is what is published, so the length
-    # is solved from it rather than picked: half the spread over sin(lean)
-    total = (FLOR_D / 2) / math.sin(FLOR_LEAN)
-    blade, tip = total * 0.86, total * 0.14
+    # the stem, and it is tall: the petals of the real one start well above
+    # head height and the whole flower sits up in the air on a stalk
+    m.cyl((cx, cy, z + 0.4), 2.1, FLOR_STEM - 0.4, steel, segs=12, top=1.15)
+    base = z + FLOR_STEM
     for k in range(PETALS):
-        a = 2 * math.pi * k / PETALS
-        x = (Matrix.Translation(Vector((cx, cy, base))) @
-             Matrix.Rotation(a, 4, "Z") @ Matrix.Rotation(FLOR_LEAN, 4, "Y"))
-        # the petal is a long tapered blade lying along local +Z once leaned
-        taper(m, 0, 0, 0.0, blade, 3.0, 6.4, steel, x)
-        taper(m, 0, 0, blade, blade + tip, 6.4, 0.8, steel, x)
-    return FLOR_POOL, lift + FLOR_H
+        x = (Matrix.Translation(Vector((cx, cy, 0.0))) @
+             Matrix.Rotation(2 * math.pi * k / PETALS + 0.22, 4, "Z"))
+        blade(m, steel, 1.4, base, FLOR_D / 2, z + FLOR_H, FLOR_PETAL_W, x)
+    # Four stamens, between the petals and finishing well above them. They have
+    # to clear the petals by more than a token: at 2 m of overhang they were a
+    # smudge in the middle of the bowl from the hero angle, and they are the
+    # detail that separates this from a generic metal flower.
+    for k in range(4):
+        a = 2 * math.pi * k / 4 + math.pi / 4
+        lean = 2.4
+        m.cyl((cx + lean * 0.25 * math.cos(a), cy + lean * 0.25 * math.sin(a),
+               base - 2.0), 0.55, FLOR_STAM - (base - 2.0 - z), steel, segs=7,
+              top=0.42)
+        m.sphere((cx + lean * math.cos(a), cy + lean * math.sin(a),
+                  z + FLOR_STAM), 1.15, steel, segs=8, rings=5)
+    return FLOR_POOL, z + FLOR_STAM
 
 
 def oval(cx, cy, rx, ry, segs=44):
