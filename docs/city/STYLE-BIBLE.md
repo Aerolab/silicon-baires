@@ -27,6 +27,32 @@ realistic kill it too.
 
 ---
 
+## 1b. The numbers, measured off the reference
+
+Not estimated. A car is 4.4 m long, so it works as a ruler, and the rest came
+from sampling pixels.
+
+| | Reference | Where we landed |
+|---|---|---|
+| Scale | ~14 px per metre → **the frame spans ~140 m** | 210 m |
+| Mean luminance | 0.498 | 0.47 |
+| Pixels below 0.25 | **15.7 %** | 15.5 % |
+| Green coverage | **17.3 %** | 15.1 % |
+| Mean saturation | **0.334** | 0.20 |
+| Road luminance | **0.18**, and warm (0.20, 0.18, 0.14) | 0.19 warm |
+
+Two of these were badly wrong on the first pass and are worth remembering:
+
+- **The shot is tight.** The first attempt framed 590 m, four times too wide.
+  Every piece of detail was then sub-pixel, which reads as "not enough detail"
+  when the real fault is the lens.
+- **The road carries the whole value structure.** At 0.38 luminance and cool
+  grey, the frame had 0.3 % dark pixels against the reference's 15.7 %, and
+  nothing else could compensate.
+
+Saturation is still the open gap. The reference fills its frame with foliage,
+coloured buildings and props; ours still shows a lot of pale roof and asphalt.
+
 ## 2. Camera
 
 Read off the frames:

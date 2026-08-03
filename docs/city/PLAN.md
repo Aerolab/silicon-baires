@@ -192,6 +192,76 @@ rebuilding anything.
 | **M3** ✅ | Trees, street furniture, traffic, crowds | `05_life.py` — 1522 trees, 456 lights and signals, ~1000 vehicles, ~660 people, all instanced |
 | **M4** ✅ | Stadium, curved building, parking structure, construction site with lattice cranes | `06_landmarks.py` |
 | **M5** ✅ | Depth of field, grain, final render | `07_look.py`. The Defocus node does nothing on an orthographic camera, so the blur is driven off the Z pass into a variable Blur. |
+| **M6** ✅ | Second pass against the reference | A side-by-side critique found six faults; all six fixed. See below. |
+
+## Second pass: what the comparison against the reference changed
+
+Everything above was built, rendered and then compared frame to frame with the
+reference. The critique found six faults, in order of impact:
+
+1. **The shot was four times too wide.** Measured with a car as a ruler: the
+   reference runs ~14 px per metre, so its frame spans ~140 m. Ours spanned
+   590 m. Now 190 m. This alone explains most of the "not enough detail"
+   complaints: the detail existed, it was just sub-pixel.
+2. **The road was twice as bright as it should be, and the wrong hue.** 0.38
+   luminance and cool grey against 0.18 and warm. The frame had 0.3 % of pixels
+   below 0.25 where the reference has 15.7 %, so it had no dark values at all.
+3. **Blocks were too big and setbacks far too generous.** 90 m blocks with
+   6–12 m setbacks left every building floating in a lawn. Now 64 m blocks with
+   1.5–4 m setbacks, and the sidewalk cut from 4.0 to 2.5 m so it stops framing
+   every block in a thick white line.
+4. **The symmetric circus was the single biggest giveaway.** It read as a formal
+   corporate park rather than improvised tech sprawl. Replaced by a curved
+   arterial — which then had to be dropped too, see the third pass below.
+5. **Every roof used the same recipe.** Now roughly a fifth stay sparse, a tenth
+   carry a single large feature, and the rest are dense.
+6. **Facades had 0.2–0.5 m of relief where the reference has 0.5–3 m.** Added
+   entrance canopies, deeper spandrel bands and projecting shade frames.
+
+## Third pass: the grid goes straight
+
+The curved arterial did not survive contact with the grid. A curve meeting an
+orthogonal layout leaves ragged leftovers: a block that merely touches the
+corridor loses its whole 64 m footprint to clear a 12 m verge, so the arterial
+ended up flanked by two enormous empty roads. Removed.
+
+The city is now strictly rectangular, 9 x 9 blocks, 714 m. Variety comes from
+the grid itself rather than from curves:
+
+- **Street hierarchy.** Local streets 12 m (two 3.5 m lanes), two avenues per
+  axis at 22 m (four lanes).
+- **Block sizes vary per row and column**, 52 to 76 m, so nothing reads as one
+  repeated module.
+
+Three placement bugs surfaced along the way, all the same mistake: **placing
+things by cell index without checking the terrain actually there**. Towers and
+landmarks stood on cells the arterial had eaten; the construction site shared a
+lot with finished buildings. All three now look the lot up and skip loudly if
+it is missing.
+
+And one modelling bug that a dozen renders failed to catch: the crane mast was
+rotated +90 deg about Y instead of -90, which sends +X to -Z. The mast ran
+underground and only the jib was visible, floating. In an orthographic view a
+horizontal jib looks like a diagonal boom, which is why it read as plausible.
+
+## Verification
+
+`scripts/city/98_check_floating.py` — two tests, because the two failure modes
+differ. **A**: no geometry below ground (every asset is modelled on z = 0, so
+anything below it is an orientation error). **B**: every instanced asset has a
+surface under it, ray-cast against the site, buildings and landmarks.
+
+Its first version tested every connected piece and reported 65,000 of 101,769
+as floating. That premise was wrong: a facade band has nothing directly under
+it by design. Merged building meshes are deliberately out of scope.
+
+`scratchpad/plan_check.py` renders a top-down plan plus two context views. Run
+it after any structural change — the close-ups and the colour metrics both
+looked fine while the layout was destroyed, because neither measures geometry.
+
+Still open: saturation sits at 0.20 against the reference's 0.334. The
+reference fills its frame with foliage, coloured buildings and props; ours
+still shows a lot of pale roof and asphalt.
 | **M6** | *(optional)* camera move, or `.glb` export for the browser | — |
 
 M1 carries the whole risk. If the block does not look right, nothing after it will, and

@@ -16,14 +16,14 @@ import bpy, blib
 
 R = ROOT / "renders"
 
-# 590 m is not arbitrary: the visible ground is a rectangle rotated 45 deg over
-# a square city, so its corners poke past the last blocks. Beyond this width the
-# frame shows bare asphalt in two corners instead of bleeding off all four sides.
-CAM_WIDTH = 590.0
+# Measured against the reference with a car as the ruler: it runs about 14 px
+# per metre, so its frame spans roughly 140 m. The first pass was 590 m, four
+# times too wide, which is why every piece of detail read as a speck.
+CAM_WIDTH = 210.0
 FOCUS_D = 1450.0           # camera sits this far out; focus on the middle
 F_STOP = 0.55              # unphysical on purpose: this is the miniature cheat
-BLUR_MAX = 15.0            # pixels at 1600 wide; scaled to the real width below
-FOCUS_SPREAD = 430.0   # metres of depth that stay acceptably sharp
+BLUR_MAX = 13.0            # pixels at 1600 wide; scaled to the real width below
+FOCUS_SPREAD = 105.0   # metres of depth that stay acceptably sharp
 GRAIN = 0.10
 VIGNETTE = 0.22
 
@@ -127,6 +127,12 @@ def main():
     cam.data.dof.focus_distance = FOCUS_D
     cam.data.dof.aperture_fstop = F_STOP
 
+    # AgX desaturates by design; Punchy pulls the chroma back towards the
+    # reference without giving up the highlight rolloff
+    scene.view_settings.look = "AgX - Punchy"
+    # the reference sits at 0.498 mean luminance; without this the frame drifts
+    # bright as soon as the roads stop carrying the dark values
+    scene.view_settings.exposure = -0.78
     build_compositor(scene)
 
     cycles = "final" in sys.argv   # not --cycles: Blender parses that itself

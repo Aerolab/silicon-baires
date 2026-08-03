@@ -3,10 +3,14 @@
 One asphalt sheet under everything, block slabs raised on top. The road is the
 gap between the slabs, which is the decision the L1 spike settled.
 
-Layout: a 7 x 7 orthogonal grid, with the middle 3 x 3 replaced by a circus —
-a planted disc, a ring road around it, and eight radial sector blocks. That
-gives the sweeping curves the reference lives on without a single clipped
-polygon: everything is a rectangle or an annulus sector.
+Layout, third pass. The second one cut the grid with a curved arterial, and a
+curve meeting an orthogonal grid always leaves ragged leftovers: a block that
+merely touches the corridor loses its whole 64 m footprint to clear a 12 m
+verge, so the arterial ended up flanked by two enormous empty roads. Dropped.
+
+The city is now strictly rectangular. Variety comes from the grid itself:
+street widths differ (two wide avenues among narrow local streets) and block
+sizes differ per row and column, so nothing reads as one repeated module.
 
     ./bl scripts/city/03_ground.py
 """
@@ -16,240 +20,164 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
-from _common import Mesh, collection, mat, pbrmat, rng, counts
+from _common import Mesh, collection, mat, pbrmat, rng, counts, srgb
 
 R = ROOT / "renders"
 
-BLOCK, STREET, PITCH = 90.0, 22.0, 112.0
-WALK = 4.0                    # sidewalk width inside the block edge
-CARRIAGE = STREET - WALK * 2  # 14 m of asphalt between kerbs
-EXTENT = 7
-HALF = (EXTENT - 1) / 2
-CITY = EXTENT * BLOCK + (EXTENT + 1) * STREET
+EXTENT = 9                    # blocks per side
+WALK = 2.5                    # sidewalk inside the block edge
 MARK_Z = 0.03
 
-# circus, replacing the middle 3 x 3
-PLAZA_R = 48.0                # planted disc in the middle
-RING_R = PLAZA_R + STREET     # outer kerb of the ring road
-SECTOR_R = RING_R + BLOCK     # outer edge of the eight sector blocks
-CLEAR_R = SECTOR_R + 12.0     # grid cells touching this are dropped
+# A lane is 3.5 m. Local streets carry two lanes, avenues four.
+LOCAL, AVENUE = 12.0, 22.0
+AVENUES_X = {2, 6}            # which street indices are wide, per axis
+AVENUES_Y = {3, 7}
+BLOCK_SIZES = [64.0, 52.0, 76.0, 64.0, 58.0, 70.0, 64.0, 54.0, 72.0]
 
-# lot surface per cell, keyed (i, j) from the south-west corner
 SPECIAL = {
-    (0, 6): "park", (1, 6): "park", (0, 0): "parking", (6, 6): "plaza",
-    (3, 0): "park", (0, 3): "parking", (6, 3): "park", (3, 6): "parking",
-    (5, 5): "std", (1, 1): "std",
-    # the construction site, and the landmark plots step 06 owns. All of these
-    # have to sit inside the hero frame, which only reaches cells 1..5.
-    (3, 1): "construction", (2, 1): "construction",
-    (5, 1): "std", (1, 5): "std", (5, 3): "std",
+    (0, 7): "park", (7, 7): "park", (1, 0): "construction",
+    (2, 0): "construction", (6, 1): "std", (1, 6): "std", (7, 4): "std",
+    (3, 1): "park", (5, 7): "plaza",
+    # the hero camera looks at the origin, so the middle of the grid has to be
+    # built up: a park there fills the whole frame with trees
+    (4, 4): "std", (3, 4): "plaza", (4, 3): "std", (3, 3): "std",
+    (5, 4): "plaza",
+    # (4, 5) is the construction site step 06 builds on. It has to be marked
+    # here or step 04 fills it with finished buildings and the crane ends up
+    # standing on a roof.
+    (4, 5): "construction",
 }
 
 
+def axis_layout(avenues):
+    """Street centres and block spans down one axis, from cumulative widths."""
+    widths = [AVENUE if k in avenues else LOCAL for k in range(EXTENT + 1)]
+    sizes = [BLOCK_SIZES[i % len(BLOCK_SIZES)] for i in range(EXTENT)]
+    pos, streets, spans = 0.0, [], []
+    for k in range(EXTENT + 1):
+        streets.append(pos + widths[k] / 2)
+        pos += widths[k]
+        if k < EXTENT:
+            spans.append((pos, sizes[k]))
+            pos += sizes[k]
+    off = pos / 2
+    return ([s - off for s in streets],
+            [(a - off + b / 2, b) for a, b in spans],
+            widths, pos)
+
+
+SX, BX, WX, TOTAL_X = axis_layout(AVENUES_X)
+SY, BY, WY, TOTAL_Y = axis_layout(AVENUES_Y)
+CITY = max(TOTAL_X, TOTAL_Y)
+
+
+def pick_kind(i, j, r):
+    """The reference block interior is mostly paving and parking, not lawn."""
+    if (i, j) in SPECIAL:
+        return SPECIAL[(i, j)]
+    # Buildings only land on "plaza" and "std", so these weights decide how
+    # built-up the city is. The first straight-grid pass gave 38 % to parks and
+    # the result was a forest with a few offices in it.
+    x = r.random()
+    if x < 0.22:
+        return "plaza"
+    if x < 0.36:
+        return "parking"
+    if x < 0.48:
+        return "park"
+    return "std"
+
+
+def surface_mat(kind):
+    return {"park": mat("Grass"), "parking": mat("Asphalt Lot"),
+            "plaza": mat("Paving"), "construction": mat("Dirt"),
+            "std": mat("Grass")}[kind]
+
+
 def retint(name, hex_col):
-    """Nudge a palette colour already living in the .blend."""
-    from _common import srgb
     m = bpy.data.materials[name]
     c = srgb(hex_col)
     m.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = \
         (c[0], c[1], c[2], 1.0)
 
 
-def cell_centre(i, j):
-    return (i - HALF) * PITCH, (j - HALF) * PITCH
-
-
-def kept(i, j):
-    """Grid cells whose square reaches into the circus are dropped."""
-    cx, cy = cell_centre(i, j)
-    nx = max(0.0, abs(cx) - BLOCK / 2)
-    ny = max(0.0, abs(cy) - BLOCK / 2)
-    return math.hypot(nx, ny) > CLEAR_R
-
-
-def lift_for(i, j, r):
-    """Blocks stand 0.3-1.2 m proud of the road. Varying it makes terraces."""
-    return round(r.uniform(0.35, 1.15), 2)
-
-
-def pick_kind(i, j, r):
-    """Not every block is a lawn. The reference is mostly paving and parking."""
-    if (i, j) in SPECIAL:
-        return SPECIAL[(i, j)]
-    x = r.random()
-    return "plaza" if x < 0.34 else ("parking" if x < 0.48 else "std")
-
-
-def surface_mat(kind):
-    return {"park": mat("Grass"), "parking": mat("Asphalt"),
-            "plaza": mat("Paving"), "construction": mat("Dirt"),
-            "std": mat("Grass")}[kind]
-
-
 # ---------------------------------------------------------------------------
 def build_sheet(m):
-    m.quad(0, 0, CITY * 1.25, CITY * 1.25, 0.0, mat("Asphalt"))
+    m.quad(0, 0, CITY * 1.3, CITY * 1.3, 0.0, mat("Asphalt"))
 
 
-def build_grid_blocks(m, r):
-    """Each block: a sidewalk slab, then the lot surface inset on top."""
+def build_blocks(m, r):
     lots = {}
-    for i in range(EXTENT):
-        for j in range(EXTENT):
-            if not kept(i, j):
-                continue
-            cx, cy = cell_centre(i, j)
+    for i, (cx, bw) in enumerate(BX):
+        for j, (cy, bd) in enumerate(BY):
             kind = pick_kind(i, j, r)
-            lift = lift_for(i, j, r)
-            m.slab(cx, cy, BLOCK, BLOCK, 0.0, lift, mat("Sidewalk"))
-            inner = BLOCK - WALK * 2
-            m.quad(cx, cy, inner, inner, lift + 0.02, surface_mat(kind))
-            lots[(i, j)] = (cx, cy, inner, lift, kind)
-    return lots
-
-
-def build_circus(m, r):
-    """Planted disc, ring road, eight sector blocks with radial streets."""
-    lots = {}
-    lift = 0.9
-    # the disc in the middle, a step higher than the blocks around it
-    m.arc_band(0.0, PLAZA_R, 0, 2 * math.pi, 0.0, mat("Sidewalk"), segs=64)
-    m.prism([(PLAZA_R * math.cos(2 * math.pi * k / 64),
-              PLAZA_R * math.sin(2 * math.pi * k / 64)) for k in range(64)],
-            0.0, lift + 0.25, mat("Sidewalk"))
-    m.arc_band(0.0, PLAZA_R - WALK, 0, 2 * math.pi, lift + 0.27,
-               mat("Grass"), segs=64)
-
-    n = 8
-    gap = STREET / ((RING_R + SECTOR_R) / 2)      # radial street, in radians
-    for k in range(n):
-        a0 = 2 * math.pi * k / n + gap / 2
-        a1 = 2 * math.pi * (k + 1) / n - gap / 2
-        segs = max(6, int((a1 - a0) * SECTOR_R / 3.0))
-        poly = ([(SECTOR_R * math.cos(a0 + (a1 - a0) * t / segs),
-                  SECTOR_R * math.sin(a0 + (a1 - a0) * t / segs))
-                 for t in range(segs + 1)] +
-                [(RING_R * math.cos(a1 - (a1 - a0) * t / segs),
-                  RING_R * math.sin(a1 - (a1 - a0) * t / segs))
-                 for t in range(segs + 1)])
-        h = round(0.5 + 0.5 * ((k * 3) % 4) / 3.0, 2)
-        m.prism(poly, 0.0, h, mat("Sidewalk"))
-        inset = WALK / SECTOR_R
-        m.arc_band(RING_R + WALK, SECTOR_R - WALK, a0 + inset, a1 - inset,
-                   h + 0.02, mat("Grass"))
-        am = (a0 + a1) / 2
-        rm = (RING_R + SECTOR_R) / 2
-        lots[("c", k)] = (rm * math.cos(am), rm * math.sin(am),
-                          (a0, a1, RING_R + WALK, SECTOR_R - WALK), h, "sector")
-    return lots
-
-
-def build_islands(m):
-    """The four diagonal pockets the circus leaves against the grid.
-
-    Bounded by the ring road on the inside and by the grid streets on the
-    outside: a curved triangle. Without these the middle of the city is a
-    large dead apron of asphalt.
-    """
-    def shape(edge, radius, sx, sy):
-        """Corner square of half-size `edge`, minus the disc of `radius`.
-
-        The arc angles have to be derived from the same pair of numbers as the
-        straight edges, or the chain does not close and the polygon
-        self-intersects into garbage.
-        """
-        y0 = math.sqrt(max(radius * radius - edge * edge, 1.0))
-        a_lo, a_hi = math.atan2(y0, edge), math.atan2(edge, y0)
-        poly = [(edge, y0), (edge, edge), (y0, edge)]
-        poly += [(radius * math.cos(a_hi + (a_lo - a_hi) * t / 20),
-                  radius * math.sin(a_hi + (a_lo - a_hi) * t / 20))
-                 for t in range(21)]
-        return [(sx * x, sy * y) for x, y in poly]
-
-    lots = {}
-    L = PITCH + BLOCK / 2                  # edge of the cleared 3 x 3
-    RI = SECTOR_R + STREET                 # inner edge, across the ring road
-    lift = 0.75
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            m.prism(shape(L, RI, sx, sy), 0.0, lift, mat("Sidewalk"))
-            m.prism(shape(L - WALK, RI + WALK, sx, sy), lift, lift + 0.02,
-                    mat("Grass"))
-            d = (L + RI) / 2 / math.sqrt(2) * 1.06
-            lots[("i", sx, sy)] = (sx * d, sy * d, 34.0, lift, "island")
+            lift = round(r.uniform(0.30, 0.85), 2)
+            m.slab(cx, cy, bw, bd, 0.0, lift, mat("Sidewalk"))
+            iw, idp = bw - WALK * 2, bd - WALK * 2
+            m.quad(cx, cy, iw, idp, lift + 0.02, surface_mat(kind))
+            lots[(i, j)] = (cx, cy, [iw, idp], lift, kind)
     return lots
 
 
 # --- markings --------------------------------------------------------------
-def street_lines():
-    """Centres of every street, both axes."""
-    return [(-HALF - 0.5 + k) * PITCH for k in range(EXTENT + 1)]
-
-
 def build_markings(m):
     mk = mat("Marking")
-    half = CARRIAGE / 2
-    centres = street_lines()
-    blocks = [(i - HALF) * PITCH for i in range(EXTENT)]
+    rr = rng(5150)
 
     for axis in (0, 1):
-        for s in centres:
-            for b in blocks:
-                if math.hypot(s, b) < CLEAR_R + BLOCK * 0.4:
-                    continue
-                # solid edge lines beside the block, stopping short of the ends
-                for side in (-1, 1):
-                    off = s + side * (half - 0.45)
-                    cx, cy = (b, off) if axis == 0 else (off, b)
-                    w, h = (BLOCK - 6.0, 0.18) if axis == 0 else (0.18, BLOCK - 6.0)
-                    m.quad(cx, cy, w, h, MARK_Z, mk)
-                # centre dashes
-                for k in range(-6, 7):
-                    d = b + k * 7.0
-                    if abs(d - b) > BLOCK / 2 - 5:
-                        continue
+        streets, widths = (SX, WX) if axis == 0 else (SY, WY)
+        blocks = BX if axis == 0 else BY
+        for s, w in zip(streets, widths):
+            carriage = w - WALK * 2
+            avenue = w >= AVENUE
+            for (b, size) in blocks:
+                n = max(1, int((size - 8) / 7.0))
+                for k in range(n):                     # dashed centre line
+                    d = b - (size - 8) / 2 + k * 7.0
                     cx, cy = (d, s) if axis == 0 else (s, d)
-                    w, h = (3.4, 0.16) if axis == 0 else (0.16, 3.4)
-                    m.quad(cx, cy, w, h, MARK_Z, mk)
+                    ww, hh = (3.2, 0.14) if axis == 0 else (0.14, 3.2)
+                    m.quad(cx, cy, ww, hh, MARK_Z, mk)
+                if avenue:                             # plus two lane dividers
+                    for side in (-1, 1):
+                        o = side * carriage / 4
+                        cx, cy = ((b, s + o) if axis == 0 else (s + o, b))
+                        ww, hh = ((size - 8, 0.12) if axis == 0
+                                  else (0.12, size - 8))
+                        m.quad(cx, cy, ww, hh, MARK_Z, mk)
 
-    # crosswalks and stop bars at every surviving intersection
-    for sx in centres:
-        for sy in centres:
-            if math.hypot(sx, sy) < CLEAR_R + STREET:
-                continue
+    for sx, wx in zip(SX, WX):                          # zebras, not everywhere
+        for sy, wy in zip(SY, WY):
             for axis in (0, 1):
+                if rr.random() < 0.40:
+                    continue
+                w = wx if axis == 0 else wy
+                across = (wy if axis == 0 else wx) - WALK * 2
                 for direction in (-1, 1):
-                    base = (sx, sy)[axis] + direction * (half + 1.3)
-                    for k in range(9):
-                        o = (sx, sy)[1 - axis] - half + 0.9 + k * 1.55
+                    base = (sx if axis == 0 else sy) + \
+                        direction * ((w - WALK * 2) / 2 + 1.2)
+                    n = max(3, int(across / 1.6))
+                    for k in range(n):
+                        o = (sy if axis == 0 else sx) - across / 2 + 0.8 + \
+                            k * (across - 1.6) / max(n - 1, 1)
                         cx, cy = (base, o) if axis == 0 else (o, base)
-                        w, h = (3.0, 0.72) if axis == 0 else (0.72, 3.0)
-                        m.quad(cx, cy, w, h, MARK_Z, mk)
-                    st = (sx, sy)[axis] + direction * (half + 5.4)
-                    cx, cy = (st, sy) if axis == 0 else (sx, st)
-                    w, h = (0.4, CARRIAGE) if axis == 0 else (CARRIAGE, 0.4)
-                    m.quad(cx, cy, w, h, MARK_Z, mk)
-
-    # ring road: two lane lines that need no joints at all
-    rr = (PLAZA_R + RING_R) / 2
-    for r_off in (-3.6, 3.6):
-        m.arc_band(rr + r_off - 0.09, rr + r_off + 0.09, 0, 2 * math.pi,
-                   MARK_Z, mk, segs=96)
+                        ww, hh = (2.2, 0.5) if axis == 0 else (0.5, 2.2)
+                        m.quad(cx, cy, ww, hh, MARK_Z, mk)
 
 
 def build_parking(m, lots):
-    """Bays on the parking lots: cheap, and they fill dead ground."""
     mk = mat("Marking")
-    for (cx, cy, inner, lift, kind) in lots.values():
+    for (cx, cy, size, lift, kind) in lots.values():
         if kind != "parking":
             continue
-        rows, z = 4, lift + 0.04
+        w, d = size
+        rows, z = 3, lift + 0.04
         for row in range(rows):
-            y = cy - inner / 2 + 9 + row * (inner - 18) / (rows - 1)
-            for k in range(16):
-                x = cx - inner / 2 + 3 + k * (inner - 6) / 15
-                m.quad(x, y, 0.14, 5.0, z, mk)
-            m.quad(cx, y - 2.6, inner - 6, 0.14, z, mk)
+            y = cy - d / 2 + 7 + row * (d - 14) / (rows - 1)
+            n = max(4, int((w - 5) / 2.6))
+            for k in range(n):
+                x = cx - w / 2 + 2.5 + k * (w - 5) / (n - 1)
+                m.quad(x, y, 0.12, 4.6, z, mk)
+            m.quad(cx, y - 2.4, w - 5, 0.12, z, mk)
 
 
 def main():
@@ -257,11 +185,25 @@ def main():
     if "GROUND_placeholder" in bpy.data.objects:
         bpy.data.objects.remove(bpy.data.objects["GROUND_placeholder"],
                                 do_unlink=True)
-    pbrmat("Paving", "#c2beb4", 0.80)
-    pbrmat("Dirt", "#a08a6c", 0.90)
-    # the first pass read as neon against all that concrete
-    retint("Grass", "#4f8f33")
-    retint("Sidewalk", "#bdb9ae")
+    pbrmat("Paving", "#6e6a5e", 0.85)
+    pbrmat("Dirt", "#8a7355", 0.92)
+    pbrmat("Asphalt Lot", "#26231e", 0.80)
+    # the reference's road sits at 0.18 luminance and is warm; the first pass
+    # was 0.38 and cool grey, which left no dark values in the frame at all
+    retint("Asphalt", "#211e19")
+    retint("Sidewalk", "#98938a")
+    retint("Marking", "#d8d8d2")
+    retint("Grass", "#4d9c26")
+    retint("Foliage Dark", "#2a6b1c")
+    retint("Foliage Mid", "#4a9422")
+    retint("Foliage Light", "#7cc32e")
+    retint("Trunk", "#7a3a22")
+    retint("Concrete Warm", "#e9dcc0")
+    retint("Concrete Warm2", "#d8c4a0")
+    retint("Concrete Cool", "#b6bcbd")
+    retint("Concrete Cool2", "#8d9599")
+    retint("Glass Light", "#5f97a6")
+    retint("Glass Dark", "#15181b")
 
     site = collection("SITE")
     for ob in list(site.objects):
@@ -270,9 +212,7 @@ def main():
     r = rng(4711)
     m = Mesh()
     build_sheet(m)
-    lots = build_grid_blocks(m, r)
-    lots.update(build_circus(m, r))
-    lots.update(build_islands(m))
+    lots = build_blocks(m, r)
     m.build("site", site)
 
     mm = Mesh()
@@ -280,27 +220,22 @@ def main():
     build_parking(mm, lots)
     mm.build("markings", site)
 
-    # hand the lot table to the later steps instead of re-deriving it
-    table = []
-    for key, (cx, cy, size, lift, kind) in lots.items():
-        table.append({"key": [str(k) for k in (key if isinstance(key, tuple)
-                                               else (key,))],
-                      "x": cx, "y": cy,
-                      "size": size if not isinstance(size, tuple) else list(size),
-                      "lift": lift, "kind": kind})
-    (R / "city_lots.json").write_text(json.dumps(table))
-    print(f"\n  lots: {len(lots)}")
+    (R / "city_lots.json").write_text(json.dumps({
+        "lots": [{"key": [str(i), str(j)], "x": cx, "y": cy, "size": size,
+                  "lift": lift, "kind": kind}
+                 for (i, j), (cx, cy, size, lift, kind) in lots.items()],
+        "streets_x": SX, "streets_y": SY, "widths_x": WX, "widths_y": WY,
+        "blocks_x": BX, "blocks_y": BY, "walk": WALK,
+    }))
+    print(f"\n  lots: {len(lots)}   city {CITY:.0f} m")
     u, t = counts()
     print(f"  triangles: {u} unique / {t} total")
 
     cam = bpy.data.objects["HeroCam"]
-    exposure = bpy.context.scene.view_settings.exposure
-    cam.data.ortho_scale = 900.0
+    cam.data.ortho_scale = CITY * 1.15
     blib.render(str(R / "city_03_plan.png"), "EEVEE", samples=32,
-                resolution=(1500, 850), exposure=exposure)
-    cam.data.ortho_scale = 620.0
-    blib.render(str(R / "city_03_hero.png"), "EEVEE", samples=64,
-                resolution=(1500, 850), exposure=exposure)
+                resolution=(1500, 850),
+                exposure=bpy.context.scene.view_settings.exposure)
     blib.save(str(R / "city.blend"))
 
 

@@ -17,10 +17,10 @@ from mathutils import Matrix, Vector
 from _common import Mesh, collection, instance, mat, pbrmat, rng, counts
 
 R = ROOT / "renders"
-BLOCK, PITCH, HALF = 90.0, 112.0, 3.0
+BLOCK, PITCH, HALF = 64.0, 76.0, 4.0
 
-CELLS = {"stadium": (5, 1), "blob": (1, 5), "garage": (5, 3)}
-SITE = [(3, 1), (2, 1)]
+CELLS = {"stadium": (6, 1), "blob": (1, 6), "garage": (7, 4)}
+SITE = [(4, 5), (2, 0)]
 
 
 def cell(i, j):
@@ -42,30 +42,30 @@ def ring_poly(r0, r1, segs=48):
 # --- stadium ---------------------------------------------------------------
 def stadium(m, cx, cy, lift):
     x = xf(cx, cy, math.radians(20), 1.22, 1.0)
-    pitch_r = 20.0
+    pitch_r = 13.0
     m.arc_band(0.0, pitch_r, 0, 2 * math.pi, lift + 0.05, mat("Grass"),
                segs=48, xform=x)
     m.arc_band(pitch_r * 0.55, pitch_r * 0.58, 0, 2 * math.pi, lift + 0.07,
                mat("Marking"), segs=48, xform=x)
-    steps = 7
+    steps = 6
     for k in range(steps):
-        r0 = pitch_r + k * 2.6
-        r1 = r0 + 2.6
-        h = lift + 1.6 + k * 2.4
+        r0 = pitch_r + k * 2.1
+        r1 = r0 + 2.1
+        h = lift + 1.4 + k * 2.0
         m.prism(ring_poly(r0, r1), lift, h,
                 mat("Concrete Cool" if k % 2 else "Concrete Cool2"), x)
-    outer = pitch_r + steps * 2.6
-    m.prism(ring_poly(outer, outer + 1.6), lift, lift + 1.6 + steps * 2.4 + 1.2,
+    outer = pitch_r + steps * 2.1
+    m.prism(ring_poly(outer, outer + 1.6), lift, lift + 1.4 + steps * 2.0 + 1.0,
             mat("Concrete Warm"), x)
     # the roof ring, cantilevered inwards over the seating
     m.prism(ring_poly(outer - 7.0, outer + 3.0),
-            lift + 1.6 + steps * 2.4 + 3.4, lift + 1.6 + steps * 2.4 + 4.2,
+            lift + 1.4 + steps * 2.0 + 2.8, lift + 1.4 + steps * 2.0 + 3.5,
             mat("Roof Deck"), x)
     for k in range(24):
         a = 2 * math.pi * k / 24
         m.box(((outer + 1.0) * math.cos(a), (outer + 1.0) * math.sin(a),
-               lift + (1.6 + steps * 2.4 + 3.4) / 2),
-              (1.0, 1.0, 1.6 + steps * 2.4 + 3.4), mat("Metal Dark"), x)
+               lift + (1.4 + steps * 2.0 + 2.8) / 2),
+              (1.0, 1.0, 1.4 + steps * 2.0 + 2.8), mat("Metal Dark"), x)
 
 
 # --- curved organic building ----------------------------------------------
@@ -86,26 +86,26 @@ def blob(m, cx, cy, lift):
     floors, fh = 5, 3.9
     for k in range(floors):
         t = k / (floors - 1)
-        ox = math.sin(t * 2.4) * 13.0
-        oy = math.cos(t * 1.7) * 7.0
-        w = 62.0 - abs(t - 0.4) * 26.0
-        d = 26.0 + math.sin(t * 3.1) * 6.0
+        ox = math.sin(t * 2.4) * 9.0
+        oy = math.cos(t * 1.7) * 5.0
+        w = 46.0 - abs(t - 0.4) * 18.0
+        d = 20.0 + math.sin(t * 3.1) * 5.0
         z0 = lift + k * fh
         x = xf(cx + ox, cy + oy, 0.22 * math.sin(t * 2.0))
-        m.prism(rounded_rect(w, d, 9.0), z0, z0 + fh * 0.72,
+        m.prism(rounded_rect(w, d, 7.0), z0, z0 + fh * 0.72,
                 mat("Concrete Warm"), x)
-        m.prism(rounded_rect(w - 2.2, d - 2.2, 8.4), z0 + fh * 0.72,
+        m.prism(rounded_rect(w - 2.0, d - 2.0, 6.6), z0 + fh * 0.72,
                 z0 + fh, mat("Glass Light"), x)
     top = lift + floors * fh
     x = xf(cx, cy)
-    m.prism(rounded_rect(40.0, 22.0, 8.0), top, top + 0.5, mat("Roof Deck"), x)
-    m.prism(rounded_rect(26.0, 14.0, 5.0), top + 0.5, top + 0.6, mat("Water"),
+    m.prism(rounded_rect(30.0, 17.0, 6.0), top, top + 0.5, mat("Roof Deck"), x)
+    m.prism(rounded_rect(19.0, 10.0, 4.0), top + 0.5, top + 0.6, mat("Water"),
             xf(cx + 6, cy - 2))
 
 
 # --- open-deck parking structure -------------------------------------------
 def garage(m, kit, coll, cx, cy, lift, r):
-    w, d, levels, fh = 74.0, 56.0, 5, 3.1
+    w, d, levels, fh = 55.0, 44.0, 5, 3.1
     x = xf(cx, cy)
     for k in range(levels):
         z = lift + k * fh
@@ -159,8 +159,10 @@ def lattice(m, length, section, material, xform, bays=None):
 
 def crane(m, cx, cy, height, jib, rot):
     y = mat("Accent Yellow")
+    # -90 deg, not +90: rotating +X about Y by +90 sends it to -Z, which buries
+    # the mast underground and leaves the jib floating in mid-air on its own.
     mast = Matrix.Translation(Vector((cx, cy, 0))) @ \
-        Matrix.Rotation(rot, 4, "Z") @ Matrix.Rotation(math.pi / 2, 4, "Y")
+        Matrix.Rotation(rot, 4, "Z") @ Matrix.Rotation(-math.pi / 2, 4, "Y")
     lattice(m, height, 2.6, y, mast)
     base = xf(cx, cy, rot)
     m.box((0, 0, 0.6), (5.0, 5.0, 1.2), mat("Concrete Cool"), base)
@@ -178,8 +180,8 @@ def crane(m, cx, cy, height, jib, rot):
 
 def construction(m, kit, coll, cx, cy, lift, r, frame=True):
     if frame:
-        cols, rows, levels = 6, 4, 4
-        w, d, fh = 60.0, 40.0, 3.9
+        cols, rows, levels = 4, 3, 3
+        w, d, fh = 30.0, 22.0, 3.9
         x = xf(cx, cy)
         for ix in range(cols):
             for iy in range(rows):
@@ -199,12 +201,12 @@ def construction(m, kit, coll, cx, cy, lift, r, frame=True):
                 m.quad(0, 0, w * 0.55, d * 0.7, z + 0.01,
                        mat("Concrete Cool"), x)
     for _ in range(5):                            # spoil heaps and materials
-        px = cx + r.uniform(-38, 38)
-        py = cy + r.uniform(-30, 30)
+        px = cx + r.uniform(-26, 26)
+        py = cy + r.uniform(-22, 22)
         m.cone((px, py, lift), r.uniform(3.0, 6.0), r.uniform(2.0, 4.0),
                mat("Dirt"), segs=7)
     for _ in range(4):
-        px, py = cx + r.uniform(-35, 35), cy + r.uniform(-30, 30)
+        px, py = cx + r.uniform(-24, 24), cy + r.uniform(-20, 20)
         for k in range(3):
             m.box((px, py, lift + 0.3 + k * 0.55), (7.0, 1.4, 0.5),
                   mat("Metal Painted"))
@@ -214,7 +216,7 @@ def main():
     bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
     kit = {ob.name: ob for ob in bpy.data.collections["KIT"].objects}
     lots = {tuple(l["key"]): l for l in
-            json.loads((R / "city_lots.json").read_text())}
+            json.loads((R / "city_lots.json").read_text())["lots"]}
 
     for name in ("LANDMARKS", "LANDMARK_PROPS"):
         if name in bpy.data.collections:
@@ -228,32 +230,36 @@ def main():
     r = rng(777)
     m = Mesh()
 
-    def lift_of(i, j):
-        key = (str(i), str(j))
-        return lots[key]["lift"] if key in lots else 0.75
+    def lot_of(i, j):
+        """None when the arterial ate that cell: a landmark there would float."""
+        return lots.get((str(i), str(j)))
 
-    i, j = CELLS["stadium"]
-    cx, cy = cell(i, j)
-    stadium(m, cx, cy, lift_of(i, j))
+    for name, fn in (
+            ("stadium", lambda l: stadium(m, l["x"], l["y"], l["lift"])),
+            ("blob", lambda l: blob(m, l["x"], l["y"], l["lift"])),
+            ("garage", lambda l: garage(m, kit, lp, l["x"], l["y"],
+                                        l["lift"], r))):
+        lot = lot_of(*CELLS[name])
+        if lot is None:
+            print(f"  {name} skipped: the arterial took its cell")
+            continue
+        fn(lot)
 
-    i, j = CELLS["blob"]
-    cx, cy = cell(i, j)
-    blob(m, cx, cy, lift_of(i, j))
-
-    i, j = CELLS["garage"]
-    cx, cy = cell(i, j)
-    garage(m, kit, lp, cx, cy, lift_of(i, j), r)
-
-    for n, (i, j) in enumerate(SITE):
-        cx, cy = cell(i, j)
-        construction(m, kit, lp, cx, cy, lift_of(i, j), r, frame=(n == 0))
-    cx, cy = cell(*SITE[0])
-    crane(m, cx - 34, cy - 26, 46.0, 40.0, math.radians(35))
-    cx, cy = cell(*SITE[1])
-    crane(m, cx + 30, cy + 24, 38.0, 34.0, math.radians(200))
-    for _ in range(3):
+    for k, (i, j) in enumerate(SITE):
+        lot = lot_of(i, j)
+        if lot is None:
+            continue
+        construction(m, kit, lp, lot["x"], lot["y"], lot["lift"], r,
+                     frame=(k == 0))
+    for k, (i, j) in enumerate(SITE):
+        lot = lot_of(i, j)
+        if lot is None:
+            continue
+        cx, cy = lot["x"], lot["y"]
+        crane(m, cx - 24 + k * 45, cy - 19 + k * 36, 44.0 - k * 8,
+              34.0 - k * 4, math.radians(35 + k * 165))
         instance(kit["Truck"], lp,
-                 (cx + r.uniform(-35, 35), cy + r.uniform(-30, 30), 0.0),
+                 (cx + r.uniform(-24, 24), cy + r.uniform(-20, 20), 0.0),
                  r.uniform(0, 6.28))
 
     m.build("landmarks", lm)

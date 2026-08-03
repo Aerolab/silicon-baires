@@ -20,28 +20,28 @@ from _common import Mesh, collection, instance, mat, rng, counts
 
 R = ROOT / "renders"
 
-BLOCK, STREET, PITCH, WALK = 90.0, 22.0, 112.0, 4.0
-EXTENT, HALF = 7, 3.0
+BLOCK, STREET, PITCH, WALK = 64.0, 12.0, 76.0, 2.5
+EXTENT, HALF = 9, 4.0
 FLOOR = 3.8
 GROUND = 4.6                  # taller ground floor, like the reference
-PLAZA_R, RING_R = 48.0, 70.0
-SECTOR_R, CLEAR_R = 160.0, 172.0
 
 FAMILIES = [
     ("Concrete Warm", "Glass Light"),
-    ("Concrete Warm", "Glass Light"),
+    ("Concrete Warm", "Glass Dark"),
     ("Concrete Warm2", "Glass Light"),
+    ("Concrete Warm2", "Glass Dark"),
+    ("Concrete Cool2", "Glass Dark"),
     ("Concrete Cool", "Glass Dark"),
     ("Concrete Cool2", "Glass Light"),
-    ("Concrete Warm", "Glass Dark"),
-    ("Brick Warm", "Glass Dark"),
+    ("Brick Warm", "Glass Dark"),          # one in ten, not one in three
     ("Facade Teal", "Glass Light"),
-    ("Concrete Dark", "Glass Light"),
+    ("Concrete Dark", "Glass Dark"),
 ]
 
 # cells that get something other than a plain low-rise campus
-TALL = {(1, 1): 22, (5, 5): 14, (2, 6): 11, (6, 2): 9, (1, 4): 10}
-LANDMARKS = {(5, 1), (1, 5), (5, 3)}     # step 06 owns these plots
+TALL = {(1, 2): 18, (7, 6): 12, (2, 7): 10, (7, 2): 8, (1, 5): 9}
+LANDMARKS = {(6, 1), (1, 6), (7, 4)}     # step 06 owns these plots
+GROUND_INSET = 0.6
 
 
 def xf(cx, cy, rot):
@@ -87,12 +87,18 @@ def mullions(m, ox, oy, w, d, z0, h, material, xform, pitch=3.0):
                    xform)
 
 
-def wing(m, ox, oy, w, d, floors, style, fam, xform, r):
+def wing(m, ox, oy, w, d, floors, style, fam, xform, r, deep=False):
     conc, glass = mat(fam[0]), mat(fam[1])
-    z = 0.0
-    # ground floor: mostly glass, set back, with the mass sitting on top
-    m.slab(ox, oy, w - 1.0, d - 1.0, 0.0, GROUND, glass, xform)
-    mullions(m, ox, oy, w - 1.0, d - 1.0, 0.3, GROUND - 0.6, conc, xform, 4.0)
+    # ground floor: recessed glass with an entrance canopy poking out. The
+    # comparison against the reference showed my facades had 0.2-0.5 m of
+    # relief where it has 0.5-3 m, and no ground-floor threshold at all.
+    m.slab(ox, oy, w - 1.6, d - 1.6, 0.0, GROUND, glass, xform)
+    mullions(m, ox, oy, w - 1.6, d - 1.6, 0.3, GROUND - 0.6, conc, xform, 4.0)
+    for sy in (-1, 1):
+        if r.random() < 0.55:
+            m.slab(ox + r.uniform(-w * 0.2, w * 0.2), oy + sy * (d / 2 + 1.1),
+                   min(w * 0.42, 11.0), 3.4, GROUND - 1.5, GROUND - 1.1,
+                   mat("Concrete Cool"), xform)
     z = GROUND
 
     for f in range(floors):
@@ -124,15 +130,18 @@ def wing(m, ox, oy, w, d, floors, style, fam, xform, r):
             mullions(m, ox, oy, w, d, z, FLOOR, conc, xform, 2.6)
         else:                                   # banded, the default
             m.slab(ox, oy, w, d, z, z + 1.15, conc, xform)
-            m.slab(ox, oy, w - 0.55, d - 0.55, z + 1.15, z + FLOOR, glass,
-                   xform)
-            mullions(m, ox, oy, w - 0.55, d - 0.55, z + 1.15, FLOOR - 1.15,
+            m.slab(ox, oy, w - 1.5, d - 1.5, z + 1.15, z + FLOOR, glass, xform)
+            mullions(m, ox, oy, w - 1.5, d - 1.5, z + 1.15, FLOOR - 1.15,
                      conc, xform, 3.0)
+            if deep and f % 2 == 0:             # projecting shade frame
+                facade_ring(m, ox, oy, w + 0.9, d + 0.9, z + FLOOR - 0.55,
+                            0.5, 0.45, mat("Concrete Cool"), xform)
         z += FLOOR
 
     # parapet ring and roof plate. The deck is always a light concrete: in the
     # reference roofs read pale whatever colour the facade is.
-    m.quad(ox, oy, w, d, z + 0.02, mat("Roof Deck"), xform)
+    m.quad(ox, oy, w, d, z + 0.02,
+           mat("Roof Dark" if r.random() < 0.45 else "Roof Deck"), xform)
     facade_ring(m, ox, oy, w, d, z, 0.85, 0.55, mat("Concrete Cool"), xform)
     return z + 0.85
 
@@ -140,12 +149,22 @@ def wing(m, ox, oy, w, d, floors, style, fam, xform, r):
 def roof_props(kit, coll, cx, cy, w, d, top, rot, r, big):
     """Never leave a roof empty: it is most of what this camera sees."""
     placed = []
+    # the coral pipe frame was on nearly every roof and read as a repeated
+    # diagram; it is now one option among many
     pool = ["RoofHVAC", "RoofHVAC", "RoofHVACSmall", "RoofHVACSmall",
-            "RoofPipes", "RoofPipes", "RoofPipesSmall", "RoofPipesSmall",
-            "RoofSolar", "RoofBulkhead", "RoofBulkhead", "RoofTank",
-            "RoofDish"]
+            "RoofBulkhead", "RoofBulkhead", "RoofTank", "RoofTank",
+            "RoofDish", "RoofSolar", "RoofPipesSmall", "RoofPipes"]
     area = w * d
     n = max(3, min(14, int(area / 170)))
+    # Reversed after the second review: the reference's roofs are mostly quiet
+    # with one memorable thing on them, not a mechanical carpet on every block.
+    n = max(3, min(12, int(area / 130)))
+    mood = r.random()
+    if mood < 0.55:                # most roofs stay quiet
+        n = max(1, n // 4)
+    elif mood > 0.88:              # a few get one large single feature
+        n = 1
+        pool = ["RoofSolarBig", "RoofBulkhead", "RoofTank"]
     for _ in range(n):
         name = r.choice(pool)
         if min(w, d) < 24 and name in ("RoofPipes", "RoofSolarBig"):
@@ -183,11 +202,12 @@ def signage(m, cx, cy, w, d, top, rot, r):
 
 
 def place_on_lot(m, kit, coll, cx, cy, size, lift, kind, r):
+    sw, sd = size
     """One to four buildings on a block, with setbacks."""
     if kind in ("park", "construction", "parking"):
         return
     tops = []
-    plan = r.choice([1, 2, 2, 4])
+    plan = r.choice([1, 2, 2, 2, 4])
     cells = {1: [(0, 0, 1.0, 1.0)],
              2: [(-0.25, 0, 0.5, 1.0), (0.25, 0, 0.5, 1.0)],
              4: [(-0.25, -0.25, 0.5, 0.5), (0.25, -0.25, 0.5, 0.5),
@@ -195,21 +215,24 @@ def place_on_lot(m, kit, coll, cx, cy, size, lift, kind, r):
     if plan == 2 and r.random() < 0.5:
         cells = [(0, -0.25, 1.0, 0.5), (0, 0.25, 1.0, 0.5)]
     for (fx, fy, fw, fh) in cells:
-        if r.random() < 0.12:
-            continue                       # a gap: courtyard or car park
-        w = size * fw - r.uniform(6.0, 12.0)
-        d = size * fh - r.uniform(6.0, 12.0)
-        if min(w, d) < 12:
+        if r.random() < 0.10:
+            continue                       # a gap: courtyard, planting or car park
+        # setbacks were 6-12 m, which left every building floating in a lawn.
+        # The reference puts the wall almost on the pavement.
+        w = sw * fw - r.uniform(1.5, 4.0)
+        d = sd * fh - r.uniform(1.5, 4.0)
+        if min(w, d) < 11:
             continue
-        bx, by = cx + size * fx, cy + size * fy
-        floors = r.choice([1, 1, 2, 2, 2, 3, 3, 4, 5])
+        bx, by = cx + sw * fx, cy + sd * fy
+        floors = r.choice([2, 2, 3, 3, 4, 4, 5, 6, 7])
         style = r.choice(["banded", "banded", "banded", "louvre", "punched"])
         fam = FAMILIES[r.randrange(len(FAMILIES))]
         kindf = r.choice(["rect", "rect", "L", "U", "T", "bar"])
         x = xf(bx, by, 0.0)
         top = 0.0
         for (ox, oy, ww, dd) in footprint(kindf, w, d):
-            t = wing(m, ox, oy, ww, dd, floors, style, fam, x, r)
+            t = wing(m, ox, oy, ww, dd, floors, style, fam, x, r,
+                     deep=(floors >= 4))
             top = max(top, t)
         roof = top - 0.83
         for (ox, oy, ww, dd) in footprint(kindf, w, d):
@@ -221,34 +244,16 @@ def place_on_lot(m, kit, coll, cx, cy, size, lift, kind, r):
     return tops
 
 
-def place_on_sector(m, kit, coll, geom, lift, r):
-    """Sector blocks: two buildings each, so the circus is not ringed by a wall."""
-    a0, a1, r0, r1 = geom
-    rm = (r0 + r1) / 2
-    for k in (0, 1):
-        f0 = a0 + (a1 - a0) * (0.04 + k * 0.5)
-        f1 = a0 + (a1 - a0) * (0.46 + k * 0.5)
-        am = (f0 + f1) / 2
-        depth = (r1 - r0) * r.uniform(0.55, 0.8)
-        rmid = r0 + depth / 2 + r.uniform(0.0, (r1 - r0) - depth)
-        cx, cy = rmid * math.cos(am), rmid * math.sin(am)
-        w = depth
-        d = (f1 - f0) * rmid
-        if min(w, d) < 13:
-            continue
-        floors = r.choice([1, 2, 2, 3, 3, 4, 6])
-        fam = FAMILIES[r.randrange(len(FAMILIES))]
-        style = r.choice(["banded", "banded", "curtain", "louvre", "punched"])
-        x = xf(cx, cy, am)
-        top = wing(m, 0, 0, w, d, floors, style, fam, x, r)
-        roof_props(kit, coll, cx, cy, w, d, top - 0.83, am, r, True)
-        if r.random() < 0.45:
-            signage(m, cx, cy, w, d, top, am, r)
-
-
-def build_towers(m, kit, coll, r):
+def build_towers(m, kit, coll, lots, r):
+    """Only on lots that survived. A tower on a dropped cell stands alone in
+    the middle of the road, which is exactly what happened the first time."""
     for (i, j), floors in TALL.items():
-        cx, cy = (i - HALF) * PITCH, (j - HALF) * PITCH
+        key = [str(i), str(j)]
+        lot = next((l for l in lots if l["key"] == key), None)
+        if lot is None:
+            print(f"  tower at {i},{j} skipped: no lot there")
+            continue
+        cx, cy = lot["x"], lot["y"]
         w = r.uniform(30, 42)
         d = r.uniform(26, 38)
         fam = FAMILIES[2] if floors > 12 else FAMILIES[0]
@@ -262,10 +267,11 @@ def main():
     bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
     kit = {ob.name: ob for ob in bpy.data.collections["KIT"].objects}
     from _common import pbrmat
-    pbrmat("Brick Warm", "#a86a4c", 0.85)
-    pbrmat("Facade Teal", "#2f7f74", 0.75)
+    pbrmat("Brick Warm", "#b0603c", 0.85)
+    pbrmat("Facade Teal", "#1f8478", 0.75)
     pbrmat("Concrete Dark", "#6e7276", 0.85)
-    pbrmat("Roof Deck", "#d5d2c9", 0.88)
+    pbrmat("Roof Deck", "#a8a292", 0.88)
+    pbrmat("Roof Dark", "#2b2b28", 0.90)
 
     for name in ("BUILDINGS", "ROOFPROPS"):
         if name in bpy.data.collections:
@@ -279,25 +285,15 @@ def main():
     r = rng(90210)
     m = Mesh()
 
-    lots = json.loads((R / "city_lots.json").read_text())
+    lots = json.loads((R / "city_lots.json").read_text())["lots"]
     for lot in lots:
-        if lot["kind"] in ("sector", "island"):
-            continue
         i, j = int(lot["key"][0]), int(lot["key"][1])
         if (i, j) in TALL or (i, j) in LANDMARKS:
             continue
         place_on_lot(m, kit, pcoll, lot["x"], lot["y"], lot["size"],
                      lot["lift"], lot["kind"], r)
 
-    n = 8
-    gap = STREET / ((RING_R + SECTOR_R) / 2)
-    for k in range(n):
-        a0 = 2 * math.pi * k / n + gap / 2
-        a1 = 2 * math.pi * (k + 1) / n - gap / 2
-        place_on_sector(m, kit, pcoll, (a0, a1, RING_R + WALK, SECTOR_R - WALK),
-                        0.7, r)
-
-    build_towers(m, kit, pcoll, r)
+    build_towers(m, kit, pcoll, lots, r)
     m.build("buildings", bcoll)
 
     u, t = counts()
@@ -308,10 +304,10 @@ def main():
     exposure = bpy.context.scene.view_settings.exposure
     blib.render(str(R / "city_04_hero.png"), "EEVEE", samples=64,
                 resolution=(1600, 900), exposure=exposure)
-    cam.data.ortho_scale = 190.0
+    cam.data.ortho_scale = 200.0
     blib.render(str(R / "city_04_closeup.png"), "EEVEE", samples=64,
                 resolution=(1600, 900), exposure=exposure)
-    cam.data.ortho_scale = 620.0
+    cam.data.ortho_scale = 700.0
     blib.save(str(R / "city.blend"))
 
 
