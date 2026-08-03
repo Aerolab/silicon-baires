@@ -2,8 +2,9 @@
 
 Derived by zooming into the reference frames (`refs/frames`, `refs/crops`), not from
 memory. The original sequence was made by yU+co for HBO. We are reproducing the
-**look and the city**, not the branding: no company logos. The title itself is
-built, as buildings — section 10.
+**look and the city**, not the branding. The company signs are built and the
+mountings are copied exactly; the companies on them are invented — section 10b.
+The title itself is built, as buildings — section 10.
 
 Everything below is a rule to build against. When a render disagrees with this
 document, the render is wrong until proven otherwise.
@@ -69,7 +70,7 @@ Two of these were badly wrong on the first pass and are worth remembering:
 
 Saturation was the long-standing gap, at 0.20 against 0.22–0.34. The jacarandás,
 the taxis and the company signs closed most of it without anyone grading
-anything: it is 0.283 now. Chroma in this frame comes from what is in it, not
+anything: it is 0.284 now. Chroma in this frame comes from what is in it, not
 from the view transform.
 
 ## 2. Camera
