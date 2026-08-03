@@ -78,7 +78,13 @@ OB_H, OB_SHAFT, OB_BASE, OB_TOP, OB_TIP = 67.5, 63.0, 6.8, 3.5, 0.40
 FLOR_H, FLOR_D, FLOR_POOL, PETALS = 23.0, 32.0, 44.0, 6
 FLOR_STEM = 9.5               # where the petals start
 FLOR_STAM = 26.5              # the stamens finish well above the petals
-FLOR_PETAL_W = 7.2            # widest point of a petal
+# Six petals at a 16 m radius have about 16.7 m of arc each. 7.2 read as six
+# separate blades with sky between them, which is a star; 13.5 closed the gaps
+# entirely and made one continuous bowl, which is a cup. The flower needs the
+# V-shaped notches between petals to be visible, so about two thirds of the
+# available arc.
+FLOR_PETAL_W = 10.6           # width at the tip, where a petal is widest
+FLOR_STAM_LEAN = 2.8          # how far the stamens lean out of the bowl
 
 
 def taper(m, cx, cy, z0, z1, w0, w1, material, xform=None):
@@ -156,35 +162,47 @@ def plaza(m, cx, cy, w, d, lift):
 
 
 def blade(m, material, r0, z0, r1, z1, width, xform,
-          segs=10, across=4, dish=0.55, thick=0.30):
-    """One petal: a dished leaf on a curved spine, not a flat triangle.
+          segs=12, across=6, curl=math.radians(52), thick=0.30, root=0.19):
+    """One petal, and it is a SCOOP: a deep trough that widens to a broad
+    rounded tip, curling in towards the axis.
 
-    Three things make it a petal rather than a blade, and all three are cheap:
+    Measured off photographs after two versions that were wrong in different
+    ways. What decides whether this is a flower or a six-pointed star:
 
-    THE SPINE CURVES. The centre line leaves the stem steeply and flattens as
-    it opens, so the silhouette is a curve. Two straight tapers - which is what
-    this was - give a six-pointed star, and a star is what a flat blade always
-    reads as from above whatever it is called.
+    IT CURLS INWARD, hard, and the section is a CIRCULAR ARC - `curl` is the
+    half-angle of that arc. The six petals together make a bowl. Earlier
+    versions had a shallow parabolic dish, which is a flat blade with a crease
+    in it; then a deep parabolic one, which is worse - a parabola keeps
+    steepening, so the edges shot up into two spikes and the petal came out as
+    a folded paper dart. An arc has constant curvature and reads as sheet metal
+    bent on a roller, which is what it is.
 
-    THE WIDTH VARIES. Nothing at the root, widest at about 40 % of the way out,
-    a point at the tip. A constant-taper blade is a knife.
+    IT WIDENS TOWARDS THE TIP. Narrow at the root, widest at the very top,
+    where neighbouring petals nearly touch. It was widest at 40 % out and came
+    to a point, which is a leaf. This is a scoop.
 
-    IT IS DISHED. The edges lift off the spine, so the petal is a shallow
-    trough and catches the sun differently along its length. This is the one
-    that does the work at 40 px: a flat facet is one value, a dished one is a
-    gradient, and it is the only thing on this object that is not a hard edge.
+    THE TIP IS BROAD AND ROUNDED, not a point. The real petal ends in a wide
+    arc. A pointed tip is what makes a star out of six of anything.
     """
     def spine(t):
-        # 1.05 and 1.32, not 1.35 and 1.6. The first pair climbed fast and
-        # opened late, so most of the petal's length sat near the axis and the
-        # flower read as a closed cup with the tips pinched in. These open the
-        # petal early and let it rise into the tip, which is the profile of the
-        # real one: out first, up second.
-        return (r0 + (r1 - r0) * t ** 1.05,
-                z0 + (z1 - z0) * (1.0 - (1.0 - t) ** 1.32))
+        # Out first, up second, and it is the TANGENT AT THE TIP that decides
+        # whether this is a bowl or an umbrella. The previous pair reached t=1
+        # with dz/dt = 0 - dead horizontal - so every petal finished by
+        # flattening outward and the flower read as a blown-out umbrella. Here
+        # the radius eases off (t^0.8) while the height accelerates (t^1.5), so
+        # the tip leaves at about 60 degrees above horizontal: a wide shallow
+        # floor that turns up into near-vertical walls, which is a bowl.
+        return (r0 + (r1 - r0) * t ** 0.8,
+                z0 + (z1 - z0) * t ** 1.5)
 
     def half(t):
-        return max(0.06, width * 0.5 * math.sin(math.pi * t ** 0.75) ** 0.85)
+        # root -> full width, then rounded off over the last 12 % so the tip
+        # is an arc rather than a point
+        w = width * 0.5 * (root + (1.0 - root) * t ** 0.72)
+        if t > 0.88:
+            u = (t - 0.88) / 0.12
+            w *= math.sqrt(max(0.0, 1.0 - u * u))
+        return max(0.06, w)
 
     verts, faces = [], []
     stride = 2 * (across + 1)
@@ -197,11 +215,12 @@ def blade(m, material, r0, z0, r1, z1, width, xform,
         n = math.hypot(dr, dz) or 1.0
         nr, nz = -dz / n, dr / n            # normal, in the radial plane
         hw = half(t)
+        arc = hw / math.sin(curl)           # radius of the section's arc
         for layer in (0, 1):
             for k in range(across + 1):
-                u = -1.0 + 2.0 * k / across
-                d = dish * hw * u * u - (thick if layer else 0.0)
-                verts.append((r + nr * d, hw * u, z + nz * d))
+                phi = curl * (-1.0 + 2.0 * k / across)
+                d = arc * (1.0 - math.cos(phi)) - (thick if layer else 0.0)
+                verts.append((r + nr * d, arc * math.sin(phi), z + nz * d))
     for i in range(segs):
         for k in range(across):
             a = i * stride + k
@@ -237,18 +256,27 @@ def floralis(m, cx, cy, lift):
         x = (Matrix.Translation(Vector((cx, cy, 0.0))) @
              Matrix.Rotation(2 * math.pi * k / PETALS + 0.22, 4, "Z"))
         blade(m, steel, 1.4, base, FLOR_D / 2, z + FLOR_H, FLOR_PETAL_W, x)
-    # Four stamens, between the petals and finishing well above them. They have
-    # to clear the petals by more than a token: at 2 m of overhang they were a
-    # smudge in the middle of the bowl from the hero angle, and they are the
-    # detail that separates this from a generic metal flower.
+    # Four stamens: thin rods that lean out of the middle of the bowl, each
+    # with a small ball on the end. Off the photograph they are slender - much
+    # thinner than a first guess makes them - and the balls are small. Built
+    # as a short stack of segments so they can lean progressively and read as
+    # curved rather than as four straight pins.
     for k in range(4):
         a = 2 * math.pi * k / 4 + math.pi / 4
-        lean = 2.4
-        m.cyl((cx + lean * 0.25 * math.cos(a), cy + lean * 0.25 * math.sin(a),
-               base - 2.0), 0.55, FLOR_STAM - (base - 2.0 - z), steel, segs=7,
-              top=0.42)
-        m.sphere((cx + lean * math.cos(a), cy + lean * math.sin(a),
-                  z + FLOR_STAM), 1.15, steel, segs=8, rings=5)
+        segsn = 5
+        z0s, z1s = base - 2.5, z + FLOR_STAM
+        for i in range(segsn):
+            t0, t1 = i / segsn, (i + 1) / segsn
+            r_0, r_1 = FLOR_STAM_LEAN * t0 ** 1.8, FLOR_STAM_LEAN * t1 ** 1.8
+            za, zb = z0s + (z1s - z0s) * t0, z0s + (z1s - z0s) * t1
+            m.cyl((cx + r_0 * math.cos(a), cy + r_0 * math.sin(a), za),
+                  0.30, zb - za, steel, segs=6, top=0.26)
+            if i:                            # close the kink between segments
+                m.sphere((cx + r_0 * math.cos(a), cy + r_0 * math.sin(a), za),
+                         0.30, steel, segs=6, rings=3)
+        m.sphere((cx + FLOR_STAM_LEAN * math.cos(a),
+                  cy + FLOR_STAM_LEAN * math.sin(a), z1s), 0.80, steel,
+                 segs=8, rings=5)
     return FLOR_POOL, z + FLOR_STAM
 
 

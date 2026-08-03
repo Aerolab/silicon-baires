@@ -390,19 +390,26 @@ as a taxi rank that was not there.
 **Jacarandá is blue-violet, tending to indigo.** The common mistake is pinkish
 lilac. If it comes out pink it is wrong.
 
-**The Floralis is a flower or it is a star, and that is decided by the petal.**
-The first version was two straight tapers per petal and it read as a
-six-pointed star from every angle — which is what a flat blade always reads as,
-whatever the file calls it. Three cheap changes fix it and all three are needed:
+**The Floralis is a BOWL, and every wrong version got there a different way.**
+It took four attempts and a photograph. The petal is a *scoop*, not a leaf:
 
-- **The spine curves**, opening early and rising into the tip. Out first, up
-  second. Climbing first and opening late puts most of the petal's length near
-  the axis and gives a closed cup with pinched tips.
-- **The width varies** — nothing at the root, widest at about 40 % out, a point
-  at the tip. Constant taper is a knife.
-- **The petal is dished**, so the edges lift off the spine. This is the one
-  that earns its keep at 40 px: a flat facet is a single value, a dished one is
-  a gradient, and it is the only thing on the object that is not a hard edge.
+- **The section is a circular arc**, half-angle ~52°, curling towards the axis.
+  Flat is a six-pointed star, whatever the file calls it. A shallow parabolic
+  dish is a flat blade with a crease. A *deep* parabolic dish is worse than
+  both — a parabola keeps steepening, so the edges shoot up into two spikes and
+  the petal comes out a folded paper dart. An arc has constant curvature and
+  reads as sheet metal bent on a roller, which is what it is.
+- **It widens towards the tip**, which is broad and rounded. Narrow at the
+  root, widest at the very top. Widest-at-40 %-with-a-point is a leaf.
+- **The tangent at the tip decides bowl versus umbrella.** Radius easing off
+  (t^0.8) against height accelerating (t^1.5) leaves the tip at ~60° above
+  horizontal: a wide shallow floor turning up into near-vertical walls. Reach
+  the tip with dz/dt = 0 and every petal finishes by flattening outward — a
+  blown-out umbrella.
+- **Width is two thirds of the available arc.** Six petals at a 16 m radius
+  have 16.7 m of arc each. Half of that leaves sky between them: a star. All
+  of it closes the gaps into one continuous vessel: a cup. The **V-shaped
+  notches between petals have to be visible** — they are what says six petals.
 
 **And there are four stamens.** They were missing entirely, and they are what
 makes it *that* flower rather than a generic metal one. They have to clear the
