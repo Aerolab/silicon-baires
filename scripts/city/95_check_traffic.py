@@ -37,6 +37,11 @@ def nearest(value, table):
 
 def main():
     bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    # Frame 1, always, and said out loud because it matters: this file may be
+    # left on any frame by the step that ran last, and the vehicles are
+    # animated. Reading "the current frame" makes the result depend on where
+    # somebody happened to leave the playhead.
+    bpy.context.scene.frame_set(1)
     data = json.loads((R / "city_lots.json").read_text())
     av = data.get("avenue9j")
     lots = [(l["x"], l["y"], l["size"][0], l["size"][1]) for l in data["lots"]]
@@ -100,6 +105,40 @@ def main():
             print(f"      {n:22s} {dp:5.2f} m in")
     else:
         print("    pass: nothing is driving on a pavement")
+
+    # -- TEST D: and still on the road at the END of the shot ---------------
+    #
+    # The one that was missing, and the reason it was missing is worth stating:
+    # every standing check in this project reads frame 1, and at frame 1 every
+    # vehicle is exactly where step 05 carefully put it. A car covers 70-145 m
+    # in ten seconds and the streets are not all continuous - two stop dead at
+    # the title's superblock and the Obelisco's island stands in the bus
+    # corridor - so a car that starts on good road can finish 25 m inside a
+    # block. Four of them did. It only surfaced because the camera move left
+    # the file on frame 240 and the checks ran against the last frame by
+    # accident.
+    scene = bpy.context.scene
+    end = scene.frame_end
+    driving = []
+    for f in (1, end // 4, end // 2, 3 * end // 4, end):
+        scene.frame_set(f)
+        for ob in vehicles:
+            if ob.hide_render:
+                continue               # step 11 already took these off the road
+            dp = depth(ob.location.x, ob.location.y)
+            if dp > 0.0:
+                driving.append((round(dp, 2), ob.name, f))
+    scene.frame_set(1)
+    driving.sort(reverse=True)
+    print(f"\n  TEST D  on the road for the whole shot, not just at frame 1")
+    if driving:
+        seen = {n for _, n, _ in driving}
+        print(f"    FAIL: {len(seen)} vehicles drive into a block during the "
+              f"shot")
+        for dp, n, f in driving[:10]:
+            print(f"      {n:22s} {dp:5.2f} m in, at frame {f}")
+    else:
+        print(f"    pass: nothing leaves the carriageway over {end} frames")
 
     # -- TEST C: the busway is for buses -----------------------------------
     print(f"\n  TEST C  the Metrobus corridor")

@@ -57,11 +57,13 @@ dependencies are real. Each script opens `city.blend`, adds its layer and saves:
 ./bl scripts/city/04_buildings.py    # publishes footprints AND plans the signs
 ./bl scripts/city/10_signs.py        # builds what 04 planned
 ./bl scripts/city/06_landmarks.py
-./bl scripts/city/06b_porteno.py     # Obelisco, cupolas, Floralis
+./bl scripts/city/06b_porteno.py     # Obelisco, Floralis
 ./bl scripts/city/05_life.py         # needs everything above: it queries footprints
 ./bl scripts/city/08_title.py        # BUENOS AIRES, built as buildings. After 05, always
 ./bl scripts/city/11_animate.py      # after 08, or it animates cars 08 deletes
-./bl scripts/city/07_look.py final   # the final Cycles frame
+./bl scripts/city/12_camera.py       # the camera move. After 11: it leaves the
+                                     # scene on the last frame, and 11 resets it to 1
+./bl scripts/city/07_look.py final   # the final Cycles frame, shot on frame 240
 ```
 
 `02_kit.py` and `02b_porteno_kit.py` run once, before all of it. Do not re-run

@@ -58,26 +58,36 @@ def in_super(x, y):
     return x0 <= x <= x1 and y0 <= y <= y1
 
 
-def onto_plaza(c):
-    """Does this vehicle's ten seconds take it onto the Obelisco's island?
+def path_blocked(c, samples=16):
+    """Does this vehicle's ten seconds take it through something solid?
 
-    Step 05 already refuses to PLACE a bus on the plaza. That is not the same
-    question and it is not enough: a bus in the corridor covers 110-145 m in
-    the shot and the island is 60 m long, so one that starts a hundred metres
-    south of it finishes on top of it. The check that found this could not: it
-    looks at frame 1, and at frame 1 the bus is on the road.
+    **Where a car STARTS is not the question.** Step 05 places every vehicle on
+    a clear piece of road and that is all it can check; a car covers 70-145 m
+    in the shot, and the streets are not all continuous - two of them stop dead
+    at the title's superblock, and the Obelisco's island stands in the middle
+    of the bus corridor. A car that begins on a perfectly good stretch of road
+    can finish 25 m inside a city block.
 
-    Only the corridor is affected. The lateral carriageways run outside the
-    island by construction, and the cross streets no longer touch it now that
-    the plaza sits mid-block.
+    Nothing could see this. Every standing check reads frame 1, and at frame 1
+    every one of these vehicles is exactly where it should be. It only surfaced
+    because the camera move left the file on frame 240 and the checks ran
+    against the last frame by accident.
+
+    So the whole path gets sampled, not the ends: a car can cross a corner of
+    a building and come out the other side by frame 240.
     """
-    if PLAZA is None:
-        return False
-    px, py, hw, hl = PLAZA
-    if c.axis != 1 or abs(c.lane - px) > hw:
-        return False
-    a, b = c.p0, c.p0 + c.dir * c.v * T
-    return max(a, b) > py - hl - 6.0 and min(a, b) < py + hl + 6.0
+    for i in range(samples + 1):
+        p = c.p0 + c.dir * c.v * T * (i / samples)
+        x, y = (p, c.lane) if c.axis == 0 else (c.lane, p)
+        if in_super(x, y):
+            return True
+        if PLAZA is not None:
+            px, py, hw, hl = PLAZA
+            if abs(x - px) < hw + 3.0 and abs(y - py) < hl + 3.0:
+                return True
+        if solids.hit(x, y, 0.0, 2.6) is not None:
+            return True
+    return False
 
 
 class Car:
@@ -178,21 +188,45 @@ def linear(ob):
 
 
 def walkers(scene, r):
-    n = 0
+    """Everything step 05 marked as being on a pavement walks along it.
+
+    The start position is stored on the object the first time, exactly like the
+    vehicles' "p0", and this is not belt-and-braces: without it the step is not
+    re-runnable. `ob.location` on an already-animated object is whatever the
+    current frame evaluates to, so a second run takes the END of the first run
+    as its start and everybody walks the distance twice. It went unnoticed
+    while step 11 was the last step and left the file on frame 1; the camera
+    move now leaves it on 240, and the next run marched 888 people fifteen
+    metres further, several of them into buildings.
+
+    A walker whose fifteen metres would take it through something solid simply
+    stands still. Same policy as the vehicles, and cheaper: a person standing
+    on a pavement is not a defect, and a person walking through a wall is.
+    """
+    n, still = 0, 0
     for ob in scene.objects:
         if ob.type != "MESH" or "walk" not in ob:
             continue
+        ob.animation_data_clear()
+        if "w0" not in ob:
+            ob["w0"] = [ob.location.x, ob.location.y, ob.location.z]
+        base = Vector(tuple(ob["w0"]))
+        ob.location = base
         dx, dy = ob["walk"][0], ob["walk"][1]
         v = r.uniform(1.0, 1.6)
         ob.rotation_euler.z = math.atan2(dy, dx)
-        base = ob.location.copy()
+        end = base + Vector((dx * v * T, dy * v * T, 0.0))
+        if solids.hit(end.x, end.y, base.z, 0.4) is not None or \
+                in_super(end.x, end.y):
+            still += 1
+            continue
         for f, t in ((1, 0.0), (FRAMES, T)):
             ob.location = base + Vector((dx * v * t, dy * v * t, 0.0))
             ob.keyframe_insert("location", frame=f)
         ob.location = base
         linear(ob)
         n += 1
-    return n
+    return n, still
 
 
 def helicopter(scene):
@@ -225,6 +259,10 @@ def main():
     PLAZA = lots.get("avenue9j", {}).get("plaza")
     scene.render.fps = FPS
     scene.frame_start, scene.frame_end = 1, FRAMES
+    # frame 1 before reading any position. This file may be left on frame 240
+    # by the camera step, and every position read below would then be an
+    # evaluated one rather than a placed one.
+    scene.frame_set(1)
 
     r = rng(2718)
     vehicles = [ob for ob in scene.objects
@@ -244,16 +282,16 @@ def main():
                             int(ob["dir"]))]) for ob in vehicles]
     print(f"\n  {len(cars)} vehicles in {len(speeds)} lanes")
 
-    # before anything else: the corridor stops at the island. Hidden and not
-    # deleted, like everything else this step takes off the road, so it stays
-    # re-runnable.
-    over = [c for c in cars if onto_plaza(c)]
+    # before anything else: take off the road anything whose ten seconds would
+    # carry it through something solid. Hidden and not deleted, like everything
+    # else this step takes off the road, so it stays re-runnable.
+    over = [c for c in cars if path_blocked(c)]
     for c in over:
         c.ob.hide_render = c.ob.hide_viewport = True
         cars.remove(c)
     if over:
-        print(f"  {len(over)} buses would have driven over Plaza de la "
-              f"Republica in the shot")
+        print(f"  {len(over)} vehicles would have driven through something "
+              f"solid before the shot ends")
 
     first = len(conflicts(cars))
     for k in range(PASSES):
@@ -305,9 +343,9 @@ def main():
           f"{culled} taken off the road, 0 left")
 
     drive(cars)
-    people = walkers(scene, r)
+    people, still = walkers(scene, r)
     heli = helicopter(scene)
-    print(f"  walking: {people} people   helicopter: "
+    print(f"  walking: {people} people ({still} left standing)   helicopter: "
           f"{'yes' if heli else 'no Heli in the kit'}")
 
     cam = bpy.data.objects["HeroCam"]

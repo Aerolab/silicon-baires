@@ -83,7 +83,16 @@ Read off the frames:
   The reference itself is not: its two title lines sit at different leans, which
   only perspective explains. We take the parallel verticals and give up that cue.
 - **Long lens, far away.** Near and far buildings are nearly the same apparent scale.
-- **Elevation 38°**, **azimuth 45°** so every building shows exactly two faces.
+- **Azimuth 45°** throughout, so every building shows exactly two faces. It never
+  moves: it is what the whole grid is composed against.
+- **Elevation descends 38° → 24°** across the shot, and the still is the last
+  frame. The elevation alone decides how wide the title reads, because the word
+  is built as buildings on the street grid: at 38° the red roof box has a true
+  aspect of 1.62 against the reference's 2.61, and solving the projection puts
+  the match at **22.5°**. So descending is the one camera axis where the
+  reference tells us which way to go. It stops at 24 rather than 22.5 because
+  the last degree and a half costs more roofscape than it buys in the word, and
+  the roof is 60 % of what this camera sees of a building.
   Measured off the reference at 35°, from the ±30° screen angle of its grid edges.
   Every straight street runs diagonally across frame; nothing is axis-aligned to the
   image.

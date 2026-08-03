@@ -97,6 +97,11 @@ def where(verts, faces, idx):
 
 def main():
     bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    # Frame 1, always, and said out loud because it matters: this file may be
+    # left on any frame by the step that ran last, and the vehicles are
+    # animated. Reading "the current frame" makes the result depend on where
+    # somebody happened to leave the playhead.
+    bpy.context.scene.frame_set(1)
     scene = bpy.context.scene
 
     solids = Solids.load(R / "city_solids.json")

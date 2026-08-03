@@ -728,6 +728,69 @@ in the file goes through it. The fix is to call both: `pbrmat` to guarantee the
 material exists, `retint` to set the colour. Anything that edits a colour in
 place has to do the same.
 
+### The camera move
+
+A descent with a drift, `12_camera.py`. Elevation 38° → 24°, frame width
+210 → 170 m, and 28 m of sideways slide, over the ten seconds.
+
+**Down is the only camera axis the reference decides for us.** The title is
+built as buildings on the street grid, so how wide the word reads comes out of
+the elevation and nothing else; solving the projection against the reference's
+2.61 aspect gives 22.5°. It stops at 24: the last degree and a half costs more
+roofscape than it buys in the word.
+
+Two things went wrong and both are worth keeping:
+
+**The end target is not the origin.** `blib.camera()` aims at the centre of the
+scene's bounds, which here is (−51.8, 22.8). Assuming (0, 0) put the title hard
+against the right edge of the last frame — a composition nobody approved and
+one that does not match the approved still.
+
+**And then I tried to read the target off the camera instead of writing it
+down.** That looks cleverer and it is a trap: the first run of the step
+*animates* the camera, so the second run reads back the target it wrote itself,
+and the framing becomes whatever the last run happened to leave. It printed
+`aiming at (-0, -0)` in perfect confidence. A composition is a decision and
+belongs in the file.
+
+The camera gets 13 keyframes rather than two, because **elevation is an angle**:
+interpolating position linearly between two points on an arc cuts the corner
+and the horizon slides. Each key is computed on the arc; easing comes from a
+smoothstep on the key values rather than from Bezier handles nobody can inspect.
+
+The still is now the last frame of the move, so `07_look.py` runs after
+`12_camera.py` and the two agree.
+
+### What the camera move exposed, which is worth more than the move
+
+Leaving the file on frame 240 made every standing check run against the last
+frame by accident, and three real faults fell out at once. All three were
+invisible before, and for the same structural reason: **the checks read frame 1,
+and at frame 1 everything is exactly where it was carefully placed.**
+
+**Cars drove into buildings.** Step 05 places every vehicle on clear road and
+that is all it can check; a car covers 70–145 m in the shot and the streets are
+not all continuous — two stop dead at the title's superblock and the Obelisco's
+island stands in the bus corridor. Four finished up to 25 m inside a block.
+Step 11 now samples the whole path, not the ends, and takes 45 vehicles off the
+road.
+
+**`walkers()` was not re-runnable.** It read `ob.location` as the start, and on
+an already-animated object that is whatever the current frame evaluates to. So
+the second run took the *end* of the first as its start and marched 888 people
+another fifteen metres, several into buildings. The vehicles had been fixed for
+exactly this years — `ob["p0"]` — and the walkers never were, because step 11
+used to be last and left the file on frame 1. It stores `w0` now. The damage
+was already baked into the .blend and only re-running step 05 cleared it.
+
+**And the checks were reading whatever frame the playhead was on.** They all
+call `frame_set(1)` now, so the result does not depend on where the previous
+step happened to leave it.
+
+`95_check_traffic.py` gained TEST D: on the road for the *whole shot*, sampled
+at five frames. That is the hole the other checks still have — they see one
+instant of an animated city — and it is now closed for the vehicles at least.
+
 ### Where the numbers landed
 
 | | |
