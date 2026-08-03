@@ -93,12 +93,17 @@ def taxi(name, kit):
     length, width = 4.4, 1.8
     body, roof = mat("Taxi Black"), mat("Taxi Yellow")
     m = Mesh()
+    # Ley 2.148 art. 12.3.3.1: black below, yellow from the lower line of the
+    # window upward. So the whole greenhouse is yellow with a glass band cut
+    # into it, not a black cabin with a yellow lid. It matters here more than
+    # it would at eye level: this camera sees a car almost entirely from above,
+    # so the yellow area is most of what the vehicle is.
     m.box((0, 0, 0.62), (length, width, 0.72), body)
-    m.box((-0.25, 0, 1.22), (length * 0.46, width * 0.86, 0.52),
+    m.box((-0.25, 0, 1.24), (length * 0.46, width * 0.86, 0.60), roof)
+    m.box((-0.25, 0, 1.16), (length * 0.47, width * 0.88, 0.34),
           mat("Car Glass"))
-    m.box((-0.25, 0, 1.46), (length * 0.44, width * 0.84, 0.06), roof)
     # the roof sign, the other half of the read
-    m.box((0.55, 0, 1.56), (0.75, 0.34, 0.18), roof)
+    m.box((0.55, 0, 1.62), (0.75, 0.34, 0.18), roof)
     wheels(m, length, width)
     return m.build(name, kit)
 

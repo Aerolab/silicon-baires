@@ -12,6 +12,11 @@ The city is now strictly rectangular. Variety comes from the grid itself:
 street widths differ (two wide avenues among narrow local streets) and block
 sizes differ per row and column, so nothing reads as one repeated module.
 
+Every block corner is cut at 45 degrees. That is the ochava, which Buenos Aires
+requires by code on every corner building, and it is the cheapest structural
+cue in the whole project: four bevels per block, and the crossings open into
+octagons. With square corners this grid reads as Manhattan.
+
     ./bl scripts/city/03_ground.py
 """
 import sys, pathlib, math, json
@@ -30,6 +35,12 @@ MARK_Z = 0.03
 
 # A lane is 3.5 m. Local streets carry two lanes, avenues four.
 LOCAL, AVENUE = 12.0, 22.0
+# The ochava: Buenos Aires cuts every street corner at 45 degrees by code, so
+# no block downtown has a 90-degree corner and the pavement widens into an
+# octagon at every crossing. It is the cheapest structural cue there is - four
+# bevels per block - and it is the one that decides whether the grid reads as
+# Buenos Aires or as Manhattan. 4 m of chord, so 2.83 m off each side.
+OCHAVA = 4.0 / math.sqrt(2.0)
 AVENUES_X = {2, 6}            # which street indices are wide, per axis
 AVENUES_Y = {3, 7}
 BLOCK_SIZES = [64.0, 52.0, 76.0, 64.0, 58.0, 70.0, 64.0, 54.0, 72.0]
@@ -60,6 +71,19 @@ SPECIAL = {
     # removing a key shifts all of them.
     (4, 5): "std",
 }
+
+
+def ochava(cx, cy, w, d, cut=None):
+    """The block outline: a rectangle with its four corners cut at 45 degrees.
+
+    Returned counter-clockwise. The cut is clamped to a quarter of the shorter
+    side so a narrow lot cannot fold in on itself.
+    """
+    c = min(OCHAVA if cut is None else cut, min(w, d) / 4)
+    x0, x1 = cx - w / 2, cx + w / 2
+    y0, y1 = cy - d / 2, cy + d / 2
+    return [(x0 + c, y0), (x1 - c, y0), (x1, y0 + c), (x1, y1 - c),
+            (x1 - c, y1), (x0 + c, y1), (x0, y1 - c), (x0, y0 + c)]
 
 
 def axis_layout(avenues):
@@ -177,17 +201,19 @@ def build_blocks(m, r):
             lift = round(r.uniform(0.30, 0.85), 2)
             if (i, j) in SUPER:
                 continue
-            m.slab(cx, cy, bw, bd, 0.0, lift, mat("Sidewalk"))
+            m.prism(ochava(cx, cy, bw, bd), 0.0, lift, mat("Sidewalk"))
             iw, idp = bw - WALK * 2, bd - WALK * 2
-            m.quad(cx, cy, iw, idp, lift + 0.02, surface_mat(kind))
+            # the inner surface keeps the same chamfer, so the pavement stays
+            # an even width all the way around the corner
+            m.flat(ochava(cx, cy, iw, idp), lift + 0.02, surface_mat(kind))
             lots[(i, j)] = (cx, cy, [iw, idp], lift, kind)
 
     x0, x1, y0, y1 = super_bounds()
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     bw, bd = x1 - x0, y1 - y0
     lift = SUPER_LIFT
-    m.slab(cx, cy, bw, bd, 0.0, lift, mat("Sidewalk"))
-    m.quad(cx, cy, bw - WALK * 2, bd - WALK * 2, lift + 0.02,
+    m.prism(ochava(cx, cy, bw, bd), 0.0, lift, mat("Sidewalk"))
+    m.flat(ochava(cx, cy, bw - WALK * 2, bd - WALK * 2), lift + 0.02,
            surface_mat("plaza"))
     lots[SUPER_KEY] = (cx, cy, [bw - WALK * 2, bd - WALK * 2], lift, "plaza")
     print(f"  superblock {bw:.0f} x {bd:.0f} m at ({cx:.0f}, {cy:.0f})")

@@ -476,6 +476,67 @@ placed them — a figure that picks its own heading walks into a wall half the
 time. And the helicopter that has been sitting unused in the kit since step 02
 finally crosses the frame.
 
+## Sixth pass: the research that arrived late
+
+The Buenos Aires work in the fifth pass was built from what I already knew,
+because the research I had commissioned did not come back in time. It came back
+afterwards, sourced, and it changed four things and confirmed the rest.
+
+**The ochava, which should have been first.** Buenos Aires cuts every street
+corner at 45° by code, so no block downtown has a 90° corner and every crossing
+opens into an octagon. Four bevels per block. It costs almost nothing, it is
+structural rather than decorative, and it does more for the read than any
+monument: with square corners the grid is Manhattan. It is now in
+`03_ground.py`, 4 m of chord.
+
+Knock-on: the last tree of each pavement row used to sit out over the cut
+corner with nothing under it, so the row is 12 m shorter than the block instead
+of 8. `98_check_floating.py` is what would have caught that; it was cheaper to
+predict it.
+
+**The taxi livery is a law.** Ley 2.148: black below, yellow from the lower line
+of the window *upward* — the whole greenhouse, not a yellow lid on a black
+cabin. Rebuilt. This is the highest-value correction in the batch, because from
+this camera a car is mostly its roof and the yellow is now most of the vehicle.
+Taxis also came out of the parked-car pool: a third of every office car park was
+yellow, which reads as a rank.
+
+**Two monument numbers were wrong and are fixed** — see the note above on the
+Obelisco's 63 m shaft and the Floralis's 32 m spread over a 44 m pool.
+
+**The provincial shields.** Plaza de la República has the 24 provincial coats of
+arms set into the paving in a ring around the Obelisco. They are 2 m discs,
+14 px each, and a ring of them is more legible from above than any paving
+texture, because a ring is a shape.
+
+**Confirmed, no change needed:** the jacarandá colour (blue-violet tending to
+indigo — the common error is pinkish lilac, and ours was already right), the
+colectivo two-tone-plus-stripe scheme and its dominant combinations, the
+Floralis's mirror-polished steel, the four windows and single west door on the
+Obelisco.
+
+### What was declined, and why
+
+Recording these so nobody re-derives them. Each one is real and would read.
+
+- **Water tanks on every roof**, 30–60 per porteño block, 8 × 20 px each. This
+  loses to the reference: the style bible has said since the second pass that
+  its roofs are quiet with one memorable thing on them, and a mechanical carpet
+  is the *Silicon Valley* look gone. Where Buenos Aires and the reference
+  disagree, the reference wins — it is the language the whole piece is in.
+- **86.6 m blocks.** The porteño block-to-street ratio is 6.3:1 against our
+  5.3:1. But the title's superblock is sized to the word, so the block size is
+  load-bearing for the thing the frame is built around.
+- **Avenida 9 de Julio at 140 m** — 82 % of a 170 m frame. The buildable
+  version is a ~52 m avenue with a raised Metrobús platform down the middle,
+  which is what would make it read as *that* avenue rather than a wide one.
+- **Medianeras** — the blank painted party walls — would be excellent and need
+  neighbouring buildings of wildly different heights, which is a change to how
+  step 04 picks floor counts rather than a thing to add.
+- **Casa Rosada, Congreso, Puente de la Mujer.** All specced now if wanted. The
+  Congreso's copper dome at 80 m against pale stone is the strongest of the
+  three from this camera.
+
 ## Verification
 
 `scripts/city/99_check_overlap.py` — three tests: published footprints, real

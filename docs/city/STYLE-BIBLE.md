@@ -280,6 +280,7 @@ are all invisible from here. Silhouette and colour are what is left.
 
 | Cue | Why it survives |
 |---|---|
+| **Ochavas** — every block corner cut at 45° | the best of the lot, and it is not a prop: Buenos Aires cuts every street corner by code, so no block downtown has a 90° corner and every crossing opens into an octagon. Four bevels per block. With square corners the grid reads Manhattan |
 | **Jacarandás in flower** | violet against green reads at any size. One street tree in five; at one in two the city turns into a fantasy |
 | **Taxis**, black body, `#f2c300` roof | this camera sees mostly roof, and the roof is the livery |
 | **Colectivos**, flat two-tone per line | a small bright rectangle among the cars |
@@ -295,9 +296,43 @@ ends **blunt at 40 cm**, not in a point. (The sources disagree about the base:
 across** open over a **44 m pool**, not the 20 m and 14 m first built, which
 made it a sculpture on a lawn instead of the thing that fills its own plaza.
 
+**The taxi livery is a law, not a style choice.** Ley 2.148 art. 12.3.3.1: black
+below, yellow from the lower line of the window upward — so the whole
+greenhouse is yellow with a glass band cut into it, not a black cabin with a
+yellow lid. It matters more here than at eye level, because this camera sees a
+car almost entirely from above and the yellow area is most of what the vehicle
+is. The yellow is `#f2c300`, egg yolk, not lemon. Taxis go on the road, never
+in an office car park: a third of the parked cars came out yellow once and read
+as a taxi rank that was not there.
+
+**Jacarandá is blue-violet, tending to indigo.** The common mistake is pinkish
+lilac. If it comes out pink it is wrong.
+
+**The real proportions, for reference, since ours are deliberately not them.**
+Jacarandá is only 3.6 % of the city's 432,000 street trees; fresno americano is
+36 % and dominant, then plátano, ficus, tilo, paraíso. We run jacarandá at 20 %
+because one tree in twenty-eight would not read at all from here, and the point
+of the cue is to be seen. That is a knowing exaggeration, not an error.
+
 Rejected for this camera, and worth recording so they are not tried again:
-veredas, medianeras, café tables, kioscos, laundry on terraces. All real, all
-invisible from 1450 m.
+veredas, medianeras, café tables, kioscos, laundry on terraces, fileteado on
+the colectivos (the lines are 2–4 cm). All real, all invisible from 1450 m.
+
+Rejected for a different reason — they would read, and they lose to the
+reference or to the frame:
+
+- **Water tanks on every roof.** A porteño block carries 30–60 of them and
+  they would read at 8 × 20 px. But §5 and §10b of this document say the
+  reference's roofs are quiet with one memorable thing on them, and carpeting
+  them is the *Silicon Valley* look gone. This is a Buenos Aires built in that
+  language, and where the two disagree the language wins.
+- **86.6 m blocks.** The porteño block is ~100 varas, and the block-to-street
+  ratio is 6.3:1 against our 5.3:1. Ours is 64 m and the title's superblock is
+  sized to the word, so changing it moves the thing the whole frame is built
+  around.
+- **Avenida 9 de Julio at 140 m.** It is 82 % of a 170 m frame. A widened
+  avenue at ~52 m with a raised Metrobús platform down the middle would read,
+  and is the version to build if it is ever wanted.
 
 ## 10d. Movement
 

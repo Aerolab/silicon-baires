@@ -27,6 +27,10 @@ TREES = (["Tree0", "Tree1", "Tree2", "Tree3", "Conifer0", "Conifer1"] * 2 +
 # camera a car is mostly its roof, and this one has a yellow roof
 CARS = ["CarRed", "CarWhite", "CarTeal", "CarBlue", "CarDark", "CarSilver",
         "Taxi", "Taxi", "Taxi"]
+# a taxi is a working vehicle: it belongs on the road, not in the car park of
+# an office block. With Taxi in this list a third of every parking lot came
+# out yellow, which reads as a taxi rank and there is no rank there.
+PARKED = CARS[:6]
 COLECTIVOS = [f"Colectivo{i}" for i in range(4)]
 PEOPLE = [f"Person{i}" for i in range(8)]
 AVENUE = 22.0
@@ -107,7 +111,10 @@ def street_trees(kit, coll, lots, walk, r):
         for axis in (0, 1):
             length = w if axis == 0 else d
             edge = (d if axis == 0 else w) / 2 + walk * 0.5
-            span = length - 8.0
+            # 12, not 8: the block corners are cut at 45 degrees now and the
+            # last tree of a row used to sit out over the chamfer with nothing
+            # under it
+            span = length - 12.0
             count = max(1, int(span / 8.5))
             for side in (-1, 1):
                 for k in range(count + 1):
@@ -267,7 +274,7 @@ def parked(kit, coll, lots, r):
                 if r.random() < 0.15:
                     continue
                 x = cx - w / 2 + 3.8 + k * (w - 5) / (count - 1)
-                name = r.choice(CARS)
+                name = r.choice(PARKED)
                 if not free("car", x, y, lot["lift"]):
                     continue
                 instance(kit[name], coll, (x, y, lot["lift"] + 0.02),

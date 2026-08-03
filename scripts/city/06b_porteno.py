@@ -91,6 +91,20 @@ def obelisco(m, cx, cy, lift):
     return OB_BASE + 5.0, lift + OB_H + 0.9
 
 
+def shields(m, cx, cy, lift):
+    """The 24 provincial coats of arms set into the paving around the monument.
+
+    They are 2 m discs on a 30 m ring, which is 14 px each from this camera:
+    small, but a regular ring of them is the single most legible thing about
+    Plaza de la Republica from above - more than any paving texture, because
+    a ring is a shape and a texture is not.
+    """
+    for k in range(24):
+        a = 2 * math.pi * k / 24
+        m.cyl((cx + 15.0 * math.cos(a), cy + 15.0 * math.sin(a), lift + 0.05),
+              1.0, 0.04, mat("Shield Bronze"), segs=10)
+
+
 def plaza(m, cx, cy, w, d, lift):
     """Radial paving under it. Plaza de la Republica is not a rectangle and
     this block is, so the pattern is what carries the resemblance."""
@@ -190,6 +204,7 @@ def main():
     pbrmat("Steel Bright", "#c9ccd0", 0.22, metallic=0.9)
     pbrmat("Cupola Slate", "#4a6b63", 0.65)      # oxidised copper, not grey
     pbrmat("Cupola Trim", "#cfc7b4", 0.75)
+    pbrmat("Shield Bronze", "#8a6a3c", 0.45, metallic=0.5)
 
     lots = {tuple(l["key"]): l for l in
             json.loads((R / "city_lots.json").read_text())["lots"]}
@@ -214,6 +229,7 @@ def main():
     if lot is None:
         raise SystemExit("no lot for the obelisco: the layout moved under it")
     plaza(g, lot["x"], lot["y"], lot["size"][0], lot["size"][1], lot["lift"])
+    shields(g, lot["x"], lot["y"], lot["lift"])
     side, ztop = obelisco(m, lot["x"], lot["y"], lot["lift"])
     sol.add(lot["x"], lot["y"], side, side, 0.0, 0.0, ztop)
     print(f"  obelisco at ({lot['x']:.0f}, {lot['y']:.0f}), "

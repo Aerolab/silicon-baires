@@ -152,6 +152,12 @@ class Mesh:
                       (rings - 2) * segs + (s + 1) % segs))
         self._add(v, f, material, xform)
 
+    def flat(self, poly, z, material, xform=None):
+        """One flat n-gon at a height. The block surfaces are octagons now and
+        quad() only makes rectangles."""
+        self._add([(x, y, z) for x, y in poly],
+                  [tuple(range(len(poly)))], material, xform)
+
     def arc_band(self, r0, r1, a0, a1, z, material, segs=None, xform=None):
         """Flat annulus sector: road markings and kerbs that follow a curve."""
         if segs is None:
