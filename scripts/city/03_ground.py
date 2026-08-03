@@ -84,9 +84,16 @@ MEDIAN_LIFT = 0.18
 # level-boarding door and the height is the reason the platform exists
 PLATFORM_LIFT = 0.40
 # Plaza de la Republica: where the Obelisco stands, in the middle of the
-# avenue, at a crossing. Corrientes meets 9 de Julio there in the real city,
-# so it is put on one of the wide cross streets rather than a local one.
-PLAZA_Y = 3                   # which Y street index the plaza straddles
+# avenue - and MID-BLOCK, not on a crossing.
+#
+# It was on a crossing first, which is where the real one is. It does not work,
+# because our crossings are crossings: the cross street runs straight through
+# the island, so traffic drives over the plaza and through the monument. The
+# real Corrientes does not do that - it was diverted in 1971 and bends around
+# the Obelisco, so the plaza is a hole in the traffic rather than a junction.
+# Mid-block gives the same read with none of the geometry: nothing crosses it
+# except the busway, which is dealt with in step 11.
+PLAZA_J = 2                   # which Y BLOCK the plaza sits in the middle of
 # The island is an OVAL, not a rectangle. Off a photograph: the plaza swells
 # out of the avenue as a long rounded lens, with curved planting beds in the
 # two ends and the monument on paving in the middle. A rectangle of the same
@@ -190,7 +197,7 @@ SX, BX, WX, TOTAL_X = axis_layout(AVENUES_X, {NINE_X: AVE9J})
 SY, BY, WY, TOTAL_Y = axis_layout(AVENUES_Y)
 CITY = max(TOTAL_X, TOTAL_Y)
 NINE = SX[NINE_X]             # the centre line of the avenue, an X coordinate
-PLAZA = SY[PLAZA_Y]           # and the crossing the Obelisco stands at
+PLAZA = BY[PLAZA_J][0]        # and the middle of the block it stands in
 
 
 def pick_kind(i, j, r):
@@ -340,32 +347,34 @@ def build_avenue(m, g):
     for a, b in ((y0, PLAZA - PLAZA_HALF), (PLAZA + PLAZA_HALF, y1)):
         m.quad(NINE, (a + b) / 2, BUSWAY * 2, b - a, 0.04, deck)
 
+    p0, p1 = PLAZA - PLAZA_HALF - 2.0, PLAZA + PLAZA_HALF + 2.0
     for j, (cy, size) in enumerate(BY):
         a, b = cy - size / 2 - 3.0, cy + size / 2 + 3.0
-        # trim against the plaza rather than dropping the whole run. Skipping
-        # any block that came near it took out the two full block-lengths on
-        # either side - 140 m of avenue with no planting in it at all - to
-        # clear a 34 m island.
-        p0, p1 = PLAZA - PLAZA_HALF - 2.0, PLAZA + PLAZA_HALF + 2.0
-        if b > p0 and a < p1:
-            if a < p0:
-                b = min(b, p0)
-            else:
-                a = max(a, p1)
-        if b - a < 10.0:
-            continue
-        for side in (-1, 1):
-            mc = side * (MEDIAN[0] + MEDIAN[1]) / 2
-            mw = MEDIAN[1] - MEDIAN[0]
-            m.prism([(NINE + mc - mw / 2, a), (NINE + mc + mw / 2, a),
-                     (NINE + mc + mw / 2, b), (NINE + mc - mw / 2, b)],
-                    0.0, MEDIAN_LIFT, kerb)
-            g.quad(NINE + mc, (a + b) / 2, mw - 1.0, b - a, MEDIAN_LIFT + 0.02,
-                   grass)
+        # Cut against the plaza rather than dropping the whole run: skipping
+        # any block that came near it took out two full block-lengths - 140 m
+        # of avenue with no planting at all - to clear a 60 m island.
+        #
+        # And it has to be a cut into TWO runs, not a trim of one end. The
+        # plaza sits mid-block now, so it lands in the middle of a median run
+        # with planting owed on both sides of it; trimming left a 9 m stub that
+        # then failed the minimum length and took the whole block with it.
+        runs = [(a, b)] if not (b > p0 and a < p1) else \
+            [(a, min(b, p0)), (max(a, p1), b)]
+        for (ra, rb) in runs:
+            if rb - ra < 10.0:
+                continue
+            for side in (-1, 1):
+                mc = side * (MEDIAN[0] + MEDIAN[1]) / 2
+                mw = MEDIAN[1] - MEDIAN[0]
+                m.prism([(NINE + mc - mw / 2, ra), (NINE + mc + mw / 2, ra),
+                         (NINE + mc + mw / 2, rb), (NINE + mc - mw / 2, rb)],
+                        0.0, MEDIAN_LIFT, kerb)
+                g.quad(NINE + mc, (ra + rb) / 2, mw - 1.0, rb - ra,
+                       MEDIAN_LIFT + 0.02, grass)
         # a station every third block, centred, 32 m long. The real corridor is
         # 3 km with 17 stations, which is 175-185 m apart, and our blocks
         # average 64: three blocks is the sourced spacing rather than a guess.
-        if j % 3 == 0 and size > 40:
+        if j % 3 == 0 and size > 40 and not (cy > p0 and cy < p1):
             sl = min(32.0, size - 12)
             m.prism([(NINE - PLATFORM, cy - sl / 2), (NINE + PLATFORM, cy - sl / 2),
                      (NINE + PLATFORM, cy + sl / 2), (NINE - PLATFORM, cy + sl / 2)],
@@ -380,8 +389,18 @@ def build_avenue(m, g):
                     m.box((NINE + s * (PLATFORM - 0.5),
                            cy + t * (sl / 2 - 1.5), PLATFORM_LIFT + 1.5),
                           (0.28, 0.28, 3.0), mat("Concrete Cool"))
+            # +1.2 of oversail, not +3.0. At 3 m the roof is 13 m wide over a
+            # 7 m platform, so from this camera it is a white slab lying across
+            # the avenue with no visible platform under it at all - which reads
+            # as a lid, not as a station. At 1.2 the deck shows on both sides.
             m.box((NINE, cy, PLATFORM_LIFT + 3.1),
-                  (PLATFORM * 2 + 3.0, sl, 0.35), mat("Station Roof"))
+                  (PLATFORM * 2 + 1.2, sl, 0.35), mat("Station Roof"))
+            # the crossing that reaches it. A station nobody can walk to reads
+            # as an object dropped in the road, and this is two quads.
+            for side in (-1, 1):
+                for k in range(5):
+                    g.quad(NINE + side * (PLATFORM + 1.2 + k * 1.3), cy,
+                           0.7, 3.4, 0.05, mat("Marking"))
             # a totem at each end. A flat slab has no silhouette from any angle
             # and this camera is looking for silhouettes: two 4.5 m verticals
             # are what makes it a station rather than a wide bit of kerb.

@@ -441,6 +441,45 @@ def crowds(kit, coll, lots, data, walk, r):
     return n
 
 
+def plaza_people(kit, coll, data, r):
+    """Somebody on the island, and somebody waiting for a bus.
+
+    The plaza used to get its crowd for free, from the knot of people step 05
+    scatters at every crossing - and then it moved mid-block and came out
+    deserted. An empty plaza around a monument reads as a model rather than as
+    a city, and this is the one place in frame the eye is sent to.
+    """
+    av = data.get("avenue9j")
+    if av is None:
+        return 0
+    n = 0
+    px, py, hw, hl = av["plaza"]
+    for _ in range(34):
+        # rejection-sample the oval: a rectangle puts a third of them on the
+        # asphalt outside it
+        a, rad = r.uniform(0, 6.28), math.sqrt(r.random())
+        x, y = px + hw * rad * math.cos(a), py + hl * rad * math.sin(a)
+        name, rot = r.choice(PEOPLE), r.uniform(0, 6.28)
+        if not free("person", x, y, 0.24):
+            continue
+        instance(kit[name], coll, (x, y, 0.24), rot)
+        n += 1
+    # and the platforms. A Metrobus station with nobody on it is a shelter.
+    plat = av["platform"]
+    for (cy, size) in data["blocks_y"]:
+        if abs(cy - py) < hl + 6.0:
+            continue
+        for _ in range(r.randint(0, 7)):
+            x = av["x"] + r.uniform(-plat + 0.8, plat - 0.8)
+            y = cy + r.uniform(-13.0, 13.0)
+            name, rot = r.choice(PEOPLE), r.uniform(0, 6.28)
+            if not free("person", x, y, 0.40):
+                continue
+            instance(kit[name], coll, (x, y, 0.40), rot)
+            n += 1
+    return n
+
+
 def rooftop_people(kit, coll, r):
     """ROOFPROPS only. CAMPUSROOF exists but is empty: the title blocks carry
     the letters themselves now, so there are no campus roofs to stand on."""
@@ -496,7 +535,8 @@ def main():
     planting(kit, nat, lots, r)
     li = lights_and_signals(kit, fur, data, r)
     ca = traffic(kit, tra, data, r) + parked(kit, tra, lots, r)
-    pe = crowds(kit, ppl, lots, data, walk, r) + rooftop_people(kit, rpl, r)
+    pe = (crowds(kit, ppl, lots, data, walk, r)
+          + plaza_people(kit, ppl, data, r) + rooftop_people(kit, rpl, r))
 
     print(f"\n  trees {len(nat.objects)} ({med} down the 9 de Julio medians)"
           f"  furniture {li}  cars {ca}  people {pe}")

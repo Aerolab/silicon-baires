@@ -460,15 +460,26 @@ carriageway — is legible as structure instead of as absence. The jacarandá is
 over-represented in the median rows on purpose, because the real avenue is one
 of the places people go to see them.
 
-The Metrobús platforms get a canopy that oversails the bus lanes and a 4.4 m
-totem at each end. Without them a station is a paving slab seen from directly
-above, and this camera is looking for silhouettes.
+The Metrobús platforms get a canopy, a 4.4 m totem at each end and a zebra
+reaching them from both medians. Without the totems a station is a paving slab
+seen from directly above, and this camera is looking for silhouettes; without
+the crossing it is an object dropped in the road, because nobody could walk to
+it. The canopy oversails the platform by **1.2 m and no more** — at 3 m it is
+13 m of white lying across a 70 m avenue with no visible platform underneath,
+which reads as a lid rather than as a station.
 
 **Plaza de la República is an oval, 60 × 31 m**, and it is not a plaza beside
 the avenue: the two directions of the 9 de Julio **separate and pass around
-it**, which is what the real one does since the 1971 layout. Corrientes and
-Diagonal Norte cross there, both 33 m against the avenue's 140 — so even in the
-real city the Obelisco stands where a wide street meets a much wider one.
+it**, which is what the real one does since the 1971 layout.
+
+**It sits mid-block, not on a crossing**, and that is a correction. The real
+one is at a junction — Corrientes and Diagonal Norte, both 33 m against the
+avenue's 140 — so it went on a crossing first. It does not work, because our
+crossings are crossings: the cross street runs straight through the island, so
+traffic drives over the plaza and through the monument. The real Corrientes
+does not do that; it was diverted in 1971 and bends around the Obelisco, which
+makes the plaza a hole in the traffic rather than a junction. Mid-block gives
+the same read and none of the geometry.
 
 **The oval is the point, and it took a photograph to see it.** Built as a
 rectangle of the same dimensions it reads as a widening of the road; built as

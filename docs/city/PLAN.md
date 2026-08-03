@@ -677,6 +677,41 @@ moment SIGNS was added to the check, now the masts. The check finds them
 because it tests *every loose object*, not the ones somebody remembered to
 validate. That property is the reason it works and it is worth protecting.
 
+### The plaza, and a check that could not have caught it
+
+Two faults spotted by eye in the GUI, after all five checks had passed.
+
+**A colectivo standing on a planting bed of the plaza.** Step 05 already
+refuses to *place* a bus on the plaza, and that is not the same question: a bus
+in the corridor covers 110–145 m in a ten-second shot and the island is 60 m
+long, so one that starts a hundred metres south of it finishes on top of it.
+The overlap check looks at frame 1, and at frame 1 the bus is on the road. So
+this is a class of fault the checks are structurally blind to — **anything that
+is only wrong once the animation has run**. Step 11 now hides the buses whose
+ten seconds take them onto the island, the same policy it already uses for
+crossing conflicts.
+
+Worth noting what I got wrong just before this: when the beds first made the
+overlap check fail, I moved them into the ground mesh. That was right for the
+people standing on them and it *also* silenced the bus, which was a real fault.
+Moving a thing out of the check because the check complains is only correct
+when the complaint is the false one.
+
+**The cross street ran straight through the island**, so traffic drove over the
+plaza and through the monument. The plaza is now mid-block. The real Corrientes
+is at that junction, but it was diverted in 1971 and bends around the Obelisco;
+ours has no such bend, so mid-block is the closer reproduction of the effect.
+
+That move broke the median trimming, which cut one end off a run — correct when
+the plaza was at a crossing, wrong when it lands in the middle of a run with
+planting owed on both sides. It cuts into two runs now.
+
+**And the plaza came out deserted**, because it used to get its crowd for free
+from the knot of people scattered at every crossing. An empty plaza around a
+monument reads as a model rather than as a city, and it is the one place in
+frame the eye is sent to. 34 people on the island, sampled inside the oval
+rather than in its bounding box, and a few waiting on each Metrobús platform.
+
 ### Where the numbers landed
 
 | | |

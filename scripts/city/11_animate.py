@@ -50,11 +50,34 @@ CLEAR = 4.0                       # half a car plus half a lane, metres
 MAX_HOLD = 45.0                   # how far back a car may be held, metres
 PASSES = 6
 solids, SUPER = None, (0, 0, 0, 0)
+PLAZA = None                      # (x, y, half_w, half_l) or None
 
 
 def in_super(x, y):
     x0, x1, y0, y1 = SUPER
     return x0 <= x <= x1 and y0 <= y <= y1
+
+
+def onto_plaza(c):
+    """Does this vehicle's ten seconds take it onto the Obelisco's island?
+
+    Step 05 already refuses to PLACE a bus on the plaza. That is not the same
+    question and it is not enough: a bus in the corridor covers 110-145 m in
+    the shot and the island is 60 m long, so one that starts a hundred metres
+    south of it finishes on top of it. The check that found this could not: it
+    looks at frame 1, and at frame 1 the bus is on the road.
+
+    Only the corridor is affected. The lateral carriageways run outside the
+    island by construction, and the cross streets no longer touch it now that
+    the plaza sits mid-block.
+    """
+    if PLAZA is None:
+        return False
+    px, py, hw, hl = PLAZA
+    if c.axis != 1 or abs(c.lane - px) > hw:
+        return False
+    a, b = c.p0, c.p0 + c.dir * c.v * T
+    return max(a, b) > py - hl - 6.0 and min(a, b) < py + hl + 6.0
 
 
 class Car:
@@ -195,9 +218,11 @@ def helicopter(scene):
 def main():
     bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
     scene = bpy.context.scene
-    global solids, SUPER
+    global solids, SUPER, PLAZA
     solids = Solids.load(R / "city_solids.json")
-    SUPER = json.loads((R / "city_lots.json").read_text())["superblock"]
+    lots = json.loads((R / "city_lots.json").read_text())
+    SUPER = lots["superblock"]
+    PLAZA = lots.get("avenue9j", {}).get("plaza")
     scene.render.fps = FPS
     scene.frame_start, scene.frame_end = 1, FRAMES
 
@@ -218,6 +243,17 @@ def main():
     cars = [Car(ob, speeds[(int(ob["axis"]), round(float(ob["lane"]), 2),
                             int(ob["dir"]))]) for ob in vehicles]
     print(f"\n  {len(cars)} vehicles in {len(speeds)} lanes")
+
+    # before anything else: the corridor stops at the island. Hidden and not
+    # deleted, like everything else this step takes off the road, so it stays
+    # re-runnable.
+    over = [c for c in cars if onto_plaza(c)]
+    for c in over:
+        c.ob.hide_render = c.ob.hide_viewport = True
+        cars.remove(c)
+    if over:
+        print(f"  {len(over)} buses would have driven over Plaza de la "
+              f"Republica in the shot")
 
     first = len(conflicts(cars))
     for k in range(PASSES):
