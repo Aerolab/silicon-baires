@@ -328,6 +328,20 @@ Footprint x −26.0 to 22.0 and y −12.7 to 90.7, inside a block of x −31 to 
 and y −31 to 109. Roof box 0.554 × 0.615 of frame against the reference's
 0.642 × 0.437, in a 170 m frame.
 
+**Those four numbers are fractions of frame and must not be divided.** The
+frame is 16:9, so a height fraction is worth 0.5625 of a width fraction in
+metres. Read as ratios they say 0.90 against 1.47 and the title looks too tall;
+converted to true aspect they say **1.60 against 2.61** and it is too narrow.
+Both readings happen to point the camera the same way, which is why the error
+survived, but the size of the gap was wrong by 60 %.
+
+Solved from the geometry rather than by trying elevations: at azimuth 45 the
+roof box aspect is 1.62 at elevation 38 — which agrees with the 1.60 measured
+off the render, so the model of the projection is right — and it reaches the
+reference's 2.61 at **elevation 22.5°**. That is the number for the camera
+move. Lower the camera and the word spreads; there is no other lever, since
+the footprint is fixed by the block.
+
 `clear_ground()` in step 08 removes whatever the earlier steps left standing
 inside the letters, since they run first and know nothing about where the words
 land. It must never touch the KIT masters: they live near the origin, the title

@@ -9,8 +9,19 @@ the move is animated.
 The findings recorded here previously — that the lean unwinds to nothing at
 azimuth 20 — belonged to a version whose words were rotated off the street
 grid, and they no longer hold. The title now sits on the grid, so what the
-camera does to it is fixed by the city, not tunable. Re-run this and read the
-frames before designing the move.
+camera does to it is fixed by the city, not tunable.
+
+What IS tunable is how wide the word reads, and it comes out of the elevation
+alone. The red roof box has a true aspect of 1.62 at elevation 38 and the
+reference's is 2.61; solving the projection gives **elevation 22.5°** for a
+match, and the "low" shot below at 26° is most of the way there. A move that
+descends is therefore a move toward the reference, not away from it.
+
+Note the trap in the numbers step 08 prints: 0.554 x 0.615 against the
+reference's 0.642 x 0.437 are fractions of a 16:9 frame, so dividing them is
+meaningless. In metres a height fraction is worth 0.5625 of a width fraction.
+
+Re-run this and read the frames before designing the move.
 
     ./bl scripts/city/96_check_title_move.py
 """
@@ -32,8 +43,11 @@ def main():
     bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
     scene = bpy.context.scene
     title = bpy.data.collections["TITLE"]
+    # TitleRoot is an Empty and has no mesh: ob.data is None and this died on
+    # it. The same Empty caught 99_check_overlap.py the first time it ran.
     pts = [ob.matrix_world @ v.co
-           for ob in title.objects for v in ob.data.vertices]
+           for ob in title.objects if ob.type == "MESH"
+           for v in ob.data.vertices]
     centre = sum(pts, Vector((0, 0, 0))) / len(pts)
     print(f"  title centre {tuple(round(v, 1) for v in centre)}")
 
