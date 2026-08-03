@@ -35,10 +35,21 @@ R = ROOT / "renders"
 
 OBELISCO = (3, 4)          # the plaza it stands on
 FLORALIS = (5, 4)
-# real numbers, and they matter: the ratio of a 67.5 m shaft to a 6.8 m base
-# is what makes it read as the Obelisco rather than as a generic spire
-OB_H, OB_BASE, OB_TOP, OB_CAP = 67.5, 6.8, 3.5, 3.5
-FLOR_H, FLOR_D, PETALS = 23.0, 20.0, 6
+# Real numbers, checked against both Wikipedias rather than remembered, because
+# the ratio of the shaft to the base is the whole reason it reads as the
+# Obelisco and not as a generic spire.
+#
+# 67.5 m total, of which 63 m is shaft, from a square base to a 3.50 m square
+# where the apex begins; the apex is therefore 4.5 m and ends blunt at 40 cm,
+# not in a point. The sources disagree about the base: the Spanish article says
+# 7 x 7 m in one place and 6.80 m per side in another. 6.8 is used here and the
+# difference is 3 mm on screen.
+OB_H, OB_SHAFT, OB_BASE, OB_TOP, OB_TIP = 67.5, 63.0, 6.8, 3.5, 0.40
+# 23 m tall, 32 m across with the petals open, standing over a 44 m pool.
+# The first pass had it at 20 m across over a 14 m pool, which made it a
+# sculpture on a lawn instead of the thing that fills its own plaza.
+FLOR_H, FLOR_D, FLOR_POOL, PETALS = 23.0, 32.0, 44.0, 6
+FLOR_LEAN = math.radians(52)
 
 
 def taper(m, cx, cy, z0, z1, w0, w1, material, xform=None):
@@ -59,7 +70,7 @@ def obelisco(m, cx, cy, lift):
     z = lift
     m.slab(cx, cy, OB_BASE + 5.0, OB_BASE + 5.0, z, z + 0.9, mat("Paving Pale"))
     z += 0.9
-    shaft = OB_H - OB_CAP
+    shaft = OB_SHAFT
     # eight segments rather than one, so the silhouette stays faceted like
     # everything else here instead of turning into the one smooth object
     for k in range(8):
@@ -67,7 +78,8 @@ def obelisco(m, cx, cy, lift):
         taper(m, cx, cy, z + shaft * t0, z + shaft * t1,
               OB_BASE + (OB_TOP - OB_BASE) * t0,
               OB_BASE + (OB_TOP - OB_BASE) * t1, stone)
-    taper(m, cx, cy, z + shaft, z + shaft + OB_CAP, OB_TOP, 0.25, stone)
+    taper(m, cx, cy, z + shaft, z + OB_H - 0.4, OB_TOP, OB_TIP * 2.2, stone)
+    taper(m, cx, cy, z + OB_H - 0.4, z + OB_H, OB_TIP * 2.2, OB_TIP, stone)
     # the door at the foot and the four small openings near the top: two
     # marks, and they are the only detail on it that is not the taper
     m.slab(cx, cy - (OB_BASE / 2 + 0.05), 2.2, 0.2, z + 0.1, z + 4.0, dark)
@@ -76,7 +88,7 @@ def obelisco(m, cx, cy, lift):
         m.slab(cx + sx * (w / 2 + 0.05), cy + sy * (w / 2 + 0.05),
                0.9 if sy else 0.2, 0.2 if sy else 0.9,
                z + shaft * 0.93, z + shaft * 0.93 + 1.3, dark)
-    return OB_BASE + 5.0, lift + OB_H + 1.0
+    return OB_BASE + 5.0, lift + OB_H + 0.9
 
 
 def plaza(m, cx, cy, w, d, lift):
@@ -101,19 +113,21 @@ def floralis(m, cx, cy, lift):
     city, which is what makes it read at this size."""
     steel = mat("Steel Bright")
     z = lift
-    m.cyl((cx, cy, z), 7.0, 0.5, mat("Water"), segs=24)
-    m.cyl((cx, cy, z + 0.5), 1.1, FLOR_H * 0.42, steel, segs=10, top=0.8)
-    base = z + FLOR_H * 0.42
+    m.cyl((cx, cy, z), FLOR_POOL / 2, 0.4, mat("Water"), segs=32)
+    m.cyl((cx, cy, z + 0.4), 1.3, FLOR_H * 0.40, steel, segs=10, top=0.9)
+    base = z + FLOR_H * 0.40
+    # the petal leans out and the spread is what is published, so the length
+    # is solved from it rather than picked: half the spread over sin(lean)
+    total = (FLOR_D / 2) / math.sin(FLOR_LEAN)
+    blade, tip = total * 0.86, total * 0.14
     for k in range(PETALS):
         a = 2 * math.pi * k / PETALS
-        lean = math.radians(52)
         x = (Matrix.Translation(Vector((cx, cy, base))) @
-             Matrix.Rotation(a, 4, "Z") @ Matrix.Rotation(lean, 4, "Y"))
-        length = FLOR_H * 0.62
+             Matrix.Rotation(a, 4, "Z") @ Matrix.Rotation(FLOR_LEAN, 4, "Y"))
         # the petal is a long tapered blade lying along local +Z once leaned
-        taper(m, 0, 0, 0.0, length, 2.6, 5.2, steel, x)
-        taper(m, 0, 0, length, length + 2.4, 5.2, 0.6, steel, x)
-    return FLOR_D, lift + FLOR_H
+        taper(m, 0, 0, 0.0, blade, 3.0, 6.4, steel, x)
+        taper(m, 0, 0, blade, blade + tip, 6.4, 0.8, steel, x)
+    return FLOR_POOL, lift + FLOR_H
 
 
 def cupola(m, cx, cy, top, radius):

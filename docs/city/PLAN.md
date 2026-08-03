@@ -498,8 +498,29 @@ reference frames, the fraction of pixels below 0.25 luminance runs 11.1, 16.0,
 35.1, 35.2 %, and mean saturation runs 0.220 to 0.336. An earlier pass took
 15.7 % off one frame and wrote it down as *the* reference; a later critique took
 35.2 % off a different one and concluded we were 22 points too bright. Ours sits
-inside the range on every measure except green coverage, which is 28.5 % against
-21.9–26.2 % — a little heavy, and the trees are why.
+inside the range on every measure except green coverage, which is 27.7 % against
+21.9–26.2 %.
+
+**That last one was chased and should not be chased again.** The ground is the
+larger source: with the ordinary blocks in lawn it contributes 14.9 points of
+green against 9.7 from every tree canopy in frame put together, so paving them
+is the obvious lever. Measured, in both directions:
+
+| | green | saturation |
+|---|---|---|
+| all lawn | 27.7 % | 0.284 |
+| half paved | 19.5 % | 0.245 |
+| all paved | 17.3 % | 0.237 |
+
+Half paved lands closer to all paved than to all lawn, and that gives the game
+away: the hero frame shows about six blocks out of eighty, so the number is
+decided by which handful the camera happens to see rather than by the
+proportion in the city. It is sampling noise at n = 6. Both changes also took
+saturation down with them, because paving is grey — so the fix made two of the
+three measures worse. Reverted. The 1.5-point overshoot is smaller than the
+4.3-point spread the reference frames have between themselves, and the next
+lever, if anyone wants one, is the tree count or the palette, not the lot
+surface.
 
 Also open, and probably not fixable here: the title face renders at
 (0.809, 0.198, 0.102) against the reference's (0.928, 0.107, 0.085) — the

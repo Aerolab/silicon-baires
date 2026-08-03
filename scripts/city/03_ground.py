@@ -102,6 +102,28 @@ def pick_kind(i, j, r):
 
 
 def surface_mat(kind):
+    """Ordinary blocks are lawn. Tried the other two ways and measured both.
+
+    The frame reads 27.7 % green against a reference that runs 21.9 to 26.2,
+    and the ground contributes 14.9 points of that against 9.7 from every tree
+    canopy in frame put together, so paving the ordinary blocks is the obvious
+    lever. It does not work:
+
+        all lawn      green 27.7 %   saturation 0.284
+        half paved    green 19.5 %   saturation 0.245
+        all paved     green 17.3 %   saturation 0.237
+
+    Half paved lands closer to all paved than to all lawn, which gives the
+    game away: the hero frame shows about six blocks out of eighty, so the
+    number is decided by which handful the camera happens to see, not by the
+    proportion in the city. It is sampling noise at n = 6.
+
+    So this stays as it was. All lawn scores best on saturation, which is the
+    measure that actually mattered, and its 1.5-point green overshoot is
+    smaller than the 4.3-point spread the four reference frames have between
+    themselves. Do not chase this number again from here; the lever would have
+    to be the tree count or the palette, not the lot surface.
+    """
     return {"park": mat("Grass"), "parking": mat("Asphalt Lot"),
             "plaza": mat("Paving"), "construction": mat("Dirt"),
             "std": mat("Grass")}[kind]

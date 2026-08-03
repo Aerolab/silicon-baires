@@ -40,14 +40,18 @@ Measured the same way across all four frames, Rec.709 luma on sRGB:
 |---|---|---|---|---|---|
 | Mean luminance | 0.414 | 0.406 | 0.498 | 0.476 | **0.439** |
 | Pixels below 0.25 | 35.2 % | 35.1 % | 16.0 % | 11.1 % | **13.1 %** |
-| Mean saturation | 0.336 | 0.316 | 0.335 | 0.220 | **0.283** |
-| Green coverage | 22.4 % | 23.6 % | 21.9 % | 26.2 % | **28.5 %** |
+| Mean saturation | 0.336 | 0.316 | 0.335 | 0.220 | **0.284** |
+| Green coverage | 22.4 % | 23.6 % | 21.9 % | 26.2 % | **27.7 %** |
 
 The dark-pixel fraction runs from 11 % to 35 % across four frames of the same
 sequence. An earlier pass took 15.7 % off one frame and wrote it down as *the*
 number; a critique later took 35.2 % off a different one and called us 22 points
 too bright. Both are one frame. We sit inside the range on every row except
-green, which is now a little high.
+green, which is 1.5 points high. Paving the ordinary block interiors is the
+obvious lever and it does not work: it overshoots to 17.3 % and takes
+saturation down with it, because the hero frame samples six blocks out of
+eighty and the number is noise at that size. See `PLAN.md` for the three
+measurements. Do not chase it from the lot surface.
 
 | | Reference | Where we landed |
 |---|---|---|
@@ -281,7 +285,15 @@ are all invisible from here. Silhouette and colour are what is left.
 | **Colectivos**, flat two-tone per line | a small bright rectangle among the cars |
 | **The Obelisco**, 67.5 m on a 6.8 m base | taller than every building here, so it is the only vertical in frame |
 | **Cúpulas** on corner buildings, oxidised `#4a6b63` | a dome is a silhouette, not a texture |
-| **Floralis Genérica**, 23 m of steel | the only polished thing in the city |
+| **Floralis Genérica**, 23 m, 32 m across, over a 44 m pool | the only polished thing in the city, and the pool is what makes its plaza read |
+
+The monument numbers are sourced, not remembered, and two were wrong the first
+time. The Obelisco is 67.5 m of which **63 m is shaft**, from the base to a
+3.50 m square where the apex begins — so the apex is 4.5 m, not 3.5 — and it
+ends **blunt at 40 cm**, not in a point. (The sources disagree about the base:
+7 × 7 m in one place, 6.80 m per side in another.) The Floralis is **32 m
+across** open over a **44 m pool**, not the 20 m and 14 m first built, which
+made it a sculpture on a lawn instead of the thing that fills its own plaza.
 
 Rejected for this camera, and worth recording so they are not tried again:
 veredas, medianeras, café tables, kioscos, laundry on terraces. All real, all
