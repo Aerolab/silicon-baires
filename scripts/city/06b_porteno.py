@@ -11,9 +11,17 @@ on the island step 03 opens at the crossing, because that is where the real one
 is and because an avenue is the thing that explains it: a monument in a plaza
 is a monument, and a monument in the middle of eight lanes is Buenos Aires.
 
-THE CUPOLAS. Domes on the corners of buildings on street corners. This is the
-one eye-level Buenos Aires detail that survives being seen from above, because
-a dome is a silhouette rather than a texture, and downtown is full of them.
+THERE ARE NO CUPOLAS ANY MORE, and the reason is worth keeping. A dome is a
+real porteno cue and it does survive this camera, so it was built - scattered
+across roofs at a fixed rate. It looked wrong, and the first fix was to put
+each one on an actual street corner instead of a random corner of a published
+box, which is correct and was still not enough. What was missing is that a
+cupola belongs to a KIND OF BUILDING: it crowns an academic pile with a
+mansard and a corner rotunda, and stuck on a flat modern office block it reads
+as a hat on the wrong head however carefully it is placed. Adding one dome is
+cheap; adding the building it belongs to is a different job. Until that job is
+done there are none, because a cue that reads as a mistake is worse than an
+absent cue.
 
 FLORALIS GENERICA. Six steel petals of 20 m and four stamens, 23 m to the tips
 and 26 above them, over a 44 m pool. It is the only polished thing in the city.
@@ -85,6 +93,12 @@ FLOR_STAM = 26.5              # the stamens finish well above the petals
 # available arc.
 FLOR_PETAL_W = 10.6           # width at the tip, where a petal is widest
 FLOR_STAM_LEAN = 2.8          # how far the stamens lean out of the bowl
+# How close a building's corner has to be to a block corner to count as a
+# corner building. The lot in the JSON is the interior - the pavement is
+# already taken off it - and step 04 sets the wall back another 0.5 to 1.3,
+# then publishes the box 0.45 proud of that. So the honest gap is small and
+# the tolerance only has to cover the setback.
+CORNER_TOL = 4.5
 
 
 def taper(m, cx, cy, z0, z1, w0, w1, material, xform=None):
@@ -337,68 +351,12 @@ def republica(m, g, sol, cx, cy, rx, ry, lift):
     # the pole IS solid and does get published: 18 m of it, and a tree or a
     # person growing through a flagpole is the same error as through a wall
     sol.add(cx, fy, 5.0, 5.0, 0.0, 0.0, z + 18.0)
-
-
-def cupola(m, cx, cy, top, radius):
-    """Drum, dome, lantern. Faceted on purpose, like everything else."""
-    slate, trim = mat("Cupola Slate"), mat("Cupola Trim")
-    m.cyl((cx, cy, top), radius * 1.12, 1.6, trim, segs=12)
-    z = top + 1.6
-    rings = 5
-    for k in range(rings):
-        t0, t1 = k / rings, (k + 1) / rings
-        r0 = radius * math.cos(t0 * math.pi / 2)
-        r1 = radius * math.cos(t1 * math.pi / 2)
-        h = radius * 1.15
-        m.cyl((cx, cy, z + h * t0), r0, h * (t1 - t0), slate, segs=12, top=r1)
-    z += radius * 1.15
-    m.cyl((cx, cy, z), radius * 0.22, radius * 0.5, trim, segs=8,
-          top=radius * 0.18)
-    m.cone((cx, cy, z + radius * 0.5), radius * 0.22, radius * 0.7, trim,
-           segs=8)
-
-
-def corner_domes(m, sol, boxes, props, removed, r):
-    """On buildings that stand on a street corner, which is where they are in
-    the real city. A dome in the middle of a block is a chapel, not a corner
-    building, and it looks like a mistake."""
-    n = 0
-    for (cx, cy, w, d, rot, z0, z1, tag) in boxes:
-        if tag != "buildings" or z1 < 12.0 or min(w, d) < 18.0:
-            continue
-        if r.random() > 0.16:
-            continue
-        # a corner of the roof, not the centre
-        sx, sy = r.choice((-1, 1)), r.choice((-1, 1))
-        rad = min(min(w, d) * 0.20, 5.0)
-        px = cx + sx * (w / 2 - rad * 1.5)
-        py = cy + sy * (d / 2 - rad * 1.5)
-        # Step 04 furnished this roof before anybody thought of putting a
-        # dome on it, so the corner usually already has a chiller on it. The
-        # first version skipped those roofs and got three domes out of a whole
-        # city, because a solar array reaches ten metres and there are not many
-        # clear corners. The dome wins instead and the unit comes off: it is
-        # the larger thing and it is the one that carries the resemblance.
-        for ob, qx, qy, qr in list(props):
-            if (px - qx) ** 2 + (py - qy) ** 2 < (rad * 1.3 + qr) ** 2:
-                bpy.data.objects.remove(ob, do_unlink=True)
-                props.remove((ob, qx, qy, qr))
-                removed[0] += 1
-        cupola(m, px, py, z1 - 0.85, rad)
-        sol.add(px, py, rad * 2.6, rad * 2.6, 0.0, z1 - 0.85,
-                z1 + rad * 2.4)
-        n += 1
-    return n
-
-
 def main():
     bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
     pbrmat("Obelisco Stone", "#d9d2c2", 0.72)
     pbrmat("Obelisco Dark", "#2a2724", 0.80)
     pbrmat("Paving Pale", "#a8a294", 0.85)
     pbrmat("Steel Bright", "#c9ccd0", 0.22, metallic=0.9)
-    pbrmat("Cupola Slate", "#4a6b63", 0.65)      # oxidised copper, not grey
-    pbrmat("Cupola Trim", "#cfc7b4", 0.75)
     pbrmat("Shield Bronze", "#8a6a3c", 0.45, metallic=0.5)
     # the red tile of the plaza border. It is the only red on the ground in
     # the whole city, which is exactly why it works from this distance.
@@ -451,20 +409,6 @@ def main():
     sol.add(lot["x"], lot["y"], dia, dia, 0.0, 0.0, ztop)
     print(f"  floralis at ({lot['x']:.0f}, {lot['y']:.0f}), "
           f"top at {ztop:.1f} m")
-
-    boxes = Solids.load(R / "city_solids.json").boxes
-    props = []
-    for cname in ("ROOFPROPS", "SIGNS"):
-        if cname in bpy.data.collections:
-            for ob in bpy.data.collections[cname].objects:
-                if ob.type != "MESH" or not ob.data.vertices:
-                    continue
-                rr = max(math.hypot(v.co.x, v.co.y) for v in ob.data.vertices)
-                props.append((ob, ob.location.x, ob.location.y,
-                              rr * max(abs(ob.scale.x), abs(ob.scale.y))))
-    removed = [0]
-    n = corner_domes(m, sol, boxes, props, removed, r)
-    print(f"  cupolas: {n}   roof units removed for them: {removed[0]}")
 
     m.build("porteno", coll)
     g.build("porteno_ground", coll)

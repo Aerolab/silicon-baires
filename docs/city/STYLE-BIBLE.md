@@ -367,7 +367,6 @@ are all invisible from here. Silhouette and colour are what is left.
 | **Taxis**, black body, `#f2c300` roof | this camera sees mostly roof, and the roof is the livery |
 | **Colectivos**, flat two-tone per line | a small bright rectangle among the cars |
 | **The Obelisco**, 67.5 m on a 6.8 m base | taller than every building here, so it is the only vertical in frame |
-| **Cúpulas** on corner buildings, oxidised `#4a6b63` | a dome is a silhouette, not a texture |
 | **Floralis Genérica**, six 20 m petals and four stamens, 32 m across, over a 44 m pool | the only polished thing in the city, and the pool is what makes its plaza read |
 
 The monument numbers are sourced, not remembered, and two were wrong the first
@@ -426,6 +425,18 @@ Jacarandá is only 3.6 % of the city's 432,000 street trees; fresno americano is
 36 % and dominant, then plátano, ficus, tilo, paraíso. We run jacarandá at 20 %
 because one tree in twenty-eight would not read at all from here, and the point
 of the cue is to be seen. That is a knowing exaggeration, not an error.
+
+**Cúpulas were built and then removed, and the reason is the useful part.** A
+dome is a real cue and it does survive this camera — a dome is a silhouette,
+not a texture. It was built as domes scattered across roofs at a fixed rate,
+which looked wrong. The first fix was to put each one on an actual street
+corner rather than a random corner of a published box — correct, and still not
+enough. **What was missing is that a cupola belongs to a kind of building.** It
+crowns an academic pile with a mansard and a corner rotunda; stuck on a flat
+modern office block it reads as a hat on the wrong head however carefully it is
+placed. Adding a dome is cheap, adding the building it belongs to is a
+different job, and until that job is done there are none — a cue that reads as
+a mistake is worse than an absent cue.
 
 Rejected for this camera, and worth recording so they are not tried again:
 veredas, café tables, kioscos, laundry on terraces, fileteado on the colectivos
