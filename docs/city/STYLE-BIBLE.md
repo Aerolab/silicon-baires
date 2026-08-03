@@ -272,12 +272,85 @@ reproduced is how a logo is physically mounted, because that is what shows.
 - **Mast disc.** A large disc on a pole, standing clear of the roof, turned to
   face the camera. One or two in frame at most: it is a hero.
 
+Two more formats — the rooftop **billboard** and the **medianera** mural —
+exist only along the Avenida 9 de Julio, and are in §10b-1 below, because what
+governs them is a law rather than a reference frame.
+
+Every one of these mountings has to stand clear of what the facade already
+carries. **These facades have a shade frame 0.45 m proud and are published
+0.45 m out**, so anything mounted closer is inside the building it is mounted
+on. That is why the letters needed 1.05 m and why a mural cannot use the 0.2 m
+that is honest for real paint on real bricks.
+
 The mark is a silhouette and nothing else — a disc, a ring, a square, a
 triangle, a chevron, three bars. At this distance there is no such thing as a
 detailed logo. Saturated face, flat ink, matte: nothing here is emissive.
 
 Roof units and signs compete for the same roof, and the sign wins. Whatever
 places the units has to know where the sign is going first.
+
+### 10b-1. The avenue advertising
+
+9 de Julio is not lit by the same trade as the office park, and what it may
+carry is not a matter of taste. **GCBA Ley 2936 de Publicidad Exterior** is
+what gives the real avenue its face, and three of its articles decide the look:
+
+- **Art. 12.16.2 prohibits structures on roofs and terraces** along the
+  stretches that take in 9 de Julio. So the format that reads as this avenue
+  is the painted **medianera**, not the rooftop hoarding. The mural is the
+  common thing here and the board the exception - about three to one. Built
+  the other way round, at fourteen boards to twelve murals, it was a
+  convincing picture of a different avenue.
+- **Art. 5.4.b: a mural may cover half the visible party wall.** No cap in
+  square metres at all - it scales with the wall, which is why these are
+  enormous and why an invented 34 m ceiling was holding the big ones back. A
+  20 x 30 m wall is entitled to 300 m² of mural.
+- **Art. 5.5 caps a rooftop sign** at 100 m² over 15 m of building, 80 m²
+  over 10 m, 60 m² below that, with no more than 10 m of structure above the
+  roof. A 20 x 8 board is 160 m² and was over the largest allowance by sixty
+  per cent.
+- **Art. 5.8 fixes the panel module at 1.09 x 1.48 m** and multiples of it.
+  The murals are snapped down to whole modules. It costs nothing - rounding
+  down can never break a fit that was already checked - and it is the
+  difference between Argentine proportions and arbitrary ones.
+
+The two formats:
+
+- **Billboard.** A panel 12-20 m wide and 5-8 m tall, at most 100 m² of face,
+  standing on legs about 4 m clear of the roof deck on a visible steel frame
+  with a catwalk under it. Turned to face the camera, not the avenue: the real
+  ones are aimed at the traffic, and from azimuth 45 the traffic is the lens.
+  Rotation 135 degrees, the same number the mast disc needed. Rare here.
+- **Medianera.** A mural filling a blind party wall, up to half of it, hung
+  from just under the parapet rather than stood on the ground: once the area
+  is capped the panel no longer reaches both ends of the wall, and the half
+  worth keeping is the top one, which is the half that clears whatever stands
+  in front of it. One flat panel, one mark, no letters: the artwork is a
+  texture that goes on later. The common format on this avenue.
+
+A mural does not start at the same height on the two banks. The entrance
+canopy reaches 2.8 m off the wall at z 3.1-3.5, and `wing()` only ever builds
+canopies on the ±y walls - so the east-bank mural, which is on +y, starts at
+6.1 m, and the west-bank one, which is on +x, runs down to 2.2 m the way a
+real medianera does. One number for both threw away four metres of every west
+wall and, with the area cap in, refused every two-floor building on that side.
+
+The two banks of the avenue are not symmetrical and cannot be made so. West of
+it a building's avenue wall is its **+x** wall, which this camera sees. East of
+it the avenue wall is a **-x** wall, which is the back of the building however
+well it is built, so the mural there goes on the **+y** wall facing the cross
+street. A real medianera on that side is exposed to the cross street too, so
+this is a constraint the geometry hands over rather than a compromise.
+
+A mural is painted flat on its wall in life, and cannot be here: the facades
+carry a shade frame 0.45 m proud and are published 0.45 m out, so the panel
+stands off at the same 1.05 m the parapet letters use.
+
+The brands on these are invented too, and drawn from a different list -
+drink, bank, phone, football - so the office park does not start selling soda.
+Unlike the company signs, each avenue sign gets its **own** material rather
+than one shared per brand: these are the ones real artwork is going onto, and
+repainting one wall must not repaint four others.
 
 ## 10c. What makes it Buenos Aires
 
@@ -289,6 +362,7 @@ are all invisible from here. Silhouette and colour are what is left.
 | Cue | Why it survives |
 |---|---|
 | **Ochavas** — every block corner cut at 45° | the best of the lot, and it is not a prop: Buenos Aires cuts every street corner by code, so no block downtown has a 90° corner and every crossing opens into an octagon. Four bevels per block. With square corners the grid reads Manhattan |
+| **The Avenida 9 de Julio**, 52 m, with planted medians and a Metrobús corridor | the second best, and for the same reason as the ochava: it is structure, not a prop. Nothing else in the city is 52 m of anything |
 | **Jacarandás in flower** | violet against green reads at any size. One street tree in five; at one in two the city turns into a fantasy |
 | **Taxis**, black body, `#f2c300` roof | this camera sees mostly roof, and the roof is the livery |
 | **Colectivos**, flat two-tone per line | a small bright rectangle among the cars |
@@ -323,8 +397,11 @@ because one tree in twenty-eight would not read at all from here, and the point
 of the cue is to be seen. That is a knowing exaggeration, not an error.
 
 Rejected for this camera, and worth recording so they are not tried again:
-veredas, medianeras, café tables, kioscos, laundry on terraces, fileteado on
-the colectivos (the lines are 2–4 cm). All real, all invisible from 1450 m.
+veredas, café tables, kioscos, laundry on terraces, fileteado on the colectivos
+(the lines are 2–4 cm). All real, all invisible from 1450 m. (Medianeras were
+on this list and have come off it — see §10b. What was rejected was the blank
+painted party wall as texture; what works is the advertising mural, which is
+20 m of flat colour and reads perfectly well.)
 
 Rejected for a different reason — they would read, and they lose to the
 reference or to the frame:
@@ -338,9 +415,69 @@ reference or to the frame:
   ratio is 6.3:1 against our 5.3:1. Ours is 64 m and the title's superblock is
   sized to the word, so changing it moves the thing the whole frame is built
   around.
-- **Avenida 9 de Julio at 140 m.** It is 82 % of a 170 m frame. A widened
-  avenue at ~52 m with a raised Metrobús platform down the middle would read,
-  and is the version to build if it is ever wanted.
+- **Avenida 9 de Julio at 140 m.** It is 82 % of a 170 m frame. The 52 m
+  version is now built, and the section is the whole trick — see below.
+
+**The Avenida 9 de Julio: the width is set by one relationship, not by taste.**
+70 m against a real 110 (140 counting the lateral streets). The number that
+matters is not the absolute one — it is that **the real avenue is wider than a
+city block**, 110 m against a porteño block of about 100. Being *narrower* than
+a block is precisely what stops a wide road from reading as the widest avenue
+in the world. Our blocks average 64 m, so 70 is the smallest width that keeps
+the relationship, and the relationship is the whole cue. The first attempt was
+52 m and it is a wide avenue and nothing else.
+
+The section, all of it inside the street gap because the pavements belong to the
+blocks:
+
+| from the west building line | |
+|---|---|
+| 0 – 19 m | lateral carriageway, five lanes, one way |
+| 19 – 28 m | planted median |
+| 28 – 42 m | Metrobús corridor: bus lane, 7 m platform, bus lane |
+| 42 – 51 m | planted median |
+| 51 – 70 m | lateral carriageway, five lanes, the other way |
+
+**The bus corridor stays at 14 m however wide the avenue gets.** Four exclusive
+lanes are 13–14 m and that is sourced; it is not a proportion of anything. An
+early attempt gave it 16 m against 10 m carriageways and from above that reads
+as a dark canal with two service roads beside it. It is the wrong way round —
+what makes the avenue enormous is the asphalt, and the busway is a thin thing
+laid down the middle of it.
+
+**The Metrobús, all sourced (GCBA):** it runs *with* traffic, not counterflow;
+four exclusive lanes, two per direction; down the centre of the avenue, on the
+central medians that were cleared for it. The platform is a central island
+between the two directions, roofed, and raised **40 cm** — the height is the
+reason the platform exists, because the buses board level. The corridor is 3 km
+with 17 stations, which is **175–185 m apart**, or one station every three
+blocks at our size. (The central-island layout won over lateral platforms
+because it cost 249 trees against 893.)
+
+The medians are not decoration either. A 52 m sheet of asphalt is a runway; the
+same width striped along its length — carriageway, trees, buses, trees,
+carriageway — is legible as structure instead of as absence. The jacarandá is
+over-represented in the median rows on purpose, because the real avenue is one
+of the places people go to see them.
+
+The Metrobús platforms get a canopy that oversails the bus lanes and a 4.4 m
+totem at each end. Without them a station is a paving slab seen from directly
+above, and this camera is looking for silhouettes.
+
+**Plaza de la República is 40 × 31 m here**, and it is not a plaza beside the
+avenue: the two directions of the 9 de Julio **separate and pass around it**,
+which is what the real one does since the 1971 layout. Corrientes and Diagonal
+Norte cross there, both 33 m against the avenue's 140 — so even in the real
+city the Obelisco stands where a wide street meets a much wider one. The first
+version was 60 × 23 and read as a platform: an island four times longer than it
+is wide is part of the road, not a place.
+
+**The trees.** The real medians are dominated by palo borracho, jacarandá and
+tipa — the transplant census for the Metrobús works moved 154 palos borrachos,
+93 jacarandás, 33 lapachos and 6 tipas. We have no palo borracho in the kit, so
+the median rows run jacarandá-heavy, which is a knowing exaggeration in the same
+direction as the street trees and for the same reason: it is the one of the
+three that reads at this size.
 
 ## 10d. Movement
 
@@ -357,6 +494,26 @@ at once, not any single vehicle being convincing.
 - **People walk along the pavement axis**, and have to be told which axis it is.
 - One helicopter, high, in a straight line: the only thing in frame that is not
   on the grid.
+
+**Argentina drives on the right, and one lane table cannot serve both axes.**
+Heading +x the driver's right hand points at −y, so the +x traffic belongs on
+the negative side of the street; heading +y it points at +x, so the +y traffic
+belongs on the positive side. The two axes have opposite handedness about the
+offset sign. Written once and used for both, the Y streets came out correct by
+luck and the X streets came out British.
+
+This is worth its own paragraph because of how invisible it is. Every single
+street is internally consistent — two lanes, opposite directions, evenly spaced
+cars — and looks completely plausible on its own. The only ways to see it are
+to pick one car and follow it through an intersection, or to count. There is
+now a check that counts: `95_check_traffic.py`.
+
+On the 9 de Julio the unit is not the street but the **carriageway**. Each
+lateral is one way, like Cerrito and Carlos Pellegrini, so what has to agree
+with the direction is which side of the avenue the carriageway is on — the
++y carriageway is the one on the +x side. And the bus corridor is for buses:
+a bus lane with cars in it is not a bus lane, and the corridor is the one part
+of the avenue a viewer can actually name.
 
 ## 11. The failure modes to watch for
 

@@ -68,11 +68,12 @@ dependencies are real. Each script opens `city.blend`, adds its layer and saves:
 `02_kit.py` casually: it makes new mesh datablocks and every instance in the
 city goes on pointing at the old ones.
 
-Four standing checks, because none of these failures raise an exception:
+Five standing checks, because none of these failures raise an exception:
 
 ```bash
 ./bl scripts/city/99_check_overlap.py           # nothing is standing inside a building
 ./bl scripts/city/98_check_floating.py          # nothing buried, nothing hovering
+./bl scripts/city/95_check_traffic.py           # right-hand traffic, and on the road
 ./bl scripts/city/96_check_title_move.py        # the title from other angles
 python3 scripts/city/97_check_title.py renders/city_08_title_only.png
 ```
@@ -82,6 +83,10 @@ objects. A tree inside an office wall is invisible from the hero camera — it
 hides behind the very wall it is inside — and 917 of them survived the whole
 build until there was something that could count.
 
+`95_check_traffic.py` exists for the same reason one axis of this city drove on
+the left for weeks: every street looked completely plausible on its own, and the
+only way to see it was to follow one car or to count.
+
 Read `docs/city/STYLE-BIBLE.md` before touching the look, and `docs/city/PLAN.md`
 for how the build is organised and which decisions were already settled (roads as
 negative space, orthographic camera, depth of field from the Z pass, the title
@@ -89,10 +94,18 @@ built as buildings on the street grid). Both documents record the attempts that
 were wrong as well as the one that stuck — the title was got wrong three times,
 and every wrong version measured well.
 
-Two files travel with the `.blend` and are read by later steps, so do not delete
-them: `renders/city_solids.json`, the rectangle every solid thing occupies, and
-`renders/city_signs.json`, the manifest of company signs (name, position,
-orientation, face size) for dropping real artwork on later.
+Three files travel with the `.blend` and are read by later steps, so do not
+delete them: `renders/city_solids.json`, the rectangle every solid thing
+occupies; `renders/city_signs.json`, the manifest of company signs (name,
+position, orientation, face size) for dropping real artwork on later; and
+`renders/city_lots.json`, the street and block tables, which also carry the
+section of the Avenida 9 de Julio under `avenue9j` — steps 05 and 06b build
+from that key rather than from a second copy of the numbers.
+
+**The street tables are per axis and they are not interchangeable.** A street
+running along X sits at a Y coordinate, so it comes out of the Y table. Reading
+the wrong one is off by 5–6 m, which is less than a lane width, so every street
+still reads as a street while the cars quietly drive along the pavement.
 
 The `.blend` is the deliverable, not the scripts. There is no city generator and
 there should not be one: when a building looks wrong, fix that building.

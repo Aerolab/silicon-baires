@@ -6,15 +6,20 @@ the colectivos. This handles the three that are somewhere in particular.
 THE OBELISCO. 67.5 m tall on a 6.8 m square base, which makes it taller than
 every building in this city including the eighteen-floor tower. That is the
 whole reason it works from a camera that flattens everything else into roofs:
-it is the only vertical in frame. It goes one block off the title rather than
-next to it, because two things that tall in the middle of a frame argue.
+it is the only vertical in frame. It stands in the middle of the 9 de Julio,
+on the island step 03 opens at the crossing, because that is where the real one
+is and because an avenue is the thing that explains it: a monument in a plaza
+is a monument, and a monument in the middle of eight lanes is Buenos Aires.
 
 THE CUPOLAS. Domes on the corners of buildings on street corners. This is the
 one eye-level Buenos Aires detail that survives being seen from above, because
 a dome is a silhouette rather than a texture, and downtown is full of them.
 
-FLORALIS GENERICA. Six steel petals, 23 m tall, about 20 m across. In a plaza
-it reads as a large bright metal star, which nothing else in the city does.
+FLORALIS GENERICA. Six steel petals, 23 m tall, 32 m across, over a 44 m pool.
+It reads as a large bright metal star, which nothing else in the city does. It
+goes at the far end of the city from the Obelisco: in Buenos Aires they are
+four kilometres apart and putting them on adjacent blocks made a souvenir
+shelf out of the middle of the frame.
 
 Everything here publishes its footprint, so step 05 keeps its trees out of it.
 Run it before step 05 for that reason.
@@ -33,8 +38,17 @@ from _solids import Solids
 
 R = ROOT / "renders"
 
-OBELISCO = (3, 4)          # the plaza it stands on
-FLORALIS = (5, 4)
+# The Obelisco does not stand on a block. It stands in the middle of the
+# avenue, on the island step 03 opens for it at the crossing, which is where
+# the real one is - Plaza de la Republica is a hole in the traffic, not a
+# square beside it. Its position comes out of city_lots.json.
+FLORALIS = (2, 7)
+# One block off the title was wrong in the way that only shows once you look at
+# the whole frame: the Obelisco, the Floralis and the word were inside three
+# adjacent blocks, so the eye had three things to look at in the middle and
+# nothing anywhere else. They are now at opposite ends of the city. From the
+# hero azimuth the Obelisco falls on the left of the frame and the Floralis on
+# the right, at about the same height, which is the band a camera move sweeps.
 # Real numbers, checked against both Wikipedias rather than remembered, because
 # the ratio of the shaft to the base is the whole reason it reads as the
 # Obelisco and not as a generic spire.
@@ -91,18 +105,22 @@ def obelisco(m, cx, cy, lift):
     return OB_BASE + 5.0, lift + OB_H + 0.9
 
 
-def shields(m, cx, cy, lift):
+def shields(m, cx, cy, lift, radius=15.0):
     """The 24 provincial coats of arms set into the paving around the monument.
 
     They are 2 m discs on a 30 m ring, which is 14 px each from this camera:
     small, but a regular ring of them is the single most legible thing about
     Plaza de la Republica from above - more than any paving texture, because
     a ring is a shape and a texture is not.
+
+    The radius is passed in now: the island in the avenue is 23 m across, and a
+    30 m ring on it put eight of the twenty-four shields out on the asphalt.
     """
     for k in range(24):
         a = 2 * math.pi * k / 24
-        m.cyl((cx + 15.0 * math.cos(a), cy + 15.0 * math.sin(a), lift + 0.05),
-              1.0, 0.04, mat("Shield Bronze"), segs=10)
+        m.cyl((cx + radius * math.cos(a), cy + radius * math.sin(a),
+               lift + 0.05), radius / 15.0, 0.04, mat("Shield Bronze"),
+              segs=10)
 
 
 def plaza(m, cx, cy, w, d, lift):
@@ -206,8 +224,9 @@ def main():
     pbrmat("Cupola Trim", "#cfc7b4", 0.75)
     pbrmat("Shield Bronze", "#8a6a3c", 0.45, metallic=0.5)
 
-    lots = {tuple(l["key"]): l for l in
-            json.loads((R / "city_lots.json").read_text())["lots"]}
+    data = json.loads((R / "city_lots.json").read_text())
+    lots = {tuple(l["key"]): l for l in data["lots"]}
+    av = data.get("avenue9j")
 
     if "PORTENO" in bpy.data.collections:
         c = bpy.data.collections["PORTENO"]
@@ -225,24 +244,28 @@ def main():
     g = Mesh()
     sol = Solids()
 
-    lot = lots.get((str(OBELISCO[0]), str(OBELISCO[1])))
-    if lot is None:
-        raise SystemExit("no lot for the obelisco: the layout moved under it")
-    plaza(g, lot["x"], lot["y"], lot["size"][0], lot["size"][1], lot["lift"])
-    shields(g, lot["x"], lot["y"], lot["lift"])
-    side, ztop = obelisco(m, lot["x"], lot["y"], lot["lift"])
-    sol.add(lot["x"], lot["y"], side, side, 0.0, 0.0, ztop)
-    print(f"  obelisco at ({lot['x']:.0f}, {lot['y']:.0f}), "
+    if av is None:
+        raise SystemExit("no avenue9j in city_lots.json: re-run step 03, or "
+                         "the Obelisco has nowhere to stand")
+    ox, oy, half_w, half_l = av["plaza"]
+    lift = 0.24                            # the island, as step 03 built it
+    # no radial paving here: step 03 already paved the island, and the pattern
+    # is sized for a whole block. The ring of shields is what carries it, and
+    # it is scaled to the island rather than to a block.
+    shields(g, ox, oy, lift, radius=min(half_w, half_l) - 3.5)
+    side, ztop = obelisco(m, ox, oy, lift)
+    sol.add(ox, oy, side, side, 0.0, 0.0, ztop)
+    print(f"  obelisco at ({ox:.0f}, {oy:.0f}) in the middle of the avenue, "
           f"top at {ztop:.1f} m")
 
     lot = lots.get((str(FLORALIS[0]), str(FLORALIS[1])))
-    if lot is not None:
-        plaza(g, lot["x"], lot["y"], lot["size"][0], lot["size"][1],
-              lot["lift"])
-        dia, ztop = floralis(m, lot["x"], lot["y"], lot["lift"])
-        sol.add(lot["x"], lot["y"], dia, dia, 0.0, 0.0, ztop)
-        print(f"  floralis at ({lot['x']:.0f}, {lot['y']:.0f}), "
-              f"top at {ztop:.1f} m")
+    if lot is None:
+        raise SystemExit(f"no lot {FLORALIS} for the floralis")
+    plaza(g, lot["x"], lot["y"], lot["size"][0], lot["size"][1], lot["lift"])
+    dia, ztop = floralis(m, lot["x"], lot["y"], lot["lift"])
+    sol.add(lot["x"], lot["y"], dia, dia, 0.0, 0.0, ztop)
+    print(f"  floralis at ({lot['x']:.0f}, {lot['y']:.0f}), "
+          f"top at {ztop:.1f} m")
 
     boxes = Solids.load(R / "city_solids.json").boxes
     props = []

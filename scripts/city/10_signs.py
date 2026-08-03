@@ -21,6 +21,26 @@ Three mountings, all read off the reference frames:
   mast      a large disc on a pole, standing clear of everything and turned to
             face the camera. One or two in frame, no more: it is a hero.
 
+And two more that belong to 9 de Julio and to nowhere else in this city. The
+real avenue is an advertising corridor and the two formats that make it one are
+the rooftop billboard and the painted medianera:
+
+  billboard a large panel standing on a visible steel frame on a roof, floating
+            about 4 m over the deck on legs, with a catwalk under it. Turned to
+            face the camera rather than to face the avenue, which is what the
+            real ones do too: they are aimed at the traffic, and here the
+            traffic is the lens.
+  medianera a mural on a blind party wall, hung from just under the parapet.
+            Its size is not a range in this file: art. 5.4.b of Ley 2936 lets
+            it cover half the wall it is on and caps nothing in square metres,
+            so step 04 measures it against that wall and these come out from
+            13 m to nearly 40 m wide. One flat panel and one mark, no letters:
+            the artwork is a texture that goes on later.
+
+The two avenue formats get their own material per sign rather than one shared
+per brand, because dropping a real mural onto one wall must not repaint every
+other wall carrying the same invented company.
+
 Step 04 chooses where they go and reserves the space, and writes the plan to
 city_signs.json. This step only builds. That split is not tidiness: the roof
 units are placed in step 04, and until it knew about the signs it put nine of
@@ -57,9 +77,17 @@ DROP = 0.7                # how far under the roof edge the letter tops sit
 MAST = 0.55               # mast height as a fraction of the disc diameter
 
 
+UNIQUE = ("billboard", "medianera")   # one material each, not one per brand
+
+
 def facemat(rec):
-    return (pbrmat(f"Logo {rec['text']}", rec["face"], 0.42),
-            pbrmat(f"Ink {rec['text']}", rec["ink"], 0.42))
+    # the avenue formats are the ones real artwork is going onto, and there is
+    # no point in reserving a wall for a mural if repainting it repaints four
+    # other walls that happen to carry the same invented company
+    tag = f"{rec['name']} {rec['text']}" if rec["kind"] in UNIQUE \
+        else rec["text"]
+    return (pbrmat(f"Logo {tag}", rec["face"], 0.42),
+            pbrmat(f"Ink {tag}", rec["ink"], 0.42))
 
 
 def letters(m, rec, face, x):
@@ -165,6 +193,72 @@ def mark(m, kind, size, ink, x):
                    0.0, 0.06, ink, x)
 
 
+def upright(x, y, z, h):
+    """A transform that stands the flat mark up in a vertical panel.
+
+    mark() draws in XY and extrudes in +Z, which is right for a panel lying on
+    a roof deck and useless for one facing sideways. Rotating 90 about X sends
+    the mark's own +Z to world -Y, which is the direction every panel here
+    faces, so the glyph ends up standing on the front of the panel instead of
+    lying on its top edge.
+    """
+    return Matrix.Translation(Vector((x, y, z))) @ \
+        Matrix.Rotation(math.radians(90), 4, "X") @ \
+        Matrix.Translation(Vector((0, 0, h)))
+
+
+def billboard(m, rec, face, ink, frame, x):
+    w, h, lift = rec["w"], rec["h"], rec["lift"]
+    t = 0.35                              # panel thickness
+    b = 0.34                              # border width
+    # legs: two pairs, front and back, so the support reads as a truss and not
+    # as a panel levitating. They carry on past the panel foot on purpose.
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            m.slab(sx * w * 0.33, sy * 0.62, 0.52, 0.52, 0.0,
+                   lift + h * 0.18, frame, x)
+    for sx in (-1, 1):                    # diagonal-ish knee braces, cheaply
+        m.slab(sx * w * 0.33, 0.0, 0.34, 1.6, lift * 0.42, lift * 0.42 + 0.34,
+               frame, x)
+    m.slab(0.0, 0.0, w * 0.70, 0.34, lift * 0.62, lift * 0.62 + 0.34, frame, x)
+    # the catwalk, in front and below: the thing that makes it read as a real
+    # hoarding rather than as a floating rectangle
+    m.slab(0.0, -1.05, w * 0.94, 1.10, lift - 0.80, lift - 0.62, frame, x)
+    for sx in (-1, 1):
+        m.slab(sx * w * 0.47, -1.05, 0.16, 1.10, lift - 0.62, lift - 0.02,
+               frame, x)
+    # the face
+    m.slab(0.0, 0.0, w, t, lift, lift + h, face, x)
+    m.slab(0.0, -t / 2 - 0.09, w, 0.18, lift, lift + b, frame, x)
+    m.slab(0.0, -t / 2 - 0.09, w, 0.18, lift + h - b, lift + h, frame, x)
+    for sx in (-1, 1):
+        m.slab(sx * (w / 2 - b / 2), -t / 2 - 0.09, b, 0.18, lift, lift + h,
+               frame, x)
+    mark(m, rec["mark"], h * 1.10, ink,
+         x @ upright(0.0, 0.0, lift + h / 2, t / 2))
+
+
+def medianera(m, rec, face, ink, frame, x):
+    """Flush on the wall, or as flush as this city's facades allow.
+
+    PROUD, not the 0.2 m a painted wall really stands off its own bricks: the
+    facades here carry a shade frame 0.45 m proud and are published 0.45 m out,
+    so the honest number puts the mural inside the building it is painted on.
+    """
+    w, h = rec["w"], rec["h"]
+    t = 0.28
+    m.slab(0.0, -PROUD - t / 2, w, t, 0.0, h, face, x)
+    # a thin surround, so the mural reads as applied to the wall and has an
+    # edge to catch the light rather than dissolving into the concrete
+    m.slab(0.0, -PROUD - t - 0.06, w, 0.12, 0.0, 0.26, frame, x)
+    m.slab(0.0, -PROUD - t - 0.06, w, 0.12, h - 0.26, h, frame, x)
+    for sx in (-1, 1):
+        m.slab(sx * (w / 2 - 0.13), -PROUD - t - 0.06, 0.26, 0.12, 0.0, h,
+               frame, x)
+    mark(m, rec["mark"], min(w, h) * 1.15, ink,
+         x @ upright(0.0, 0.0, h / 2, PROUD + t))
+
+
 def build(rec, coll):
     m = Mesh()
     face, ink = facemat(rec)
@@ -177,6 +271,10 @@ def build(rec, coll):
         # word reads against the facade rather than against the sky
         letters(m, rec, face,
                 x @ Matrix.Translation(Vector((0, -PROUD, -CAP - DROP))))
+    elif kind == "billboard":
+        billboard(m, rec, face, ink, frame, x)
+    elif kind == "medianera":
+        medianera(m, rec, face, ink, frame, x)
     elif kind == "roofmark":
         s = rec["w"]
         m.slab(0, 0, s, s, 0.0, 0.10, face, x)
@@ -216,8 +314,20 @@ def main():
         # published so the overlap check knows these are meant to be there,
         # and so anything placed later keeps out of them
         zs = [(ob.matrix_world @ v.co).z for v in ob.data.vertices]
-        sol.add(rec["x"], rec["y"], rec["w"] + 1.0, rec["w"] + 1.0,
-                0.0, min(zs), max(zs))
+        if rec["kind"] == "medianera":
+            # a square the width of a 34 m mural would reach 17 m out over the
+            # pavement and refuse every tree and every pedestrian along the
+            # avenue. A mural is a rotated slot, so publish the slot: it runs
+            # the length of the panel and 1.9 m off the wall.
+            sol.add(rec["x"] + math.sin(rec["rot"]) * 0.8,
+                    rec["y"] - math.cos(rec["rot"]) * 0.8,
+                    rec["w"] + 1.0, 2.2, rec["rot"], min(zs), max(zs))
+        elif rec["kind"] == "billboard":
+            sol.add(rec["x"], rec["y"], rec["w"] + 1.0, 3.4, rec["rot"],
+                    min(zs), max(zs))
+        else:
+            sol.add(rec["x"], rec["y"], rec["w"] + 1.0, rec["w"] + 1.0,
+                    0.0, min(zs), max(zs))
     sol.merge_into(R / "city_solids.json", "signs")
 
     kinds = {}

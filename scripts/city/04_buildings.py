@@ -40,15 +40,23 @@ FAMILIES = [
 ]
 
 # cells that get something other than a plain low-rise campus
-TALL = {(1, 2): 18, (7, 6): 12, (2, 7): 10, (7, 2): 8, (1, 5): 9}
+TALL = {(1, 2): 18, (7, 6): 12, (7, 2): 8, (1, 5): 9}
 LANDMARKS = {(6, 1), (1, 6), (7, 4)}     # step 06 owns these plots
-# and step 06b owns these two: the Obelisco and the Floralis stand on them.
-# "plaza" is not an empty lot - this step builds offices on plazas - so
-# without this the Obelisco went up inside somebody's fourth floor.
-PORTENO = {(3, 4), (5, 4)}
-# the blocks the title stands on. Step 08 builds the letters here as real
+# and step 06b owns this one: the Floralis stands on it. "plaza" is not an
+# empty lot - this step builds offices on plazas - so without this the
+# monument went up inside somebody's fourth floor. The Obelisco is not here
+# any more: it stands in the middle of the avenue, which is nobody's lot.
+PORTENO = {(2, 7)}
+# The blocks the title stands on. Step 08 builds the letters here as real
 # buildings, so step 04 builds nothing: see build_campus().
-CAMPUS = {(4, 4), (4, 5), (5, 4), (5, 5)}
+#
+# Two, not four. This set had (5, 4) and (5, 5) in it as well, but the title
+# only occupies the two cells step 03 merges into the superblock - column 4 -
+# so column 5 was being left empty for a word that never reaches it. That is
+# the bare green block sitting immediately right of the title in every frame
+# since the title was built, and nothing was wrong with it except that this
+# set was a guess and the superblock is the fact.
+CAMPUS = {(4, 4), (4, 5)}
 GROUND_INSET = 0.6
 
 # Invented companies. The reference is a parade of real logos and we are not
@@ -72,6 +80,94 @@ SIGN_FACES = [
     ("NUBE", "bars", "#e8e4da", "#5c3d8f"),
 ]
 
+# The avenue advertises to drivers, not to recruiters, so it carries a
+# different register of invented brand: drink, bank, phone, football boots.
+# Same shape of record, different list, so the office park does not suddenly
+# start selling soda.
+AV_FACES = [
+    ("QUILME", "disc", "#1a7f3c", "#ffffff"),
+    ("FERNET", "ring", "#3b1f13", "#f2b705"),
+    ("BANCOSUR", "square", "#123a8f", "#ffffff"),
+    ("TELCO", "chevron", "#e8262a", "#ffffff"),
+    ("MEDIALUNA", "triangle", "#f2b705", "#3b1f13"),
+    ("PATAGON", "bars", "#0f9bd7", "#ffffff"),
+    ("GAUCHO", "square", "#c8102e", "#f7f3e8"),
+    ("ALFAJOR", "disc", "#f7f3e8", "#7a3b12"),
+    ("COLECTIVO", "chevron", "#ef7d1a", "#22201c"),
+    ("SUBTE", "ring", "#2b2f77", "#f2b705"),
+    ("ASADO", "triangle", "#8f2a1c", "#f7f3e8"),
+    ("BOCA", "bars", "#0d3b8f", "#f2b705"),
+]
+
+# How often a building that looks at the avenue carries each format, and how
+# large each is allowed to be. These are not taste: they come off the GCBA Ley
+# 2936 de Publicidad Exterior, which is what decides how the real avenue looks.
+#
+# The mural is the common format and the rooftop board the rare one, which is
+# the opposite of what this file did first. Art. 12.16.2 prohibits structures
+# on roofs and terraces along the stretches that take in 9 de Julio, so the
+# thing that gives the avenue its face is the painted medianera, not the
+# hoarding. The first pass had it 14 boards to 12 murals and that is a picture
+# of a different avenue.
+#
+# A strict reading of 12.16.2 puts the rooftop count at zero on this frontage.
+# It is kept low rather than zero on instruction. No building carries both: a
+# board and a mural on one address is the reading of this avenue the law most
+# specifically rules out.
+AV_MEDIANERA = 0.90
+# 0.35, after the rate was tuned from 0.85 to 0.22 to 0.60 to 0.18 with the
+# count stuck at one or two. The limit was never the rate: the board was being
+# offered the narrow wing. With that fixed the rate means something again.
+# The mural dominates because the law makes it the format of this avenue; the
+# board is present because the same research says plainly that systematic
+# non-compliance is what produces the real image of the place, and the
+# photograph this was built from is full of them.
+AV_BILLBOARD = 0.35
+MAST_POLE = 0.55          # pole height as a fraction of the disc diameter, and
+                          # it has to match MAST in 10_signs.py: this step
+                          # decides where the disc is and that one builds it
+AV_REACH = 15.0           # how close a wall has to be to count as on the avenue
+BOARD_LIFT = 4.2          # legs: how far the panel floats over the roof deck.
+                          # Art. 5.5 allows 10 m of structure over the roof, so
+                          # this is well inside it and is a look decision.
+# Art. 5.5, rooftop sign area, by the height of the building it stands on.
+BOARD_AREA = ((15.0, 100.0), (10.0, 80.0), (0.0, 60.0))
+MED_COVER = 0.50          # art. 5.4.b: a mural may cover half the visible party
+                          # wall. No cap in square metres - it scales with the
+                          # wall, which is why these can be enormous. It is a
+                          # ceiling and not a target, but a 0.92 x 0.55 panel
+                          # lands within a percent of it on any wall.
+# Art. 5.8 fixes the panel module at 1.09 x 1.48 m and multiples of it. The
+# mural is snapped down to whole modules, which only ever shrinks it, so it
+# cannot break a fit that was already checked.
+MODULE_W, MODULE_H = 1.09, 1.48
+# How low a mural can start, and it is not one number. The entrance canopy
+# reaches 2.8 m off the wall at z 3.1-3.5 and a panel standing 1.05 m proud is
+# inside it - but wing() only ever builds canopies on the +/-y walls, so that
+# cost is only owed on the east bank, where the mural is on +y. On the west
+# bank the mural is on +x, where there is nothing but a 0.45 m shade frame, and
+# it can run down almost to the pavement the way a real medianera does. Holding
+# both banks at 6.1 threw away four metres of every west wall and, with the
+# area cap in, refused every two-floor building on that side outright.
+#
+# 3.8 on the east bank, not 6.1. The canopy's top face is at GROUND - 1.1, so
+# 3.5 - the 6.1 was a floor's worth of guesswork on top of a number that could
+# be read off wing(). It costs a low building its whole mural shape: on a 16 m
+# wall, 6.1 of base and 1.2 of parapet gap leave 8.7 m of an area allowance
+# that would happily have paid for more, and every east-bank mural on a short
+# building came out as a long thin band across the middle of the facade
+# instead of as a mural.
+MED_BASE = {"x": 2.2, "y": 3.8}
+AV_MED_CROSS = 0.45       # a west-bank building's +y wall is a party wall too,
+                          # and art. 5.4.b is written per wall, not per address.
+                          # A corner on the real avenue is painted on both.
+MED_PROUD = 1.05          # the same projection the parapet letters use, and
+                          # for the same reason: a real mural is painted flat
+                          # on the wall, but this city's facades carry a shade
+                          # frame standing 0.45 m proud and are published 0.45
+                          # out, so a panel at the honest 0.2 m is inside the
+                          # building. See PROUD in 10_signs.py.
+
 
 def xf(cx, cy, rot):
     return Matrix.Translation(Vector((cx, cy, 0))) @ Matrix.Rotation(rot, 4, "Z")
@@ -87,7 +183,11 @@ def footprint(kind, w, d):
     if kind == "T":
         return [(0, d / 4, w, d / 2), (0, -d / 4, w / 2, d / 2)]
     if kind == "bar":
-        return [(0, 0, w, d * 0.55)]
+        # 0.72, not 0.55. A bar is meant to be a slab that leaves a forecourt,
+        # not a building that gives back nearly half its lot: at 0.55 the two
+        # bars on a split block left a strip of lawn down the middle wider than
+        # the street beside it.
+        return [(0, 0, w, d * 0.72)]
     # twins: two wings with a slot between them. One slab per block held the
     # title up fine and turned the middle of the frame into four blank boxes;
     # a 4 m slot costs almost no roof and gives the campus back its facades.
@@ -308,6 +408,28 @@ def sign_fits(sol, bx, by, length, top, h):
     return None
 
 
+def mast_fits(sol, cx, cy, rot, disc, z):
+    """The largest disc that clears its neighbours, or None.
+
+    The disc stands on edge on a pole, so in plan it is a line of length `disc`
+    lying along the rotation - and at 135 degrees that is 0.707 * disc/2 in
+    both x and y at once. The pole is at `z`, the disc sits above it, so the
+    height to test at is the middle of the disc and not the roof.
+    """
+    ux, uy = math.cos(rot), math.sin(rot)
+    for trial in (disc, disc * 0.8, disc * 0.6):
+        mid = z + MAST_POLE * trial + trial / 2
+        clear = True
+        for k in range(7):
+            t = -trial / 2 + trial * k / 6
+            if sol.hit(cx + ux * t, cy + uy * t, mid, 0.3) is not None:
+                clear = False
+                break
+        if clear:
+            return trial
+    return None
+
+
 def plan_sign(bx, by, w, d, top, floors, r, signs, sol=None):
     """Reserve a place for a company sign, and record where it is.
 
@@ -377,7 +499,244 @@ def plan_sign(bx, by, w, d, top, floors, r, signs, sol=None):
     return keep
 
 
-def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r):
+def avenue_bank(av, bx, by, w, d):
+    """Which bank of 9 de Julio this building stands on, or None.
+
+    "west" means the building sits west of the avenue, so the wall that looks
+    at it is its +x wall - a wall this camera can see. "east" means the wall
+    that looks at the avenue is a -x wall, which from azimuth 45 is the back
+    of the building and is permanently invisible however well it is built. So
+    the two banks do not get the same treatment: on the east bank the mural
+    goes on the +y wall, facing the cross street, which is where a real
+    medianera on that side would be exposed anyway.
+    """
+    if av is None:
+        return None
+    half = av["width"] / 2
+    if 0 <= (av["x"] - half) - (bx + w / 2) <= AV_REACH:
+        return "west"
+    if 0 <= (bx - w / 2) - (av["x"] + half) <= AV_REACH:
+        return "east"
+    return None
+
+
+def panel_fits(sol, wx, wy, rot, length, z):
+    """The longest wall panel that clears whatever else stands along this wall.
+
+    Same shape of question as sign_fits, and the same trap: sample where the
+    panel actually is and no closer. The panel spans MED_PROUD to about
+    MED_PROUD + 0.3 off the wall and this building's own published box already
+    reaches 0.45 out, so sampling at 1.35 with 0.4 of clearance reaches back to
+    0.95 and finds only somebody else's building.
+    """
+    ux, uy = math.cos(rot), math.sin(rot)            # along the wall
+    nx, ny = math.sin(rot), -math.cos(rot)           # outward, local -Y
+    for trial in (length, length * 0.8, length * 0.6):
+        clear = True
+        for k in range(9):
+            t = -trial / 2 + trial * k / 8
+            if sol.hit(wx + ux * t + nx * (MED_PROUD + 0.3),
+                       wy + uy * t + ny * (MED_PROUD + 0.3),
+                       z, 0.4) is not None:
+                clear = False
+                break
+        if clear:
+            return trial
+    return None
+
+
+def plan_medianera(side, bx, by, w, d, top, r, signs, sol):
+    """A mural on a blind party wall. The format the avenue is famous for.
+
+    No letters and no relief: one panel with a face colour and a mark, because
+    the artwork is a texture that goes on later and anything modelled here
+    would have to be unmodelled then.
+
+    `side` is which wall, "x" or "y", and not which bank. They came in as the
+    same argument at first and they are not the same question: a west-bank
+    building looks at the avenue over its +x wall and at the cross street over
+    its +y wall, and both of those are party walls that can be painted.
+    """
+    if side == "x":
+        wx, wy, rot, run = bx + w / 2, by, math.pi / 2, d
+    else:
+        wx, wy, rot, run = bx, by + d / 2, math.pi, w
+    wall = top - 0.85                        # under the parapet, not over it
+    base0 = MED_BASE[side]
+    if wall - base0 < 9.0:
+        return None                          # too short to read as a mural
+    # no arbitrary cap on the width any more. Art. 5.4.b has no limit in square
+    # metres: a mural may take half of whatever wall it is on, so it scales
+    # with the building and a 30 m wall is entitled to 300 m of it. The 34 m
+    # ceiling this had was invented and was holding the big walls back.
+    length = panel_fits(sol, wx, wy, rot, run * 0.92,
+                        (base0 + wall) / 2)
+    if length is None:
+        return None
+    length = modules(length, MODULE_W)
+    if length < 10 * MODULE_W:
+        return None
+    height = modules(min(wall - base0 - 1.2,
+                         MED_COVER * run * wall / length), MODULE_H)
+    if height < 5 * MODULE_H:
+        return None                          # 7.4 m: under this it is a poster
+    # and a mural is not a banner. The area allowance alone let a short wall
+    # spend all of it on width - 57 m by 7.4 is legal, is 42 % of the wall, and
+    # reads as a strip of tape across the middle of the building. Trimming the
+    # width to four times the height only ever gives area back, so the cap and
+    # the fit both still hold.
+    length = modules(min(length, height * 4.0), MODULE_W)
+    if length < 10 * MODULE_W:
+        return None
+    # hung from the top of the wall, not stood on MED_BASE. Once the area is
+    # capped the panel no longer reaches both ends of the wall, and the half it
+    # should keep is the top one: that is the half that clears the roofs of
+    # whatever is in front of it, which is the entire reason a medianera is
+    # worth renting.
+    base = max(base0, wall - 1.2 - height)
+    face = r.choice(AV_FACES)
+    rec = dict(kind="medianera", x=wx, y=wy, z=base, rot=rot,
+               w=length, h=height, run=run, wall=wall,
+               name=f"Sign.{len(signs):03d}", text=face[0], mark=face[1],
+               face=face[2], ink=face[3])
+    signs.append(rec)
+    return rec
+
+
+def plan_billboard(bx, by, w, d, top, rot, r, signs, siblings, ox, oy):
+    """A panel on legs on the roof, turned to face the camera.
+
+    Returned in wing-local coordinates as a keep-out for the roof units, the
+    same contract plan_sign has: the sign is chosen first and the mechanical
+    plant is told to go somewhere else.
+    """
+    # The panel is a line of length `board` lying at 45 degrees in plan, so it
+    # reaches 0.354 * board in both x and y whichever way the roof runs. Size
+    # it off what the roof can hold rather than off the roof's own proportion:
+    # taking 0.70 of the smaller dimension refused half the avenue, because the
+    # wing that faces it is often a 12 m arm of a U and a hoarding is 2 m deep.
+    room = min(w, d) / 2 - 3.0               # 1.6 of frame, 1.4 off the parapet
+    board = min(20.0, room / 0.354, max(w, d) * 0.9)
+    if board < 12.0:
+        return None
+    # art. 5.5: 100 square metres over 15 m of building, 80 over 10, 60 below.
+    # Scaled down about its own proportion rather than trimmed on one side, so
+    # a legal board is still the shape of a board: 20 x 8 is 160 and was over
+    # the largest allowance by sixty per cent.
+    cap = next(a for h, a in BOARD_AREA if top >= h)
+    high = min(8.0, max(5.0, board * 0.40))
+    if board * high > cap:
+        k = math.sqrt(cap / (board * high))
+        board, high = board * k, high * k
+        if high < 5.0:                       # the shape gives out before the
+            high, board = 5.0, cap / 5.0     # area does on a low building
+        if board < 12.0:
+            return None
+    rad = board * 0.354 + 1.6
+    mx, my = w / 2 - rad - 1.4, d / 2 - rad - 1.4
+    lx = max(-mx, min(mx, r.uniform(-w * 0.12, w * 0.12)))
+    ly = max(-my, min(my, r.uniform(-d * 0.12, d * 0.12)))
+    if straddles(lx, ly, rad, ox, oy, siblings):
+        return None                          # standing on a neighbour's parapet
+    face = r.choice(AV_FACES)
+    rec = dict(kind="billboard", x=bx + lx, y=by + ly, z=top - 0.83, rot=rot,
+               w=board, h=high, lift=BOARD_LIFT,
+               name=f"Sign.{len(signs):03d}", text=face[0], mark=face[1],
+               face=face[2], ink=face[3])
+    signs.append(rec)
+    return (lx, ly, 2 * rad + 1.0, 2 * rad + 1.0)
+
+
+def modules(x, unit):
+    """Down to a whole number of art. 5.8 panel modules.
+
+    1.09 x 1.48 m is the sheet an Argentine mural is actually assembled from,
+    so a mural that is a whole number of them has proportions off the street
+    rather than off a random number generator. It only ever rounds down, which
+    is why it is safe to apply after the fit has been checked.
+    """
+    return math.floor(x / unit) * unit
+
+
+def avenue_rng(bx, by):
+    """A random stream of this building's own, not the city's.
+
+    Every avenue draw used to come out of the shared `r`, so adding one coin
+    flip here reshuffled all eighty lots downstream of it: the mural count came
+    out 7, then 11, then 9, then 8 across four runs whose only difference was a
+    rate that murals do not read. Twice that made a change look like it had
+    done the opposite of what it does, and the rate was tuned against the
+    noise. Seeded off the position, so it still varies building to building and
+    is still deterministic, but the avenue now costs the rest of the city no
+    draws at all and the counts move only when the rates do.
+    """
+    return rng(int(round(abs(bx) * 977 + abs(by) * 131)))
+
+
+def plan_avenue(bank, bx, by, w, d, top, floors, r, signs, sol, siblings,
+                ox, oy, board=None):
+    """The mural first, and the rooftop board only if there is no mural.
+
+    Art. 12.16.2 prohibits rooftop structures on this stretch, so the board is
+    the exception here and not the rule.
+
+    `board` is the wing the rooftop panel goes on, which is NOT the wing the
+    mural goes on. The mural needs the wall that looks at the avenue; the board
+    needs a roof wide enough to stand on, and once it is up there it is visible
+    from the length of the avenue whichever wing it stands on. Given the same
+    wing as the mural it was being offered the 12 m arm of an L over and over
+    - a hoarding turned 45 degrees in plan reaches 0.354 of its length in both
+    axes at once, so it needs about 15 m of roof in the short direction and was
+    refused on nearly every candidate. The rate was then tuned from 0.85 down
+    to 0.18 and back with the count stuck at one or two, which is the tell: a
+    rate that moves by a factor of five and changes nothing is not the limit.
+
+    Returns (planned, keep). The two are not the same question and reading one
+    off the other is a real bug: a mural reserves no roof, so returning its
+    empty keep-out let the caller decide nothing had been planned and hang a
+    parapet word on the same wall the mural is painted on.
+    """
+    # The rare format is drawn first, and the common one takes what is left.
+    # That is the wrong way round for reading the rates off the page and the
+    # right way round for the result: drawn second, the board only ever landed
+    # on the four buildings no mural would fit, which put every board on the
+    # avenue within one block of the next.
+    ar = avenue_rng(bx, by)
+    if ar.random() < AV_BILLBOARD:
+        # 135 degrees, not 45. The panel is built facing its own local -Y,
+        # which Rz(135) turns into (+0.71, +0.71) - straight at a camera
+        # sitting at azimuth 45. This is the same number the mast disc needed
+        # and for the same reason.
+        gx, gy, gw, gd = board if board is not None else (ox, oy, w, d)
+        keep = plan_billboard(bx - ox + gx, by - oy + gy, gw, gd, top,
+                              math.radians(135), ar, signs, siblings, gx, gy)
+        if keep is not None:
+            # the keep-out comes back in the board wing's local frame and the
+            # caller works in the mural wing's, so it is rebased here rather
+            # than at the call site, where the two frames are easy to confuse
+            return True, (keep[0] + gx - ox, keep[1] + gy - oy,
+                          keep[2], keep[3])
+    # no floor count here. It was standing in for "is this wall tall enough",
+    # and now that the mural is measured against the wall it is on, the wall
+    # answers that itself - and answers it differently on the two banks, which
+    # a floor count cannot.
+    side = "x" if bank == "west" else "y"
+    got = False
+    if ar.random() < AV_MEDIANERA:
+        got = plan_medianera(side, bx, by, w, d, top, ar, signs,
+                             sol) is not None
+    # and the cross-street wall of a west-bank building, which is a second
+    # party wall and not a second sign on the same one. Only west: on the east
+    # bank "y" is already the wall the mural went on, and "x" there is the -x
+    # face this camera never sees.
+    if bank == "west" and ar.random() < AV_MED_CROSS:
+        if plan_medianera("y", bx, by, w, d, top, ar, signs, sol) is not None:
+            got = True
+    return got, None
+
+
+def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
+                 av=None):
     sw, sd = size
     """One to four buildings on a block, with setbacks."""
     if kind in ("park", "construction", "parking"):
@@ -391,12 +750,16 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r):
     if plan == 2 and r.random() < 0.5:
         cells = [(0, -0.25, 1.0, 0.5), (0, 0.25, 1.0, 0.5)]
     for (fx, fy, fw, fh) in cells:
-        if r.random() < 0.10:
+        # 0.04, not 0.10. On a block split in two this draw is the difference
+        # between a built block and a half-built one, and one in ten was
+        # frequent enough that the city read as unfinished rather than as
+        # having the odd courtyard in it.
+        if r.random() < 0.04:
             continue                       # a gap: courtyard, planting or car park
         # setbacks were 6-12 m, which left every building floating in a lawn.
         # The reference puts the wall almost on the pavement.
-        w = sw * fw - r.uniform(1.5, 4.0)
-        d = sd * fh - r.uniform(1.5, 4.0)
+        w = sw * fw - r.uniform(1.0, 2.6)
+        d = sd * fh - r.uniform(1.0, 2.6)
         if min(w, d) < 11:
             continue
         bx, by = cx + sw * fx, cy + sd * fy
@@ -424,9 +787,48 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r):
         # inside a cell and the cell's own +y edge is thin air over one of
         # them: the first version hung a word off the end of a building.
         hx, hy, hw, hd = max(wings, key=lambda s: s[2] * s[3])
-        keep = plan_sign(bx + hx, by + hy, hw, hd, top, floors, r, signs, sol)
+        # On the avenue the sign goes on the wing that looks at it, not on the
+        # biggest one. An L is two wings and the big one is as often the back
+        # one, and a mural on the back wing is painted onto the courtyard.
+        if av is not None:
+            near = min(wings, key=lambda s: abs(bx + s[0] - av["x"]))
+            if avenue_bank(av, bx + near[0], by + near[1], near[2],
+                           near[3]) is not None:
+                hx, hy, hw, hd = near
+        # a building that looks at 9 de Julio advertises to the avenue instead
+        # of to the office park. If the billboard draw misses it still gets an
+        # ordinary sign, so the corridor does not end up with bald roofs.
+        bank = avenue_bank(av, bx + hx, by + hy, hw, hd)
+        planned, keep = False, None
+        if bank is not None:
+            # the board goes on the widest roof the building has, the mural on
+            # the wall that looks at the avenue. On a rectangle these are the
+            # same wing and nothing changes; on an L or a U they are not.
+            planned, keep = plan_avenue(bank, bx + hx, by + hy, hw, hd, top,
+                                        floors, r, signs, sol, wings, hx, hy,
+                                        board=max(wings,
+                                                  key=lambda s: s[2] * s[3]))
+        if not planned:
+            keep = plan_sign(bx + hx, by + hy, hw, hd, top, floors, r, signs,
+                             sol)
         if keep is not None:
             keep = (keep[0] + hx, keep[1] + hy, keep[2], keep[3])
+        # A U has two arms on the avenue and a T has an arm and a flank, so
+        # they have two party walls looking at it and were being given one.
+        # Capped at one extra: three murals on one address is a lot advertising
+        # to itself, and the fit check refuses the buried ones anyway.
+        if bank is not None:
+            for (ox2, oy2, ww2, dd2) in wings:
+                if (ox2, oy2) == (hx, hy):
+                    continue
+                b2 = avenue_bank(av, bx + ox2, by + oy2, ww2, dd2)
+                ar2 = avenue_rng(bx + ox2, by + oy2)
+                if b2 is None or ar2.random() >= AV_MEDIANERA:
+                    continue
+                if plan_medianera("x" if b2 == "west" else "y",
+                                  bx + ox2, by + oy2, ww2, dd2, top, ar2,
+                                  signs, sol) is not None:
+                    break
         for (ox, oy, ww, dd) in wings:
             roof_props(kit, coll, bx + ox, by + oy, ww, dd, roof, 0.0, r,
                        ww * dd > 700, siblings=wings, ox=ox, oy=oy, keep=keep)
@@ -501,14 +903,16 @@ def main():
     sol = Solids()
     signs = []
 
-    lots = json.loads((R / "city_lots.json").read_text())["lots"]
+    site = json.loads((R / "city_lots.json").read_text())
+    lots = site["lots"]
+    av = site.get("avenue9j")
     for lot in lots:
         i, j = int(lot["key"][0]), int(lot["key"][1])
         if (i, j) in TALL or (i, j) in LANDMARKS or (i, j) in CAMPUS \
                 or (i, j) in PORTENO:
             continue
         place_on_lot(m, kit, pcoll, sol, signs, lot["x"], lot["y"],
-                     lot["size"], lot["lift"], lot["kind"], r)
+                     lot["size"], lot["lift"], lot["kind"], r, av)
 
     build_campus(m, kit, pcoll, ccoll, lots, r)
     build_towers(m, kit, pcoll, sol, signs, lots, r)
@@ -520,16 +924,37 @@ def main():
     # into. Re-checking here, with everything published, is the whole fix.
     dropped = 0
     for rec in list(signs):
-        if rec["kind"] != "parapet":
+        if rec["kind"] == "parapet":
+            fit = sign_fits(sol, rec["x"], rec["y"], rec["w"], rec["z"],
+                            rec["h"])
+        elif rec["kind"] == "medianera":
+            # a mural is 34 m of wall, so it has more of the neighbour's
+            # building to run into than a word does, not less
+            fit = panel_fits(sol, rec["x"], rec["y"], rec["rot"], rec["w"],
+                             rec["z"] + rec["h"] / 2)
+            if fit is not None:
+                fit = modules(fit, MODULE_W)   # still whole panels afterwards
+                if fit < 10 * MODULE_W:
+                    fit = None
+        elif rec["kind"] == "mast":
+            # The mast had no fit check at all, on either pass, and it is the
+            # one format that reaches furthest: a 16 m disc stood on edge at
+            # 45 degrees in plan swings 5.7 m out in x and y at once, well past
+            # the parapet it is standing behind. One of them was inside the
+            # building next door and the only reason it was found is that the
+            # overlap check tests every loose object, not the ones somebody
+            # remembered to validate.
+            fit = mast_fits(sol, rec["x"], rec["y"], rec["rot"], rec["w"],
+                            rec["z"])
+        else:
             continue
-        fit = sign_fits(sol, rec["x"], rec["y"], rec["w"], rec["z"], rec["h"])
         if fit is None:
             signs.remove(rec)
             dropped += 1
         else:
             rec["w"] = fit
     if dropped:
-        print(f"  {dropped} words dropped: no room once every building was in")
+        print(f"  {dropped} signs dropped: no room once every building was in")
 
     sol.merge_into(R / "city_solids.json", "buildings")
     (R / "city_signs.json").write_text(json.dumps(signs, indent=1))

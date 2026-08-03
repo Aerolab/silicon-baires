@@ -17,6 +17,12 @@ requires by code on every corner building, and it is the cheapest structural
 cue in the whole project: four bevels per block, and the crossings open into
 octagons. With square corners this grid reads as Manhattan.
 
+One street is not like the others: the Avenida 9 de Julio, 52 m wide, two
+blocks off centre. It is built as a section rather than as a wide road - two
+one-way carriageways, two planted medians, a Metrobus corridor down the middle
+and an island at one crossing for the Obelisco to stand on. See the constants
+below for why the proportions are what they are.
+
     ./bl scripts/city/03_ground.py
 """
 import sys, pathlib, math, json
@@ -35,6 +41,61 @@ MARK_Z = 0.03
 
 # A lane is 3.5 m. Local streets carry two lanes, avenues four.
 LOCAL, AVENUE = 12.0, 22.0
+
+# --- Avenida 9 de Julio ----------------------------------------------------
+# The real one is 110 m between building lines, 140 counting the lateral
+# streets, which is 20 % of this city and about 82 % of the hero frame: at that
+# width it stops being a street in a city and becomes a city cut in half.
+#
+# 70 m, and the number is not a compromise between 110 and "what fits". It is
+# set by one fact: **the real avenue is wider than a city block** - 110 m
+# against a porteno block of about 100 - and being narrower than a block is
+# exactly what stops a wide road from reading as the widest avenue in the
+# world. Our blocks average 64 m. So 70 is the smallest width that keeps the
+# relationship, and the relationship is the whole cue. The first attempt was
+# 52 m, which is a wide avenue and nothing more.
+#
+# The section, from the west building line, all of it inside the street gap
+# because the pavements belong to the blocks:
+#
+#     0 .. 19   lateral carriageway (five lanes, one way)
+#    19 .. 28   planted median
+#    28 .. 31.5 busway
+#    31.5 .. 38.5  Metrobus platform
+#    38.5 .. 42 busway
+#    42 .. 51   planted median
+#    51 .. 70   lateral carriageway (five lanes, the other way)
+#
+# The bus corridor stays at 14 m however wide the avenue gets: four exclusive
+# lanes are 13-14 m and that is sourced. An earlier version gave it 16 and the
+# carriageways 10, and from above that reads as a dark canal with two service
+# roads beside it. It is the wrong way round - what makes the avenue enormous
+# is the asphalt, and the busway is a thin thing laid down the middle of it.
+#
+# It runs north-south, like the real one, so its position is an X coordinate
+# and it is an entry in the X street table.
+AVE9J = 70.0
+NINE_X = 6                    # which X street index it replaces
+MEDIAN = (7.0, 16.0)          # from the centre line: |offset| in this band
+BUSWAY = 7.0                  # half-width of the whole bus corridor
+PLATFORM = 3.5                # half-width of the island between the bus lanes
+MEDIAN_LIFT = 0.18
+# 40 cm, which is the published figure for the real platform: the buses have a
+# level-boarding door and the height is the reason the platform exists
+PLATFORM_LIFT = 0.40
+# Plaza de la Republica: where the Obelisco stands, in the middle of the
+# avenue, at a crossing. Corrientes meets 9 de Julio there in the real city,
+# so it is put on one of the wide cross streets rather than a local one.
+PLAZA_Y = 3                   # which Y street index the plaza straddles
+# 34 m along by 23 m across. 60 m long came out as a platform rather than a
+# plaza: an island four times longer than it is wide reads as part of the road.
+# The real Plaza de la Republica is about 100 m and there is no room for that
+# inside a 52 m avenue, so what is being built here is the thing that actually
+# carries the resemblance - a monument standing in the middle of a road too
+# wide to cross - and not the plaza's own dimensions.
+PLAZA_HALF = 20.0             # how far the plaza runs along the avenue
+PLAZA_WIDE = 15.5             # half-width: it swallows both medians, and stops
+                              # half a metre short of the lateral carriageway
 # The ochava: Buenos Aires cuts every street corner at 45 degrees by code, so
 # no block downtown has a 90-degree corner and the pavement widens into an
 # octagon at every crossing. It is the cheapest structural cue there is - four
@@ -63,8 +124,19 @@ SPECIAL = {
     (5, 7): "construction",
     # the hero camera looks at the origin, so the middle of the grid has to be
     # built up: a park there fills the whole frame with trees
-    (4, 4): "std", (3, 4): "plaza", (4, 3): "std", (3, 3): "std",
-    (5, 4): "plaza",
+    (4, 4): "std", (4, 3): "std", (3, 3): "std",
+    # The two plazas that used to flank the title held the Obelisco and the
+    # Floralis, one block either side of the word. Two monuments and a title
+    # inside three blocks is a souvenir shelf: nothing has room to be the
+    # thing you look at. The Obelisco has moved into the middle of the avenue,
+    # where it belongs, and the Floralis to (2, 7), which is the far side of
+    # the city and reads on the opposite side of the frame.
+    (3, 4): "std", (5, 4): "std",
+    # "park", not "plaza". The real Floralis stands in a 4 ha park with a 44 m
+    # pool and nothing built anywhere near it - it is 2.5 km from the Obelisco,
+    # which is three and a half times the width of this entire city. A plaza
+    # lot puts offices around it and turns it into a fountain in a forecourt.
+    (2, 7): "park",
     # (4, 5) carries the title now, so it is built up like the rest of the
     # campus. Keeping the key here and only changing its value matters: the
     # kinds of every other lot come out of one RNG stream, and adding or
@@ -86,9 +158,15 @@ def ochava(cx, cy, w, d, cut=None):
             (x1 - c, y1), (x0 + c, y1), (x0, y1 - c), (x0, y0 + c)]
 
 
-def axis_layout(avenues):
-    """Street centres and block spans down one axis, from cumulative widths."""
-    widths = [AVENUE if k in avenues else LOCAL for k in range(EXTENT + 1)]
+def axis_layout(avenues, wide=None):
+    """Street centres and block spans down one axis, from cumulative widths.
+
+    `wide` overrides individual streets, which is how the 9 de Julio gets its
+    52 m without every other avenue growing with it.
+    """
+    wide = wide or {}
+    widths = [wide.get(k, AVENUE if k in avenues else LOCAL)
+              for k in range(EXTENT + 1)]
     sizes = [BLOCK_SIZES[i % len(BLOCK_SIZES)] for i in range(EXTENT)]
     pos, streets, spans = 0.0, [], []
     for k in range(EXTENT + 1):
@@ -103,9 +181,11 @@ def axis_layout(avenues):
             widths, pos)
 
 
-SX, BX, WX, TOTAL_X = axis_layout(AVENUES_X)
+SX, BX, WX, TOTAL_X = axis_layout(AVENUES_X, {NINE_X: AVE9J})
 SY, BY, WY, TOTAL_Y = axis_layout(AVENUES_Y)
 CITY = max(TOTAL_X, TOTAL_Y)
+NINE = SX[NINE_X]             # the centre line of the avenue, an X coordinate
+PLAZA = SY[PLAZA_Y]           # and the crossing the Obelisco stands at
 
 
 def pick_kind(i, j, r):
@@ -115,12 +195,16 @@ def pick_kind(i, j, r):
     # Buildings only land on "plaza" and "std", so these weights decide how
     # built-up the city is. The first straight-grid pass gave 38 % to parks and
     # the result was a forest with a few offices in it.
+    # Only the thresholds move here, never the number of draws: the kinds of
+    # every other lot come out of this one stream. A quarter of the city was a
+    # lot with no building on it at all (parking or park), which is where most
+    # of the bare green comes from - not from the setbacks.
     x = r.random()
-    if x < 0.22:
+    if x < 0.24:
         return "plaza"
-    if x < 0.36:
+    if x < 0.35:
         return "parking"
-    if x < 0.48:
+    if x < 0.43:
         return "park"
     return "std"
 
@@ -220,6 +304,114 @@ def build_blocks(m, r):
     return lots
 
 
+# --- Avenida 9 de Julio ----------------------------------------------------
+def build_avenue(m, g):
+    """The medians, the busway and the Metrobus platforms.
+
+    Solid geometry into `m`, flat paint into `g`. The medians are the whole
+    point: a 52 m sheet of asphalt is a runway, and what makes the real avenue
+    read from above is that it is striped along its length - carriageway,
+    trees, buses, trees, carriageway - so the width is legible as structure
+    rather than as absence.
+
+    Everything stops at the crossings. A planted median that runs through an
+    intersection is a wall, and the cross streets have to get across.
+    """
+    grass, kerb = mat("Grass"), mat("Sidewalk")
+    plat, deck = mat("Paving Pale"), mat("Busway")
+    stations = 0
+
+    # the bus corridor: its own surface, so the two lanes read as a separate
+    # road from the lateral carriageways. In two pieces, because the plaza
+    # stands in the middle of it: left continuous, a dark ribbon came out from
+    # behind the plaza at both ends and read as a tunnel mouth.
+    y0, y1 = -TOTAL_Y / 2, TOTAL_Y / 2
+    for a, b in ((y0, PLAZA - PLAZA_HALF), (PLAZA + PLAZA_HALF, y1)):
+        m.quad(NINE, (a + b) / 2, BUSWAY * 2, b - a, 0.04, deck)
+
+    for j, (cy, size) in enumerate(BY):
+        a, b = cy - size / 2 - 3.0, cy + size / 2 + 3.0
+        # trim against the plaza rather than dropping the whole run. Skipping
+        # any block that came near it took out the two full block-lengths on
+        # either side - 140 m of avenue with no planting in it at all - to
+        # clear a 34 m island.
+        p0, p1 = PLAZA - PLAZA_HALF - 2.0, PLAZA + PLAZA_HALF + 2.0
+        if b > p0 and a < p1:
+            if a < p0:
+                b = min(b, p0)
+            else:
+                a = max(a, p1)
+        if b - a < 10.0:
+            continue
+        for side in (-1, 1):
+            mc = side * (MEDIAN[0] + MEDIAN[1]) / 2
+            mw = MEDIAN[1] - MEDIAN[0]
+            m.prism([(NINE + mc - mw / 2, a), (NINE + mc + mw / 2, a),
+                     (NINE + mc + mw / 2, b), (NINE + mc - mw / 2, b)],
+                    0.0, MEDIAN_LIFT, kerb)
+            g.quad(NINE + mc, (a + b) / 2, mw - 1.0, b - a, MEDIAN_LIFT + 0.02,
+                   grass)
+        # a station every third block, centred, 32 m long. The real corridor is
+        # 3 km with 17 stations, which is 175-185 m apart, and our blocks
+        # average 64: three blocks is the sourced spacing rather than a guess.
+        if j % 3 == 0 and size > 40:
+            sl = min(32.0, size - 12)
+            m.prism([(NINE - PLATFORM, cy - sl / 2), (NINE + PLATFORM, cy - sl / 2),
+                     (NINE + PLATFORM, cy + sl / 2), (NINE - PLATFORM, cy + sl / 2)],
+                    0.04, PLATFORM_LIFT, plat)
+            # the canopy: a flat roof on four posts, which is the whole form at
+            # this size. The real ones are glazed boxes and none of that reads.
+            # The roof oversails the bus lanes by a metre on each side, which is
+            # both what a bus shelter does and the only thing that stops the
+            # station from reading as a paving slab from directly above.
+            for t in (-1, 1):
+                for s in (-1, 1):
+                    m.box((NINE + s * (PLATFORM - 0.5),
+                           cy + t * (sl / 2 - 1.5), PLATFORM_LIFT + 1.5),
+                          (0.28, 0.28, 3.0), mat("Concrete Cool"))
+            m.box((NINE, cy, PLATFORM_LIFT + 3.1),
+                  (PLATFORM * 2 + 3.0, sl, 0.35), mat("Station Roof"))
+            # a totem at each end. A flat slab has no silhouette from any angle
+            # and this camera is looking for silhouettes: two 4.5 m verticals
+            # are what makes it a station rather than a wide bit of kerb.
+            for t in (-1, 1):
+                m.box((NINE, cy + t * (sl / 2 + 0.9), PLATFORM_LIFT + 2.2),
+                      (1.6, 0.35, 4.4), mat("Station Roof"))
+            stations += 1
+
+    # Plaza de la Republica. The medians and the platform give way to one paved
+    # island wide enough to stand a monument on, which is what the real plaza
+    # is: the avenue opens around it rather than the plaza sitting beside it.
+    m.prism([(NINE - PLAZA_WIDE, PLAZA - PLAZA_HALF),
+             (NINE + PLAZA_WIDE, PLAZA - PLAZA_HALF),
+             (NINE + PLAZA_WIDE, PLAZA + PLAZA_HALF),
+             (NINE - PLAZA_WIDE, PLAZA + PLAZA_HALF)], 0.0, 0.22, kerb)
+    g.quad(NINE, PLAZA, PLAZA_WIDE * 2 - 1.6, PLAZA_HALF * 2 - 1.6, 0.24, plat)
+    print(f"  9 de Julio at x={NINE:.0f}, {AVE9J:.0f} m wide, "
+          f"{stations} Metrobus stations")
+    print(f"  Plaza de la Republica at y={PLAZA:.0f}")
+
+
+def avenue_markings(m):
+    """Lane lines for the two lateral carriageways, and nothing in the middle:
+    the busway carries its own surface and the medians are grass.
+
+    Each carriageway is one way, like Cerrito and Carlos Pellegrini are, so
+    there is no centre line to paint - only the four dividers between five
+    lanes.
+    """
+    mk = mat("Marking")
+    for side in (-1, 1):
+        c = side * (MEDIAN[1] + AVE9J / 2) / 2      # centre of the lateral
+        for lane in (-5.25, -1.75, 1.75, 5.25):
+            x = NINE + c + lane
+            for (cy, size) in BY:
+                n = max(1, int((size - 8) / 7.0))
+                for k in range(n):
+                    d = cy - (size - 8) / 2 + k * 7.0
+                    m.quad(x, d, 0.12, 3.2, MARK_Z, mk)
+
+
 # --- markings --------------------------------------------------------------
 def build_markings(m):
     mk = mat("Marking")
@@ -228,13 +420,29 @@ def build_markings(m):
     def paint(cx, cy, ww, hh):
         # the two streets that used to cross the superblock are gone; their
         # centre lines and zebras would otherwise still be painted across it
-        if not in_super(cx, cy, -WALK):
-            m.quad(cx, cy, ww, hh, MARK_Z, mk)
+        if in_super(cx, cy, -WALK):
+            return
+        # and a zebra crossing the 9 de Julio is 47 m long, so it runs up over
+        # both planted medians and across the Metrobus platform. Real ones stop
+        # at each island; here they simply stop.
+        if abs(cx - NINE) > MEDIAN[0] - 1.0 and abs(cx - NINE) < AVE9J / 2:
+            return
+        m.quad(cx, cy, ww, hh, MARK_Z, mk)
 
     for axis in (0, 1):
-        streets, widths = (SX, WX) if axis == 0 else (SY, WY)
+        # A street running along X sits at a Y coordinate, so it comes out of
+        # the Y table. The two tables are not interchangeable: the wide streets
+        # are at different indices per axis, so reading the X table here put
+        # the four-lane markings of an avenue down a 12 m local street and left
+        # the real avenue painted as a local. It is off by 5 to 6 m, which is
+        # under a lane width, which is why nothing looked wrong - 46 vehicles
+        # were driving 1.75 m up on the pavement and every street still read as
+        # a street.
+        streets, widths = (SY, WY) if axis == 0 else (SX, WX)
         blocks = BX if axis == 0 else BY
-        for s, w in zip(streets, widths):
+        for k, (s, w) in enumerate(zip(streets, widths)):
+            if axis == 1 and k == NINE_X:
+                continue                   # the avenue paints its own lanes
             carriage = w - WALK * 2
             avenue = w >= AVENUE
             for (b, size) in blocks:
@@ -295,6 +503,11 @@ def main():
     pbrmat("Paving", "#6e6a5e", 0.85)
     pbrmat("Dirt", "#8a7355", 0.92)
     pbrmat("Asphalt Lot", "#26231e", 0.80)
+    # the busway is asphalt with a warm cast, not a painted red lane: the real
+    # corridor is not colour-coded and a red stripe down the middle of the
+    # frame would be the loudest thing in the city
+    pbrmat("Busway", "#332a24", 0.86)
+    pbrmat("Station Roof", "#d2ccbc", 0.70)
     # the reference's road sits at 0.18 luminance and is warm; the first pass
     # was 0.38 and cool grey, which left no dark values in the frame at all
     retint("Asphalt", "#211e19")
@@ -318,12 +531,14 @@ def main():
 
     r = rng(4711)
     m = Mesh()
+    mm = Mesh()
     build_sheet(m)
     lots = build_blocks(m, r)
+    build_avenue(m, mm)
     m.build("site", site)
 
-    mm = Mesh()
     build_markings(mm)
+    avenue_markings(mm)
     build_parking(mm, lots)
     mm.build("markings", site)
 
@@ -334,6 +549,13 @@ def main():
         "streets_x": SX, "streets_y": SY, "widths_x": WX, "widths_y": WY,
         "blocks_x": BX, "blocks_y": BY, "walk": WALK,
         "superblock": list(super_bounds()),
+        # everything downstream needs the section, not just the centre line:
+        # step 05 plants the medians and drives buses down the busway, and
+        # step 06b stands the Obelisco on the plaza
+        "avenue9j": {"x": NINE, "width": AVE9J, "index": NINE_X,
+                     "median": list(MEDIAN), "busway": BUSWAY,
+                     "platform": PLATFORM, "median_lift": MEDIAN_LIFT,
+                     "plaza": [NINE, PLAZA, PLAZA_WIDE, PLAZA_HALF]},
     }))
     print(f"\n  lots: {len(lots)}   city {CITY:.0f} m")
     u, t = counts()

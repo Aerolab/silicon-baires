@@ -555,6 +555,138 @@ Recording these so nobody re-derives them. Each one is real and would read.
   Congreso's copper dome at 80 m against pale stone is the strongest of the
   three from this camera.
 
+## Seventh pass: the avenue, the empty blocks, and which side of the road
+
+Three corrections from the first proper look at the finished frame.
+
+### Everything drove on the left
+
+The lane table in step 05 is written once and used for both axes, and **the two
+axes have opposite handedness about the offset sign**. Heading +x the driver's
+right hand points at −y, so the +x traffic belongs on the negative side of the
+street; heading +y it points at +x, so the +y traffic belongs on the positive
+side. One table cannot be right for both. The Y streets came out correct by
+luck and the X streets came out British.
+
+What makes this worth recording is that it is invisible. Every individual
+street is internally consistent — two lanes, opposite directions, cars evenly
+spaced — and looks completely plausible. You can only see it by picking one car
+and following it across an intersection, or by counting.
+
+### The street tables were being read on the wrong axis
+
+Found while fixing the above, and the same shape of bug. `streets_x` holds the
+positions of the streets that run along **Y** — its entries are X coordinates —
+and step 03's markings and step 05's traffic were both reading it for the
+streets that run along X. Since both axes have the same total length and two
+avenues each, everything landed inside a street gap and nothing looked wrong.
+It is off by 5–6 m, and the avenues have their wide streets at different
+indices per axis, so **the four-lane markings of an avenue were being painted
+down a 12 m local street** while the real avenue was painted as a local. 46
+vehicles were driving 1.75 m up on the pavement, which is under a lane width
+and therefore under the threshold of looking wrong.
+
+Both are now covered by `95_check_traffic.py`, which is the fifth standing
+check: which side of the road, on the road at all, and buses only in the busway.
+
+### The Avenida 9 de Julio
+
+Built at 52 m, at street index 6 on the X axis, which is two blocks off centre
+— the periphery, not the middle. The section is in §10c of the style bible and
+the reasoning that matters is there too: the bus corridor got 16 m in the first
+attempt and had to come down to 14, because what makes the avenue enormous is
+the asphalt and not the thing running down the middle of it.
+
+**The Obelisco has moved into it**, onto an island at the crossing with a wide
+cross street, which is where the real one stands. This is the change that makes
+it work: a monument in a plaza is a monument, and a monument in the middle of
+eight lanes is Buenos Aires. It also solves a composition problem nobody had
+named — the Obelisco, the Floralis and the title were inside three adjacent
+blocks, so the middle of the frame had three things competing and the rest of
+the city had none. The Floralis is now at (2, 7), the far corner. From the hero
+azimuth the Obelisco falls on the left of the frame and the Floralis on the
+right, at about the same height, which is the band a camera move sweeps.
+
+Plaza de la República is 34 × 23 m against a real ~100. The first version was
+60 × 23 and read as a platform rather than a place.
+
+The avenue also carries two sign formats that exist nowhere else in the city —
+the rooftop **billboard** and the **medianera** mural — because the real 9 de
+Julio is an advertising corridor and that is most of what tells a viewer which
+kind of street they are looking at. Medianeras had been declined in the sixth
+pass on the grounds that they need neighbouring buildings of wildly different
+heights; that was the *blank painted party wall as texture*, which is invisible
+from here. The advertising mural is 20 m of flat colour and reads fine.
+
+Which of the two dominates is decided by GCBA Ley 2936 and not by taste — see
+§10b-1 of the style bible. The first version had fourteen boards to twelve
+murals, which is a convincing picture of a different avenue: art. 12.16.2
+prohibits rooftop structures on these stretches, so the mural is the format and
+the board the exception, about three to one.
+
+**And the rate was tuned four times before anyone checked whether the rate was
+the limit.** `AV_BILLBOARD` went 0.85 → 0.22 → 0.60 → 0.18 with the count stuck
+at one or two throughout. A rate that moves by a factor of five and changes
+nothing is not what is limiting the count. What was limiting it: on the avenue
+the sign goes on the wing that *looks at* the avenue, which on an L is often a
+12 m arm — right for a mural, which needs a wall, and hopeless for a board,
+which needs roof. A hoarding turned 45° in plan reaches 0.354 of its length in
+both axes at once, so it wants about 15 m of roof in the short direction and
+was refused on nearly every candidate. The board now goes on the widest wing
+and the mural on the wall that faces the avenue; on a plain rectangle these are
+the same wing and nothing changes.
+
+The two banks of the avenue are not treated the same, and the reason is the
+camera rather than the city. West of the avenue, the wall that looks at it is a
++x wall, which azimuth 45 can see. East of it, the wall that looks at the
+avenue is a −x wall and is permanently the back of the building, so the mural
+goes on the +y wall facing the cross street instead. This is the third time
+this project has had to learn that a sign on a face the camera cannot see is
+geometrically perfect and completely worthless.
+
+### The empty block, which had a cause
+
+`CAMPUS` in step 04 — the set of blocks left clear for the title — held four
+cells, but step 03 only merges **two** of them into the superblock the title
+stands on. Column 5 was being kept empty for a word that never reaches it. That
+is the bare green block sitting immediately to the right of the title in every
+frame since the title was built, and nothing was wrong with it except that the
+set was a guess where the superblock is a fact.
+
+The rest of the bare green was a quarter of the city being a lot with no
+building on it at all — `parking` or `park` — which is a bigger lever than any
+setback. Those weights are now 11 % and 8 % against 14 % and 12 %; the skipped
+cell inside a block went from one in ten to one in twenty-five; and the `bar`
+footprint went from 55 % of its lot's depth to 72 %, because at 55 % two bars
+on a split block left a strip of lawn wider than the street beside it.
+
+Only the thresholds moved, never the number of draws — the kinds of every lot
+come out of one stream and adding or removing a draw reshuffles all of them.
+
+### The mast had never been checked
+
+Found by the overlap check on the last rebuild: one mast disc standing inside
+the building next door. Masts had **no fit test at all**, on either pass, while
+parapet words had two — and the mast is the format that reaches furthest, since
+a 16 m disc stood on edge at 45° in plan swings 5.7 m out in x and y at once,
+well past the parapet it stands behind.
+
+This is the third time this project has found a whole class of object that was
+built and never tested: the trees inside letters, then all 22 company signs the
+moment SIGNS was added to the check, now the masts. The check finds them
+because it tests *every loose object*, not the ones somebody remembered to
+validate. That property is the reason it works and it is worth protecting.
+
+### Where the numbers landed
+
+| | |
+|---|---|
+| City | 762 × 714 m, 80 lots |
+| Avenue | 70 m at x = 120, 3 Metrobús stations, 141 median trees |
+| Signs | 82 — 24 parapet, 32 roofmark, 10 mast, 12 medianera, 4 billboard |
+| Trees / cars / people | 1599 / 1807 / 2324 |
+| Crossing conflicts | 1160 found, 1113 held, 282 taken off the road, 0 left |
+
 ## Verification
 
 `scripts/city/99_check_overlap.py` — three tests: published footprints, real

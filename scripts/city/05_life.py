@@ -141,6 +141,52 @@ def street_trees(kit, coll, lots, walk, r):
     return n
 
 
+MEDIAN_TREES = (["Jacaranda0", "Jacaranda1", "Tree1", "Tree3", "Conifer1",
+                 "Tree3", "Jacaranda2", "Tree1"])
+
+
+def avenue_trees(kit, coll, data, r):
+    """Two rows down the planted medians of the 9 de Julio.
+
+    This is the whole reason the medians are there. A 52 m avenue with nothing
+    growing in it is a runway; the same avenue with two lines of trees down it
+    is the widest street in the world, which is what it is famous for being.
+
+    The median is 5 m wide, so the species are the narrow ones - and the
+    jacaranda is over-represented on purpose, because the real avenue is one
+    of the places people go to see them.
+    """
+    av = data.get("avenue9j")
+    if av is None:
+        return 0
+    n = 0
+    lift = av["median_lift"]
+    px, py, pw, pl = av["plaza"]
+    mid = (av["median"][0] + av["median"][1]) / 2
+    for (cy, size) in data["blocks_y"]:
+        # 7 m, not 9. The median is the one planting in this city that is meant
+        # to read as a continuous line rather than as a row of individuals, and
+        # at 9 m it came out with bald stretches between the crossings.
+        span = size - 10.0
+        count = max(1, int(span / 7.0))
+        for side in (-1, 1):
+            for k in range(count + 1):
+                t = cy - span / 2 + k * span / count
+                name = r.choice(MEDIAN_TREES)
+                sc = r.uniform(0.85, 1.15)
+                jitter = r.uniform(-1.1, 1.1)
+                x, y = av["x"] + side * mid, t + jitter
+                if abs(y - py) < pl + 3.0:
+                    continue                 # the plaza interrupts the median
+                if SOLIDS.hit(x, y, lift, RAD[name] * sc * 0.7) is not None:
+                    SKIPPED["tree"] = SKIPPED.get("tree", 0) + 1
+                    continue
+                instance(kit[name], coll, (x, y, lift),
+                         r.uniform(0, 6.28), sc)
+                n += 1
+    return n
+
+
 def clump(kit, coll, cx, cy, rw, rd, lift, count, r):
     for _ in range(count):
         name = r.choice(TREES)
@@ -188,8 +234,10 @@ def lights_and_signals(kit, coll, data, r):
     n = 0
     walk = data["walk"]
     for axis in (0, 1):
-        streets = data["streets_x"] if axis == 0 else data["streets_y"]
-        widths = data["widths_x"] if axis == 0 else data["widths_y"]
+        # the street runs along this axis, so its position is a coordinate on
+        # the other one: see the note in 03_ground.build_markings
+        streets = data["streets_y"] if axis == 0 else data["streets_x"]
+        widths = data["widths_y"] if axis == 0 else data["widths_x"]
         blocks = data["blocks_x"] if axis == 0 else data["blocks_y"]
         for s, w in zip(streets, widths):
             half = (w - walk * 2) / 2
@@ -220,22 +268,78 @@ def lights_and_signals(kit, coll, data, r):
     return n
 
 
+def avenue_lanes(av):
+    """The 9 de Julio's lanes, which are not a wider version of an avenue's.
+
+    Two one-way lateral carriageways of four lanes each, and a bus corridor in
+    the middle that only buses may use. Read as an ordinary 52 m avenue it puts
+    four lanes of cars straight down the Metrobus platform.
+
+    Which side goes which way is not a choice: driving on the right, the
+    carriageway heading +y is the one on the +x side, because that is where the
+    driver's right hand is.
+    """
+    out = []
+    lat = (av["median"][1] + av["width"] / 2) / 2      # centre of a lateral
+    for side in (-1, 1):
+        for o in (-7.0, -3.5, 0.0, 3.5, 7.0):          # five lanes each
+            out.append((side * lat + o, side, False))
+    for side in (-1, 1):
+        out.append((side * (av["platform"] + 1.75), side, True))
+    return out
+
+
 def traffic(kit, coll, data, r):
     n = 0
     span = max(data["blocks_x"][-1][0], data["blocks_y"][-1][0]) + 60
+    av = data.get("avenue9j")
     for axis in (0, 1):
-        streets = data["streets_x"] if axis == 0 else data["streets_y"]
-        widths = data["widths_x"] if axis == 0 else data["widths_y"]
-        for s, w in zip(streets, widths):
-            lanes = ((-5.25, -1), (-1.75, -1), (1.75, 1), (5.25, 1)) \
-                if w >= AVENUE else ((-1.75, -1), (1.75, 1))
+        # a street running along X is at a Y coordinate: the Y table
+        streets = data["streets_y"] if axis == 0 else data["streets_x"]
+        widths = data["widths_y"] if axis == 0 else data["widths_x"]
+        for idx, (s, w) in enumerate(zip(streets, widths)):
+            nine = av is not None and axis == 1 and idx == av["index"]
+            if nine:
+                lanes = [(o, d) for o, d, _ in avenue_lanes(av)]
+                buses = {o for o, _, b in avenue_lanes(av) if b}
+            else:
+                lanes = ((-5.25, -1), (-1.75, -1), (1.75, 1), (5.25, 1)) \
+                    if w >= AVENUE else ((-1.75, -1), (1.75, 1))
+                buses = set()
             for lane, direction in lanes:
+                # Argentina drives on the right, and the lane table above is
+                # written once for both axes, which cannot be right for both:
+                # the two axes have opposite handedness about the offset sign.
+                # Heading +x the driver's right hand points at -y, so the +x
+                # traffic belongs on the negative side; heading +y it points at
+                # +x, so the +y traffic belongs on the positive side. The y
+                # streets came out correct by luck and the x streets came out
+                # British, which is a thing you can only see by picking one car
+                # and following it: every street looked plausible on its own.
+                if axis == 0:
+                    direction = -direction
                 pos = -span
                 while pos < span:
-                    pos += r.uniform(13.0, 44.0)
+                    # a bus lane is not a car lane with buses in it. At car
+                    # spacing the corridor came out as one unbroken line of
+                    # colectivos nose to tail down the middle of the avenue,
+                    # which reads as a parked queue rather than as a service.
+                    # 2.2, not 3.4: at car spacing the corridor is a solid line
+                    # of colectivos nose to tail, which reads as a queue, and
+                    # at 3.4 there were sixteen buses in 762 m of busway, which
+                    # reads as a corridor nobody uses
+                    pos += r.uniform(13.0, 44.0) * (2.2 if lane in buses else 1.0)
                     x, y = ((pos, s + lane) if axis == 0 else (s + lane, pos))
                     name = (r.choice(COLECTIVOS + ["Truck"])
                             if r.random() < 0.09 else r.choice(CARS))
+                    if lane in buses:
+                        # a bus lane with cars in it is not a bus lane, and the
+                        # corridor is the one part of this avenue that a viewer
+                        # can actually name
+                        name = r.choice(COLECTIVOS)
+                        px, py, pw, pl = av["plaza"]
+                        if abs(y - py) < pl + 4.0:
+                            continue       # the plaza stands in the busway
                     if in_super(x, y, -1.0):
                         continue
                     if SOLIDS.hit(x, y, 0.0, VEHICLE.get(name, 2.4)):
@@ -388,12 +492,14 @@ def main():
     walk = data["walk"]
     r = rng(31337)
     street_trees(kit, nat, lots, walk, r)
+    med = avenue_trees(kit, nat, data, r)
     planting(kit, nat, lots, r)
     li = lights_and_signals(kit, fur, data, r)
     ca = traffic(kit, tra, data, r) + parked(kit, tra, lots, r)
     pe = crowds(kit, ppl, lots, data, walk, r) + rooftop_people(kit, rpl, r)
 
-    print(f"\n  trees {len(nat.objects)}  furniture {li}  cars {ca}  people {pe}")
+    print(f"\n  trees {len(nat.objects)} ({med} down the 9 de Julio medians)"
+          f"  furniture {li}  cars {ca}  people {pe}")
     print("  refused for want of room: " +
           ("  ".join(f"{k} {v}" for k, v in sorted(SKIPPED.items())) or "none"))
     u, t = counts()
