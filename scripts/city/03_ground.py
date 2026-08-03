@@ -80,6 +80,13 @@ MEDIAN = (7.0, 16.0)          # from the centre line: |offset| in this band
 BUSWAY = 7.0                  # half-width of the whole bus corridor
 PLATFORM = 3.5                # half-width of the island between the bus lanes
 MEDIAN_LIFT = 0.18
+# The shelters. Two to a block where the block is long enough, and clear of the
+# crossings by STATION_MARGIN at each end: a canopy hanging over an
+# intersection is the one place it must not be, because that is where the cross
+# traffic and the zebras are.
+STATION_LEN = 22.0
+STATION_GAP = 8.0
+STATION_MARGIN = 5.0
 # 40 cm, which is the published figure for the real platform: the buses have a
 # level-boarding door and the height is the reason the platform exists
 PLATFORM_LIFT = 0.40
@@ -371,42 +378,55 @@ def build_avenue(m, g):
                         0.0, MEDIAN_LIFT, kerb)
                 g.quad(NINE + mc, (ra + rb) / 2, mw - 1.0, rb - ra,
                        MEDIAN_LIFT + 0.02, grass)
-        # a station every third block, centred, 32 m long. The real corridor is
-        # 3 km with 17 stations, which is 175-185 m apart, and our blocks
-        # average 64: three blocks is the sourced spacing rather than a guess.
-        if j % 3 == 0 and size > 40 and not (cy > p0 and cy < p1):
-            sl = min(32.0, size - 12)
-            m.prism([(NINE - PLATFORM, cy - sl / 2), (NINE + PLATFORM, cy - sl / 2),
-                     (NINE + PLATFORM, cy + sl / 2), (NINE - PLATFORM, cy + sl / 2)],
+        # Shelters the length of the boulevard: up to two per block, never
+        # over an intersection. The real corridor is 3 km with 17 stations,
+        # which is 175-185 m apart, or one every three blocks at our size, and
+        # this is deliberately not that. It is a shorter shelter repeated along
+        # the median - what the avenue looks like rather than what the
+        # timetable says. Recorded as a departure, not as the sourced number.
+        room = size - STATION_MARGIN * 2
+        if room >= STATION_LEN * 2 + STATION_GAP:
+            centres = [cy - (STATION_LEN + STATION_GAP) / 2,
+                       cy + (STATION_LEN + STATION_GAP) / 2]
+        elif room >= STATION_LEN:
+            centres = [cy]
+        else:
+            centres = []
+        for sc in centres:
+            if p0 - STATION_LEN < sc < p1 + STATION_LEN:
+                continue                    # the plaza is standing there
+            sl = STATION_LEN
+            m.prism([(NINE - PLATFORM, sc - sl / 2), (NINE + PLATFORM, sc - sl / 2),
+                     (NINE + PLATFORM, sc + sl / 2), (NINE - PLATFORM, sc + sl / 2)],
                     0.04, PLATFORM_LIFT, plat)
             # the canopy: a flat roof on four posts, which is the whole form at
             # this size. The real ones are glazed boxes and none of that reads.
-            # The roof oversails the bus lanes by a metre on each side, which is
-            # both what a bus shelter does and the only thing that stops the
-            # station from reading as a paving slab from directly above.
             for t in (-1, 1):
-                for s in (-1, 1):
-                    m.box((NINE + s * (PLATFORM - 0.5),
-                           cy + t * (sl / 2 - 1.5), PLATFORM_LIFT + 1.5),
+                for s2 in (-1, 1):
+                    m.box((NINE + s2 * (PLATFORM - 0.5),
+                           sc + t * (sl / 2 - 1.5), PLATFORM_LIFT + 1.5),
                           (0.28, 0.28, 3.0), mat("Concrete Cool"))
             # +1.2 of oversail, not +3.0. At 3 m the roof is 13 m wide over a
-            # 7 m platform, so from this camera it is a white slab lying across
-            # the avenue with no visible platform under it at all - which reads
-            # as a lid, not as a station. At 1.2 the deck shows on both sides.
-            m.box((NINE, cy, PLATFORM_LIFT + 3.1),
+            # 7 m platform, so from this camera it is a slab lying across the
+            # avenue with no visible platform under it at all - which reads as
+            # a lid, not as a station. At 1.2 the deck shows on both sides.
+            m.box((NINE, sc, PLATFORM_LIFT + 3.1),
                   (PLATFORM * 2 + 1.2, sl, 0.35), mat("Station Roof"))
+            # one white line down the roof, and it is load-bearing: the roof is
+            # dark now, and from overhead a dark rectangle on dark asphalt is a
+            # hole in the avenue. The line is what makes the shelter read.
+            m.box((NINE, sc, PLATFORM_LIFT + 3.30),
+                  (1.1, sl - 1.4, 0.06), mat("Station Line"))
             # the crossing that reaches it. A station nobody can walk to reads
-            # as an object dropped in the road, and this is two quads.
+            # as an object dropped in the road, and this is two rows of quads.
             for side in (-1, 1):
                 for k in range(5):
-                    g.quad(NINE + side * (PLATFORM + 1.2 + k * 1.3), cy,
+                    g.quad(NINE + side * (PLATFORM + 1.2 + k * 1.3), sc,
                            0.7, 3.4, 0.05, mat("Marking"))
-            # a totem at each end. A flat slab has no silhouette from any angle
-            # and this camera is looking for silhouettes: two 4.5 m verticals
-            # are what makes it a station rather than a wide bit of kerb.
-            for t in (-1, 1):
-                m.box((NINE, cy + t * (sl / 2 + 0.9), PLATFORM_LIFT + 2.2),
-                      (1.6, 0.35, 4.4), mat("Station Roof"))
+            # one totem, at the near end. Two of them on a 22 m shelter, twice
+            # per block, is a picket fence down the middle of the avenue.
+            m.box((NINE, sc - sl / 2 - 0.9, PLATFORM_LIFT + 2.2),
+                  (1.6, 0.35, 4.4), mat("Station Roof"))
             stations += 1
 
     # Plaza de la Republica. The medians and the platform give way to one paved
@@ -541,7 +561,19 @@ def main():
     # corridor is not colour-coded and a red stripe down the middle of the
     # frame would be the loudest thing in the city
     pbrmat("Busway", "#332a24", 0.86)
-    pbrmat("Station Roof", "#d2ccbc", 0.70)
+    # dark grey with a white line down it, off the photograph. Pale, the
+    # shelters were the brightest thing on the avenue and pulled the eye off
+    # the monument; dark, they sit into the asphalt and the line does the
+    # reading.
+    pbrmat("Station Roof", "#3b3e42", 0.72)
+    pbrmat("Station Line", "#eceae4", 0.60)
+    # and then retint both, because pbrmat only ever CREATES. It fetches an
+    # existing material unchanged - which is what makes it idempotent and safe
+    # to call every run - so changing a colour in this file does nothing at all
+    # to a material that is already in the .blend. The shelters stayed pale
+    # through a full rebuild for exactly this reason.
+    retint("Station Roof", "#3b3e42")
+    retint("Station Line", "#eceae4")
     # the reference's road sits at 0.18 luminance and is warm; the first pass
     # was 0.38 and cool grey, which left no dark values in the frame at all
     retint("Asphalt", "#211e19")

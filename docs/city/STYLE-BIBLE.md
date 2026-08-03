@@ -460,13 +460,27 @@ carriageway — is legible as structure instead of as absence. The jacarandá is
 over-represented in the median rows on purpose, because the real avenue is one
 of the places people go to see them.
 
-The Metrobús platforms get a canopy, a 4.4 m totem at each end and a zebra
-reaching them from both medians. Without the totems a station is a paving slab
-seen from directly above, and this camera is looking for silhouettes; without
-the crossing it is an object dropped in the road, because nobody could walk to
-it. The canopy oversails the platform by **1.2 m and no more** — at 3 m it is
-13 m of white lying across a 70 m avenue with no visible platform underneath,
-which reads as a lid rather than as a station.
+**The shelters run the length of the boulevard** — up to two per block, 22 m
+each, always clear of the intersections by 5 m. This is a deliberate departure
+from the sourced number: the real corridor is 3 km with 17 stations, 175–185 m
+apart, or one every three blocks at our size. One every three blocks is what
+the timetable says and it leaves the median empty; a shorter shelter repeated
+along it is what the avenue *looks* like. Recorded here as a departure so
+nobody re-derives the spacing from the source and "fixes" it.
+
+They are **dark grey with one white line down the roof**. Pale, they were the
+brightest thing on the avenue and pulled the eye off the monument. Dark, they
+sit into the asphalt — and then a dark rectangle on dark asphalt is a hole, so
+the white line is not decoration: it is the entire reason the shelter reads.
+
+Each gets a 4.4 m totem at one end and a zebra reaching it from both medians.
+Without the totem a station is a paving slab seen from directly above, and this
+camera is looking for silhouettes; without the crossing it is an object dropped
+in the road, because nobody could walk to it. One totem, not two: two on a 22 m
+shelter, twice per block, is a picket fence down the middle of the avenue. The
+canopy oversails the platform by **1.2 m and no more** — at 3 m it is 13 m of
+roof over a 7 m platform with none of it visible from above, which reads as a
+lid rather than as a station.
 
 **Plaza de la República is an oval, 60 × 31 m**, and it is not a plaza beside
 the avenue: the two directions of the 9 de Julio **separate and pass around

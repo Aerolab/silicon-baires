@@ -712,12 +712,28 @@ monument reads as a model rather than as a city, and it is the one place in
 frame the eye is sent to. 34 people on the island, sampled inside the oval
 rather than in its bounding box, and a few waiting on each Metrobús platform.
 
+### `pbrmat` only ever creates
+
+Worth its own heading because it cost a full rebuild and looked like nothing.
+
+`_common.pbrmat(name, colour, ...)` fetches an existing material **unchanged**
+and only builds one when the name is new. That is what makes it idempotent and
+safe to call on every run — and it means changing a colour in a script does
+nothing whatsoever to a material that is already in the `.blend`. The Metrobús
+shelters were changed from pale to dark grey, rebuilt, and came out pale, with
+no error anywhere.
+
+`03_ground.py` already had `retint()` for exactly this and every other colour
+in the file goes through it. The fix is to call both: `pbrmat` to guarantee the
+material exists, `retint` to set the colour. Anything that edits a colour in
+place has to do the same.
+
 ### Where the numbers landed
 
 | | |
 |---|---|
 | City | 762 × 714 m, 80 lots |
-| Avenue | 70 m at x = 120, 3 Metrobús stations, 141 median trees |
+| Avenue | 70 m at x = 120, 13 Metrobús shelters, 130 median trees |
 | Signs | 82 — 24 parapet, 32 roofmark, 10 mast, 12 medianera, 4 billboard |
 | Trees / cars / people | 1599 / 1807 / 2324 |
 | Crossing conflicts | 1160 found, 1113 held, 282 taken off the road, 0 left |
