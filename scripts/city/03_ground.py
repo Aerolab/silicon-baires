@@ -87,13 +87,18 @@ PLATFORM_LIFT = 0.40
 # avenue, at a crossing. Corrientes meets 9 de Julio there in the real city,
 # so it is put on one of the wide cross streets rather than a local one.
 PLAZA_Y = 3                   # which Y street index the plaza straddles
-# 34 m along by 23 m across. 60 m long came out as a platform rather than a
-# plaza: an island four times longer than it is wide reads as part of the road.
-# The real Plaza de la Republica is about 100 m and there is no room for that
-# inside a 52 m avenue, so what is being built here is the thing that actually
-# carries the resemblance - a monument standing in the middle of a road too
-# wide to cross - and not the plaza's own dimensions.
-PLAZA_HALF = 20.0             # how far the plaza runs along the avenue
+# The island is an OVAL, not a rectangle. Off a photograph: the plaza swells
+# out of the avenue as a long rounded lens, with curved planting beds in the
+# two ends and the monument on paving in the middle. A rectangle of the same
+# size reads as a platform - part of the road - and the curve is the whole
+# difference, because it is the only curve anywhere in this city and the eye
+# goes straight to it.
+#
+# 31 x 60 m. The real Plaza de la Republica is about 100 and there is no room
+# for that inside the avenue, but the plaza's own dimensions are not what
+# carries the resemblance: a monument standing in the middle of a road too wide
+# to cross is.
+PLAZA_HALF = 30.0             # how far the plaza runs along the avenue
 PLAZA_WIDE = 15.5             # half-width: it swallows both medians, and stops
                               # half a metre short of the lateral carriageway
 # The ochava: Buenos Aires cuts every street corner at 45 degrees by code, so
@@ -305,6 +310,12 @@ def build_blocks(m, r):
 
 
 # --- Avenida 9 de Julio ----------------------------------------------------
+def ellipse(cx, cy, rx, ry, segs=44):
+    """A closed oval as a polygon, counter-clockwise."""
+    return [(cx + rx * math.cos(2 * math.pi * i / segs),
+             cy + ry * math.sin(2 * math.pi * i / segs)) for i in range(segs)]
+
+
 def build_avenue(m, g):
     """The medians, the busway and the Metrobus platforms.
 
@@ -382,11 +393,15 @@ def build_avenue(m, g):
     # Plaza de la Republica. The medians and the platform give way to one paved
     # island wide enough to stand a monument on, which is what the real plaza
     # is: the avenue opens around it rather than the plaza sitting beside it.
-    m.prism([(NINE - PLAZA_WIDE, PLAZA - PLAZA_HALF),
-             (NINE + PLAZA_WIDE, PLAZA - PLAZA_HALF),
-             (NINE + PLAZA_WIDE, PLAZA + PLAZA_HALF),
-             (NINE - PLAZA_WIDE, PLAZA + PLAZA_HALF)], 0.0, 0.22, kerb)
-    g.quad(NINE, PLAZA, PLAZA_WIDE * 2 - 1.6, PLAZA_HALF * 2 - 1.6, 0.24, plat)
+    #
+    # An oval. It is the only curve in this city - the grid is strictly
+    # rectangular and even the ochavas are straight cuts - so it costs nothing
+    # to build and the eye goes to it before anything else in the frame. Built
+    # as a rectangle first, and a rectangle of exactly these dimensions reads as
+    # a widening of the road rather than as a place in it.
+    m.prism(ellipse(NINE, PLAZA, PLAZA_WIDE, PLAZA_HALF), 0.0, 0.22, kerb)
+    g.flat(ellipse(NINE, PLAZA, PLAZA_WIDE - 0.8, PLAZA_HALF - 0.8), 0.24,
+           plat)
     print(f"  9 de Julio at x={NINE:.0f}, {AVE9J:.0f} m wide, "
           f"{stations} Metrobus stations")
     print(f"  Plaza de la Republica at y={PLAZA:.0f}")

@@ -464,13 +464,32 @@ The Metrobús platforms get a canopy that oversails the bus lanes and a 4.4 m
 totem at each end. Without them a station is a paving slab seen from directly
 above, and this camera is looking for silhouettes.
 
-**Plaza de la República is 40 × 31 m here**, and it is not a plaza beside the
-avenue: the two directions of the 9 de Julio **separate and pass around it**,
-which is what the real one does since the 1971 layout. Corrientes and Diagonal
-Norte cross there, both 33 m against the avenue's 140 — so even in the real
-city the Obelisco stands where a wide street meets a much wider one. The first
-version was 60 × 23 and read as a platform: an island four times longer than it
-is wide is part of the road, not a place.
+**Plaza de la República is an oval, 60 × 31 m**, and it is not a plaza beside
+the avenue: the two directions of the 9 de Julio **separate and pass around
+it**, which is what the real one does since the 1971 layout. Corrientes and
+Diagonal Norte cross there, both 33 m against the avenue's 140 — so even in the
+real city the Obelisco stands where a wide street meets a much wider one.
+
+**The oval is the point, and it took a photograph to see it.** Built as a
+rectangle of the same dimensions it reads as a widening of the road; built as
+an oval it reads as a place in it. It is also **the only curve anywhere in this
+city** — the grid is strictly rectangular and even the ochavas are straight
+cuts — so the eye finds it before anything else in frame, and it costs one
+polygon function.
+
+Four things dress it, off the photograph, and none of them is a paving pattern:
+
+| | |
+|---|---|
+| **Red tile border**, ~3 m all round | after the monument itself this is the strongest element in the photograph: a saturated ring against grey asphalt and green median, and the only red on the ground anywhere in the city |
+| **Two curved planting beds**, one in each end | what stops the island from being a car park with a spire on it. Ours are ovals rather than the real crescents — two pixels of difference and a crescent costs a boolean |
+| **The flagpole**, 18 m, at the south end | 18 m of vertical in a frame whose only other vertical is the monument, and the cue that says which country this is without any text. Turned to +135° like the mast discs: a flag hung along a world axis is edge-on to a camera at azimuth 45 and vanishes into a line |
+| **The 24 provincial shields**, on a 9 m ring | on the monument's own apron, between the two beds. At 12 m a third of them ended up in the grass |
+
+The beds go into the **ground** mesh, not the monument mesh. A 26 cm kerb is a
+floor, and built as a solid it made the overlap check report a bus and two
+people standing inside a planting bed — true, and useless. Same call as was
+already made for the plaza paving. The flagpole is a solid and is published.
 
 **The trees.** The real medians are dominated by palo borracho, jacarandá and
 tipa — the transplant census for the Metrobús works moved 154 palos borrachos,

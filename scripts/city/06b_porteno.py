@@ -162,6 +162,65 @@ def floralis(m, cx, cy, lift):
     return FLOR_POOL, lift + FLOR_H
 
 
+def oval(cx, cy, rx, ry, segs=44):
+    return [(cx + rx * math.cos(2 * math.pi * i / segs),
+             cy + ry * math.sin(2 * math.pi * i / segs)) for i in range(segs)]
+
+
+def republica(m, g, sol, cx, cy, rx, ry, lift):
+    """What is actually around the Obelisco, off a photograph.
+
+    Step 03 opens the oval island in the avenue; this dresses it. Three things
+    do the work, and none of them is the paving pattern a plaza usually gets:
+
+    THE RED BORDER. A band of red tile all the way round the edge. It is the
+    strongest single element in the photograph after the monument itself - a
+    saturated ring against grey asphalt and green median, and the only red on
+    the ground anywhere in this city.
+
+    THE TWO BEDS. Curved planting in each end of the oval, which is what stops
+    the island from being a car park with a spire on it. They are ovals of
+    their own rather than the real crescents: at this size the difference is
+    two pixels and a crescent costs a boolean.
+
+    THE FLAGPOLE. Argentine flag on a mast at the south end. It is 15 m of
+    vertical in a frame where the only other vertical is the monument, and it
+    is the cue that says which country this is without any text.
+    """
+    tile, pale, dark = mat("Tile Red"), mat("Paving Pale"), mat("Paving")
+    z = lift
+    g.flat(oval(cx, cy, rx - 0.5, ry - 0.5), z + 0.01, tile)
+    g.flat(oval(cx, cy, rx - 3.6, ry - 3.6), z + 0.02, dark)
+    # the beds: one in each end, clear of the monument's own apron.
+    #
+    # Into `g`, the ground mesh, and not into `m`. A 26 cm kerb is a floor and
+    # not a solid, and the overlap check treats everything in `m` as something
+    # to test against: built into `m` it reported a bus and two people standing
+    # inside a planting bed, which is true, and useless - it is the same call
+    # that was made for the plaza paving itself.
+    for side in (-1, 1):
+        by = cy + side * (ry * 0.58)
+        g.prism(oval(cx, by, rx * 0.66, ry * 0.24), z, z + 0.26,
+                mat("Sidewalk"))
+        g.flat(oval(cx, by, rx * 0.66 - 0.6, ry * 0.24 - 0.6), z + 0.28,
+               mat("Grass"))
+    # the flagpole, in the end furthest from the monument's door
+    fy = cy - ry * 0.80
+    m.cyl((cx, fy, z), 1.9, 0.35, pale, segs=12)
+    m.cyl((cx, fy, z + 0.35), 0.22, 18.0, pale, segs=8, top=0.14)
+    # +135, the same number the mast discs needed and for the same reason: a
+    # flag is a plane, and hung along a world axis it is edge-on to a camera at
+    # azimuth 45 and disappears into a line. Turned into the diagonal it faces
+    # the lens square.
+    fx = (Matrix.Translation(Vector((cx, fy, 0.0))) @
+          Matrix.Rotation(math.radians(135), 4, "Z"))
+    for k, col in enumerate(("Flag Blue", "Flag White", "Flag Blue")):
+        m.box((3.4, 0.0, z + 16.0 - k * 1.25), (6.4, 0.06, 1.25), mat(col), fx)
+    # the pole IS solid and does get published: 18 m of it, and a tree or a
+    # person growing through a flagpole is the same error as through a wall
+    sol.add(cx, fy, 5.0, 5.0, 0.0, 0.0, z + 18.0)
+
+
 def cupola(m, cx, cy, top, radius):
     """Drum, dome, lantern. Faceted on purpose, like everything else."""
     slate, trim = mat("Cupola Slate"), mat("Cupola Trim")
@@ -223,6 +282,11 @@ def main():
     pbrmat("Cupola Slate", "#4a6b63", 0.65)      # oxidised copper, not grey
     pbrmat("Cupola Trim", "#cfc7b4", 0.75)
     pbrmat("Shield Bronze", "#8a6a3c", 0.45, metallic=0.5)
+    # the red tile of the plaza border. It is the only red on the ground in
+    # the whole city, which is exactly why it works from this distance.
+    pbrmat("Tile Red", "#9c4a33", 0.85)
+    pbrmat("Flag Blue", "#74acdf", 0.70)     # the celeste of the flag, sourced
+    pbrmat("Flag White", "#f2f2ee", 0.70)    # off the official 74ACDF
 
     data = json.loads((R / "city_lots.json").read_text())
     lots = {tuple(l["key"]): l for l in data["lots"]}
@@ -250,9 +314,12 @@ def main():
     ox, oy, half_w, half_l = av["plaza"]
     lift = 0.24                            # the island, as step 03 built it
     # no radial paving here: step 03 already paved the island, and the pattern
-    # is sized for a whole block. The ring of shields is what carries it, and
-    # it is scaled to the island rather than to a block.
-    shields(g, ox, oy, lift, radius=min(half_w, half_l) - 3.5)
+    # is sized for a whole block. What the real plaza has instead is a red tile
+    # border, two curved beds and a flagpole.
+    republica(m, g, sol, ox, oy, half_w, half_l, lift)
+    # 9 m, not 12: the ring has to sit on the monument's own apron, between the
+    # two planting beds, or a third of the shields end up in the grass
+    shields(g, ox, oy, lift + 0.03, radius=9.0)
     side, ztop = obelisco(m, ox, oy, lift)
     sol.add(ox, oy, side, side, 0.0, 0.0, ztop)
     print(f"  obelisco at ({ox:.0f}, {oy:.0f}) in the middle of the avenue, "
