@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
 from _common import Mesh, collection, instance, mat, rng, counts
+from _solids import Solids
 
 R = ROOT / "renders"
 
@@ -41,10 +42,35 @@ FAMILIES = [
 # cells that get something other than a plain low-rise campus
 TALL = {(1, 2): 18, (7, 6): 12, (2, 7): 10, (7, 2): 8, (1, 5): 9}
 LANDMARKS = {(6, 1), (1, 6), (7, 4)}     # step 06 owns these plots
+# and step 06b owns these two: the Obelisco and the Floralis stand on them.
+# "plaza" is not an empty lot - this step builds offices on plazas - so
+# without this the Obelisco went up inside somebody's fourth floor.
+PORTENO = {(3, 4), (5, 4)}
 # the blocks the title stands on. Step 08 builds the letters here as real
 # buildings, so step 04 builds nothing: see build_campus().
 CAMPUS = {(4, 4), (4, 5), (5, 4), (5, 5)}
 GROUND_INSET = 0.6
+
+# Invented companies. The reference is a parade of real logos and we are not
+# reproducing the branding, so these are made up, and made up with an ear for
+# where the city is: they are the names a Buenos Aires tech park would have.
+# (text, mark, face colour, ink colour)
+SIGN_FACES = [
+    ("ZONDA", "chevron", "#e8532a", "#ffffff"),
+    ("OMBU", "disc", "#1d7fc4", "#ffffff"),
+    ("PAMPA", "bars", "#f2b705", "#22201c"),
+    ("CEIBO", "triangle", "#c8102e", "#ffffff"),
+    ("YERBA", "ring", "#2f8f4e", "#ffffff"),
+    ("RIACHO", "square", "#2b2f77", "#ffffff"),
+    ("VELOX", "chevron", "#d9d5cc", "#c8102e"),
+    ("MATE", "disc", "#5c3d8f", "#ffffff"),
+    ("SUR", "bars", "#0f9bd7", "#ffffff"),
+    ("ANDA", "triangle", "#ef7d1a", "#22201c"),
+    ("LUMA", "ring", "#e8e4da", "#1d7fc4"),
+    ("TANGO", "square", "#22201c", "#f2b705"),
+    ("KETZAL", "disc", "#0d8a86", "#ffffff"),
+    ("NUBE", "bars", "#e8e4da", "#5c3d8f"),
+]
 
 
 def xf(cx, cy, rot):
@@ -98,7 +124,7 @@ def mullions(m, ox, oy, w, d, z0, h, material, xform, pitch=3.0):
 
 
 def wing(m, ox, oy, w, d, floors, style, fam, xform, r, deep=False,
-         deck=None):
+         deck=None, sol=None, wx=0.0, wy=0.0):
     conc, glass = mat(fam[0]), mat(fam[1])
     # ground floor: recessed glass with an entrance canopy poking out. The
     # comparison against the reference showed my facades had 0.2-0.5 m of
@@ -107,9 +133,18 @@ def wing(m, ox, oy, w, d, floors, style, fam, xform, r, deep=False,
     mullions(m, ox, oy, w - 1.6, d - 1.6, 0.3, GROUND - 0.6, conc, xform, 4.0)
     for sy in (-1, 1):
         if r.random() < 0.55:
-            m.slab(ox + r.uniform(-w * 0.2, w * 0.2), oy + sy * (d / 2 + 1.1),
-                   min(w * 0.42, 11.0), 3.4, GROUND - 1.5, GROUND - 1.1,
-                   mat("Concrete Cool"), xform)
+            cx0 = ox + r.uniform(-w * 0.2, w * 0.2)
+            cw = min(w * 0.42, 11.0)
+            m.slab(cx0, oy + sy * (d / 2 + 1.1), cw, 3.4,
+                   GROUND - 1.5, GROUND - 1.1, mat("Concrete Cool"), xform)
+            # the canopy reaches 2.8 m past the wall, over the pavement, and
+            # the street tree row runs at 1.25 m: this was the single largest
+            # source of trees growing through solid geometry. It is published
+            # as its own small box rather than by inflating the whole wing,
+            # so the trees that get refused are the ones in front of a door.
+            if sol is not None:
+                sol.add(wx + cx0, wy + oy + sy * (d / 2 + 1.1), cw, 3.4,
+                        0.0, 0.0, GROUND - 1.1)
     z = GROUND
 
     for f in range(floors):
@@ -157,7 +192,40 @@ def wing(m, ox, oy, w, d, floors, style, fam, xform, r, deep=False,
     return z + 0.85
 
 
-def roof_props(kit, coll, cx, cy, w, d, top, rot, r, big):
+_plan_radius = {}
+
+
+def plan_radius(ob):
+    """How far the asset reaches in plan, from its own mesh. Rotation about Z
+    is random, so it is the largest hypot, not the largest x or y."""
+    if ob.data.name not in _plan_radius:
+        _plan_radius[ob.data.name] = max(
+            (math.hypot(v.co.x, v.co.y) for v in ob.data.vertices), default=0.0)
+    return _plan_radius[ob.data.name]
+
+
+def straddles(lx, ly, rad, ox, oy, siblings):
+    """Does this roof unit sit across a neighbouring wing's parapet?
+
+    An L or a U is several overlapping rectangles and each one gets its own
+    parapet ring, including along the seams that end up inside the building.
+    A unit placed safely inside wing A can therefore be sitting on wing B's
+    parapet, which is a 0.55 m ledge standing 0.85 m proud of the roof it
+    shares. Nine units were doing exactly that.
+    """
+    for (sx, sy, sw, sd) in siblings:
+        if (sx, sy) == (ox, oy):
+            continue                       # this is the wing it is standing on
+        dx, dy = abs(lx + ox - sx), abs(ly + oy - sy)
+        outside = dx > sw / 2 + rad + 0.6 or dy > sd / 2 + rad + 0.6
+        within = dx < sw / 2 - rad - 0.6 and dy < sd / 2 - rad - 0.6
+        if not (outside or within):
+            return True
+    return False
+
+
+def roof_props(kit, coll, cx, cy, w, d, top, rot, r, big, siblings=(),
+               ox=0.0, oy=0.0, keep=None):
     """Never leave a roof empty: it is most of what this camera sees."""
     placed = []
     # the coral pipe frame was on nearly every roof and read as a repeated
@@ -183,10 +251,28 @@ def roof_props(kit, coll, cx, cy, w, d, top, rot, r, big):
         lx = r.uniform(-w / 2 + 6, w / 2 - 6)
         ly = r.uniform(-d / 2 + 5, d / 2 - 5)
         a = rot + r.choice([0, math.pi / 2])
+        sc = r.uniform(1.3, 2.1)
+        # a fixed 6 m inset assumed every unit was the same size. A solar array
+        # scaled 2.1 reaches 10 m from its origin, so it hung a third of itself
+        # over the parapet, which reads from this camera as a shelf of nothing.
+        # The clamp happens after every draw, so the rest of the city is not
+        # reshuffled by fixing it.
+        rad = plan_radius(kit[name]) * sc
+        mx, my = w / 2 - rad - 1.2, d / 2 - rad - 1.2
+        if mx < 0 or my < 0:
+            continue                          # too big for this roof, at all
+        lx = max(-mx, min(mx, lx))
+        ly = max(-my, min(my, ly))
+        if straddles(lx, ly, rad, ox, oy, siblings):
+            continue
+        if keep is not None:
+            kx, ky, kw, kd = keep
+            if (abs(lx + ox - kx) < kw / 2 + rad and
+                    abs(ly + oy - ky) < kd / 2 + rad):
+                continue                       # the company sign goes there
         wx = cx + lx * math.cos(rot) - ly * math.sin(rot)
         wy = cy + lx * math.sin(rot) + ly * math.cos(rot)
-        placed.append(instance(kit[name], coll, (wx, wy, top), a,
-                               r.uniform(1.3, 2.1)))
+        placed.append(instance(kit[name], coll, (wx, wy, top), a, sc))
     if r.random() < 0.25:
         lx, ly = r.uniform(-w / 4, w / 4), r.uniform(-d / 4, d / 4)
         wx = cx + lx * math.cos(rot) - ly * math.sin(rot)
@@ -195,24 +281,67 @@ def roof_props(kit, coll, cx, cy, w, d, top, rot, r, big):
     return placed
 
 
-def signage(m, cx, cy, w, d, top, rot, r):
-    """Abstract volumes where the reference puts logos. No branding."""
-    col = mat(r.choice(["Accent Red", "Accent Yellow", "Accent Magenta",
-                        "Concrete Cool2", "Solar"]))
-    x = xf(cx, cy, rot)
-    length = min(w, d) * 0.72
-    height = max(3.0, length * 0.28)
-    if r.random() < 0.5:
-        for sx in (-1, 1):                       # legs, so it reads as a sign
-            m.slab(sx * length * 0.35, d / 2 - 1.4, 0.5, 0.5, top,
-                   top + height * 0.5, mat("Metal Dark"), x)
-        m.slab(0, d / 2 - 1.4, length, 0.7, top + height * 0.4,
-               top + height * 1.4, col, x)
+def plan_sign(bx, by, w, d, top, floors, r, signs):
+    """Reserve a place for a company sign, and record where it is.
+
+    Step 04 decides, step 10 builds. It has to be this way round: this step
+    knows the roof it goes on and owns the RNG, while the sign itself has to
+    be a separate object with its own material slot so a logo can be dropped
+    onto it later, and everything this step builds ends up merged into one
+    mesh with no per-building object left to address.
+
+    The reservation matters as much as the record. When the signs were built
+    here as loose volumes that nobody published, nine roof units ended up
+    standing inside one, which is how they were found: not by looking, but by
+    the overlap check reporting a building nobody could name.
+    """
+    kind = None
+    if floors >= 3 and w >= 26 and r.random() < 0.42:
+        kind = "parapet"
+    elif w * d > 520 and r.random() < 0.5:
+        kind = "roofmark"
+    elif r.random() < 0.14:
+        kind = "mast"
+    if kind is None:
+        return None
+    idx = len(signs)
+    face = r.choice(SIGN_FACES)
+    if kind == "parapet":
+        # On the +y wall, turned to face it, because that is a wall this
+        # camera can see. The hero camera sits at azimuth 45, so it looks at
+        # the +x and +y faces of everything; the first version put the letters
+        # on -y, where they were geometrically perfect and permanently behind
+        # the building. Turned through pi the word also runs along world -x,
+        # which is screen-right from here, so it reads forwards.
+        length = min(w * 0.62, 26.0)
+        rec = dict(kind=kind, x=bx, y=by + d / 2, z=top, rot=math.pi,
+                   w=length, h=min(4.6, length * 0.26))
+        keep = (0.0, d / 2 - 2.0, length + 2.0, 5.0)
+    elif kind == "roofmark":
+        # a flat panel lying on the deck, like the orange square in the
+        # reference: the only type that costs no height at all
+        side = min(w, d) * 0.42
+        rec = dict(kind=kind, x=bx + r.uniform(-w * 0.12, w * 0.12),
+                   y=by + r.uniform(-d * 0.12, d * 0.12), z=top - 0.83,
+                   rot=r.choice([0.0, math.pi / 2]), w=side, h=side)
+        keep = (rec["x"] - bx, rec["y"] - by, side + 2.0, side + 2.0)
     else:
-        m.slab(-w * 0.2, 0, 0.7, length, top + 0.2, top + height * 1.2, col, x)
+        disc = min(min(w, d) * 0.55, 16.0)
+        rec = dict(kind=kind, x=bx + r.uniform(-w * 0.2, w * 0.2),
+                   y=by + r.uniform(-d * 0.2, d * 0.2), z=top,
+                   # +135, not -45. The disc is a cylinder stood on edge, so
+                   # its face points along local -Y, and the camera is out at
+                   # azimuth 45: at -45 the face pointed exactly away and every
+                   # mast in the city showed its blank back.
+                   rot=math.radians(135), w=disc, h=disc)
+        keep = (rec["x"] - bx, rec["y"] - by, disc + 2.0, disc + 2.0)
+    rec.update(name=f"Sign.{idx:03d}", text=face[0], mark=face[1],
+               face=face[2], ink=face[3])
+    signs.append(rec)
+    return keep
 
 
-def place_on_lot(m, kit, coll, cx, cy, size, lift, kind, r):
+def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r):
     sw, sd = size
     """One to four buildings on a block, with setbacks."""
     if kind in ("park", "construction", "parking"):
@@ -243,14 +372,28 @@ def place_on_lot(m, kit, coll, cx, cy, size, lift, kind, r):
         top = 0.0
         for (ox, oy, ww, dd) in footprint(kindf, w, d):
             t = wing(m, ox, oy, ww, dd, floors, style, fam, x, r,
-                     deep=(floors >= 4))
+                     deep=(floors >= 4), sol=sol, wx=bx, wy=by)
             top = max(top, t)
-        roof = top - 0.83
         for (ox, oy, ww, dd) in footprint(kindf, w, d):
+            # +0.9: the projecting shade frame on a deep facade stands 0.45 m
+            # off the wall on every side
+            sol.add(bx + ox, by + oy, ww + 0.9, dd + 0.9, 0.0, 0.0, top)
+        roof = top - 0.83
+        wings = footprint(kindf, w, d)
+        # the sign is chosen before the roof units, so the units can be told
+        # to keep out of its way. The other order is what put nine of them
+        # inside one.
+        #
+        # and it goes on the largest wing, not on the lot. An L is two wings
+        # inside a cell and the cell's own +y edge is thin air over one of
+        # them: the first version hung a word off the end of a building.
+        hx, hy, hw, hd = max(wings, key=lambda s: s[2] * s[3])
+        keep = plan_sign(bx + hx, by + hy, hw, hd, top, floors, r, signs)
+        if keep is not None:
+            keep = (keep[0] + hx, keep[1] + hy, keep[2], keep[3])
+        for (ox, oy, ww, dd) in wings:
             roof_props(kit, coll, bx + ox, by + oy, ww, dd, roof, 0.0, r,
-                       ww * dd > 700)
-        if r.random() < 0.45:
-            signage(m, bx, by, w, d, top, 0.0, r)
+                       ww * dd > 700, siblings=wings, ox=ox, oy=oy, keep=keep)
         tops.append(top)
     return tops
 
@@ -270,7 +413,7 @@ def build_campus(m, kit, coll, ccoll, lots, r):
     print(f"  campus: {len(CAMPUS)} blocks left clear for the title")
 
 
-def build_towers(m, kit, coll, lots, r):
+def build_towers(m, kit, coll, sol, signs, lots, r):
     """Only on lots that survived. A tower on a dropped cell stands alone in
     the middle of the road, which is exactly what happened the first time."""
     for (i, j), floors in TALL.items():
@@ -285,8 +428,14 @@ def build_towers(m, kit, coll, lots, r):
         fam = FAMILIES[2] if floors > 12 else FAMILIES[0]
         style = "curtain" if floors > 12 else "banded"
         x = xf(cx, cy, 0.0)
-        top = wing(m, 0, 0, w, d, floors, style, fam, x, r)
-        roof_props(kit, coll, cx, cy, w, d, top - 0.83, 0.0, r, True)
+        top = wing(m, 0, 0, w, d, floors, style, fam, x, r,
+                   sol=sol, wx=cx, wy=cy)
+        sol.add(cx, cy, w + 0.9, d + 0.9, 0.0, 0.0, top)
+        # a tower always gets a sign: in the reference the tall buildings are
+        # exactly the ones that carry a name
+        keep = plan_sign(cx, cy, w, d, top, floors, r, signs)
+        roof_props(kit, coll, cx, cy, w, d, top - 0.83, 0.0, r, True,
+                   keep=keep)
 
 
 def main():
@@ -313,18 +462,29 @@ def main():
 
     r = rng(90210)
     m = Mesh()
+    sol = Solids()
+    signs = []
 
     lots = json.loads((R / "city_lots.json").read_text())["lots"]
     for lot in lots:
         i, j = int(lot["key"][0]), int(lot["key"][1])
-        if (i, j) in TALL or (i, j) in LANDMARKS or (i, j) in CAMPUS:
+        if (i, j) in TALL or (i, j) in LANDMARKS or (i, j) in CAMPUS \
+                or (i, j) in PORTENO:
             continue
-        place_on_lot(m, kit, pcoll, lot["x"], lot["y"], lot["size"],
-                     lot["lift"], lot["kind"], r)
+        place_on_lot(m, kit, pcoll, sol, signs, lot["x"], lot["y"],
+                     lot["size"], lot["lift"], lot["kind"], r)
 
     build_campus(m, kit, pcoll, ccoll, lots, r)
-    build_towers(m, kit, pcoll, lots, r)
+    build_towers(m, kit, pcoll, sol, signs, lots, r)
     m.build("buildings", bcoll)
+    sol.merge_into(R / "city_solids.json", "buildings")
+    (R / "city_signs.json").write_text(json.dumps(signs, indent=1))
+    kinds = {}
+    for s in signs:
+        kinds[s["kind"]] = kinds.get(s["kind"], 0) + 1
+    print(f"  footprints published: {len(sol.boxes)}")
+    print(f"  signs planned: {len(signs)}   " +
+          "  ".join(f"{k} {v}" for k, v in sorted(kinds.items())))
 
     u, t = counts()
     print(f"\n  roof props: {len(pcoll.objects)}")

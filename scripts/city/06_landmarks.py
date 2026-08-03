@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
 from _common import Mesh, collection, instance, mat, pbrmat, rng, counts
+from _solids import Solids
 
 R = ROOT / "renders"
 BLOCK, PITCH, HALF = 64.0, 76.0, 4.0
@@ -229,10 +230,19 @@ def main():
 
     r = rng(777)
     m = Mesh()
+    sol = Solids()
 
     def lot_of(i, j):
         """None when the arterial ate that cell: a landmark there would float."""
         return lots.get((str(i), str(j)))
+
+    # the rectangle each landmark sits inside. The stadium and the blob are
+    # round, so their box claims more ground than they occupy: over-protective
+    # is the right way to be wrong here, since the cost is a tree that could
+    # have stood a metre closer.
+    FOOT = {"stadium": (66.4, 54.4, math.radians(20), 17.0),
+            "blob": (64.0, 40.0, 0.0, 21.0),
+            "garage": (56.0, 45.0, 0.0, 17.5)}
 
     for name, fn in (
             ("stadium", lambda l: stadium(m, l["x"], l["y"], l["lift"])),
@@ -244,6 +254,8 @@ def main():
             print(f"  {name} skipped: the arterial took its cell")
             continue
         fn(lot)
+        fw, fd, frot, fh = FOOT[name]
+        sol.add(lot["x"], lot["y"], fw, fd, frot, 0.0, lot["lift"] + fh)
 
     for k, (i, j) in enumerate(SITE):
         lot = lot_of(i, j)
@@ -251,18 +263,25 @@ def main():
             continue
         construction(m, kit, lp, lot["x"], lot["y"], lot["lift"], r,
                      frame=(k == 0))
+        if k == 0:
+            sol.add(lot["x"], lot["y"], 30.0, 22.0, 0.0, 0.0,
+                    lot["lift"] + 11.7)
     for k, (i, j) in enumerate(SITE):
         lot = lot_of(i, j)
         if lot is None:
             continue
         cx, cy = lot["x"], lot["y"]
-        crane(m, cx - 24 + k * 45, cy - 19 + k * 36, 44.0 - k * 8,
-              34.0 - k * 4, math.radians(35 + k * 165))
-        instance(kit["Truck"], lp,
-                 (cx + r.uniform(-24, 24), cy + r.uniform(-20, 20), 0.0),
-                 r.uniform(0, 6.28))
+        mx, my = cx - 24 + k * 45, cy - 19 + k * 36
+        crane(m, mx, my, 44.0 - k * 8, 34.0 - k * 4,
+              math.radians(35 + k * 165))
+        sol.add(mx, my, 5.0, 5.0, 0.0, 0.0, 44.0 - k * 8)
+        tx, ty, trot = (cx + r.uniform(-24, 24), cy + r.uniform(-20, 20),
+                        r.uniform(0, 6.28))
+        if sol.hit(tx, ty, 0.0, 4.2) is None:      # a truck is 8 m long
+            instance(kit["Truck"], lp, (tx, ty, 0.0), trot)
 
     m.build("landmarks", lm)
+    sol.merge_into(R / "city_solids.json", "landmarks")
     u, t = counts()
     print(f"\n  triangles: {u} unique / {t} total")
 

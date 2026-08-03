@@ -162,6 +162,12 @@ class Mesh:
         v = [(x, y, z) for x, y in poly]
         self._add(v, [tuple(range(len(v)))], material, xform)
 
+    def add_mesh(self, me, material, xform=None):
+        """Absorb an existing Blender mesh. Font curves arrive this way: a
+        letterform is not expressible as any primitive here."""
+        self._add([v.co.copy() for v in me.vertices],
+                  [tuple(p.vertices) for p in me.polygons], material, xform)
+
     # -- output -------------------------------------------------------------
     def build(self, name, coll=None, smooth=False):
         me = bpy.data.meshes.new(name)

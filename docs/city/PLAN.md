@@ -1,11 +1,35 @@
 # Build plan — "toy valley" city
 
 Goal: build a city in the visual language of the *Silicon Valley* title sequence and
-render a hero frame from a helicopter-style tilt-shift camera. **No company logos.**
-The title was out of scope at first and is now built, as buildings: see the fourth
-pass below.
+render a hero frame from a helicopter-style tilt-shift camera. The title was out of
+scope at first and is now built, as buildings: see the fourth pass. Company signs are
+built and carry **invented** companies, not real branding: see the fifth pass. The
+city is Buenos Aires, and says so.
 
 Read `STYLE-BIBLE.md` first. This document is about *how the work is organised*.
+
+## The order the steps actually run in
+
+The numbers no longer match the order, and following the numbers breaks the build.
+The dependencies are real: step 05 has to know where the buildings are before it
+plants anything, and step 08 deletes what step 05 puts inside the letters.
+
+```
+03_ground  →  04_buildings  →  10_signs  →  06_landmarks  →  06b_porteno
+           →  05_life  →  08_title  →  11_animate  →  07_look final
+```
+
+with `02_kit` and `02b_porteno_kit` before all of it, once.
+
+- **04 before 05**, and **06, 06b before 05**: they publish the footprints in
+  `city_solids.json` that step 05 queries before placing a tree.
+- **04 before 10**: step 04 chooses where the signs go and reserves the space;
+  step 10 only builds them.
+- **06b after 04 and 10**: a cupola takes a roof corner and needs to know what
+  is already standing there.
+- **05 before 08**: step 08 deletes what is inside the letters and only step 05
+  puts it back.
+- **11 after 08**: otherwise it animates cars step 08 is about to delete.
 
 ---
 
@@ -195,6 +219,10 @@ rebuilding anything.
 | **M5** ✅ | Depth of field, grain, final render | `07_look.py`. The Defocus node does nothing on an orthographic camera, so the blur is driven off the Z pass into a variable Blur. |
 | **M6** ✅ | Second pass against the reference | A side-by-side critique found six faults; all six fixed. See below. |
 | **M7** ✅ | The title, as buildings | `08_title.py`. Out of the original scope, and the thing this build got wrong most often: three times, and every wrong version measured well against the reference. See the fourth pass. |
+| **M8** ✅ | Nothing intersects a building, and it is checked | `_solids.py`, `99_check_overlap.py`, and the clearance queries in `05_life.py`. See the fifth pass. |
+| **M9** ✅ | Buenos Aires reads | `02b_porteno_kit.py`, `06b_porteno.py` |
+| **M10** ✅ | Sign placeholders with fake logos | `04_buildings.py` plans them, `10_signs.py` builds them, `renders/city_signs.json` is the manifest |
+| **M11** ✅ | The city moves | `11_animate.py`, and `renders/city_move.mp4` |
 
 ## Second pass: what the comparison against the reference changed
 
@@ -313,7 +341,132 @@ nothing at azimuth 20 — belonged to the off-grid version and no longer holds:
 the shear in `plan()` is tuned to one elevation and one azimuth, so moving the
 camera puts the lean back. Re-run it before designing the move.
 
+## Fifth pass: things that stand inside other things, and things that move
+
+Four pieces of work, in the order they had to happen.
+
+### Nothing may stand inside a building
+
+The complaint was trees intersecting buildings. The count, once there was
+something that could count, was **917 street trees inside an office** — 44 % of
+the row — plus canopies through entrance canopies, solar arrays hanging over
+parapets, roof units inside company signs, and buses through walls.
+
+The reason it had gone unnoticed for the whole build is worth stating: by the
+time step 05 runs, every building has been merged into one mesh, so there is no
+per-building object left to ask. Steps 04, 06, 06b, 08 and 10 now publish the
+rectangle each solid occupies into `renders/city_solids.json`, and step 05
+queries it before placing anything.
+
+- The clearance is **measured off the asset's own mesh**, not assumed. The trees
+  range from 1.84 m to 4.38 m of plan radius, so one blanket number either lets
+  Tree2 into the wall or refuses Tree3 for nothing. It is the largest
+  `hypot(x, y)`, not the largest x or y, because everything is dropped in at a
+  random rotation about Z.
+- A tree that does not fit is **not refused, it is downgraded**: same species
+  smaller, then a narrower species, then a shrub. Refusing outright left a bare
+  pavement in front of every building, which is the opposite of the reference.
+- The street tree row moved **onto the pavement**. It used to run 1.2 m inside
+  the lot interior and buildings come within 0.75 m of that same line, so the
+  row was inside the building by construction. The pedestrians moved with it,
+  for the same reason.
+
+`99_check_overlap.py` is the check, and it is deliberately three tests: the
+footprint query (the same one step 05 makes, so it goes quiet if the mechanism
+breaks), real triangle-against-triangle BVH overlap (the ground truth, which
+does not care what anybody published), and the big merged meshes against each
+other (a crane jib through a neighbour's facade belongs to nobody).
+
+Two things it taught, both about the difference between contact and
+intersection. Every tested object is **lifted 5 cm** first, because a roof unit
+sits with its bottom face exactly on the roof plate and coplanar triangles
+report as overlapping — without the lift the first run reported all 300-odd roof
+units as errors. And modelling a loose object as a **disc of some radius** is
+wrong in both directions: a traffic light is a 6 m cantilever arm over the road,
+and a 6 m disc swallows the building behind it. It samples the vertices instead.
+
+The count went 159 → 49 → 24 → 13 → 0 as each class was fixed. The one that
+took longest was the title: sampling points and asking whether each is inside a
+letter kept missing, at 8 directions and then at 32, because a canopy can
+straddle the bar of an A with every sample falling in the daylight either side.
+Step 08 now asks the triangles, the same way the check does.
+
+One real bug in the query itself, and it is the classic one: the spatial hash
+looked only in the cell containing the query point, forgetting the query has a
+radius. A tree with an 8 m canopy standing 2 m outside a footprint one 24 m cell
+over passed cheerfully.
+
+### Buenos Aires
+
+Chosen by what survives being twelve pixels tall from a high oblique view, which
+rules out most of what makes the city recognisable at eye level — the tiled
+pavements, the cafés, the kiosks, the painted party walls are all invisible from
+here. What is left is silhouette and colour.
+
+- **Jacarandás.** The strongest and the cheapest. One street tree in five is in
+  flower. Six in twelve was tried first and half the city came out violet, which
+  reads as a fantasy rather than as November.
+- **Taxis**, black with a yellow roof, one car in five. From this camera a car is
+  almost entirely its roof, so a livery whose distinguishing feature is the roof
+  colour is a piece of luck.
+- **Colectivos**, flat saturated two-tone, painted per line.
+- **The Obelisco**, 67.5 m on a 6.8 m base — taller than every building here
+  including the eighteen-floor tower, which is the whole reason it works from a
+  camera that flattens everything else into roofs. It is the only vertical in
+  frame.
+- **Cúpulas** on the corners of corner buildings: the one eye-level detail that
+  survives, because a dome is a silhouette rather than a texture.
+- **Floralis Genérica**, 23 m, in the plaza on the other side.
+
+Two things about placement. A 170 m frame holds the title's own block and very
+little else, so at the hero framing the Obelisco reads as a shaft at the top of
+frame and the Floralis at the left edge; both are composed for the camera *move*
+rather than for the still. And "plaza" is not an empty lot — step 04 builds
+offices on plazas — so the Obelisco went up inside somebody's fourth floor until
+its cell was reserved.
+
+### Signs, ready for logos
+
+Three mountings, taken off the reference frames: **parapet letters** standing on
+the roof edge and projecting past the facade (the Google one, and the type that
+reads from furthest away because it breaks the roofline), a flat **roofmark**
+panel lying on the deck, and a **mast disc** standing clear of everything.
+
+Step 04 chooses and reserves, step 10 builds, `renders/city_signs.json` is the
+manifest. Each sign is its own object with its own material slots, so real
+artwork later is a material swap on a named object.
+
+The letters went on the **+y wall**, which is the one this camera can see: the
+hero camera is at azimuth 45 and looks at the +x and +y faces of everything, and
+the first version put them on −y, where they were geometrically perfect and
+permanently behind the building. Turned through π the word also runs along world
+−x, which is screen-right from here, so it reads forwards.
+
+### Movement
+
+Two linear keyframes per object, no rig and no physics: at this scale what sells
+movement is the whole frame drifting in several directions at once.
+
+Every vehicle in a lane gets the **same speed**, which makes rear-end collisions
+impossible by construction rather than by checking; speed varies between lanes
+instead, and one lane in six is congested. Crossings are the part that has to be
+solved, and it can be solved exactly, because two constant-velocity cars either
+meet or they do not and it is decided before the first frame. Each conflict
+holds one car back along its own lane; holding creates new conflicts, so it
+iterates, and what six passes cannot settle is taken off the road rather than
+left to drive through something. **773 conflicts, 809 cars held, 169 hidden, 0
+left.** A car may not be held into a building or onto the title's block.
+
+Nine hundred people walk, along the pavement axis step 05 recorded when it
+placed them — a figure that picks its own heading walks into a wall half the
+time. And the helicopter that has been sitting unused in the kit since step 02
+finally crosses the frame.
+
 ## Verification
+
+`scripts/city/99_check_overlap.py` — three tests: published footprints, real
+triangle overlap, and the merged meshes against each other. See the fifth pass
+for what each is for and why contact is not intersection.
 
 `scripts/city/98_check_floating.py` — two tests, because the two failure modes
 differ. **A**: no geometry below ground (every asset is modelled on z = 0, so
@@ -348,7 +501,11 @@ is grading the title after the view transform, which the compositor cannot do
 because it runs before it. Worth noting that the reference is not consistent
 with itself either — its own wide shot is a much more orange red than the
 close-up we measured, and ours sits between the two.
-| **M6** | *(optional)* camera move, or `.glb` export for the browser | — |
+
+Still open, and not attempted: `98_check_floating.py` does not look inside the
+merged building meshes, so a loose piece of one building is out of scope by
+design. The company logos themselves are deliberately not drawn — the mountings
+and the manifest exist, the artwork does not.
 
 M1 carries the whole risk. If the block does not look right, nothing after it will, and
 scaling a wrong look just makes it wrong thirty-six times over.
@@ -379,11 +536,14 @@ The city file itself is edited one step at a time, in order.
 
 ## 7. Assumptions (say if any is wrong)
 
-- **Deliverable: one hero still frame**, 2560 × 1440, Cycles. Built so an animated
-  camera move is a later addition, not a rebuild.
-- **No logos.** Where the original has a logo, we put an abstract signage volume so
-  the silhouette still works. The **title is built**, though it was not in the
-  original scope: BUENOS AIRES, as buildings shaped like the letters.
-- **A fictional city in that style**, not a shot-for-shot copy of a specific frame.
+- **Deliverable: one hero still frame**, 2560 × 1440, Cycles, plus a ten-second
+  moving preview at 24 fps. The camera itself does not move yet; the city does.
+- **No real branding.** The sign mountings are built and carry invented companies
+  (ZONDA, OMBÚ, PAMPA, CEIBO…), so the silhouette works and real artwork can be
+  dropped onto a named object later. The **title is built**, though it was not in
+  the original scope: BUENOS AIRES, as buildings shaped like the letters.
+- **A fictional Buenos Aires in that style**, not a shot-for-shot copy of a
+  specific frame and not a map of the real city: the Obelisco stands on a block
+  of an invented grid, not on 9 de Julio.
 - **6 × 6 blocks**, camera covering roughly a third — enough to fill the frame edge to
   edge with depth behind.

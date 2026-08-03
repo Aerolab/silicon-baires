@@ -41,6 +41,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 from _common import collection, pbrmat, srgb
 
 R = ROOT / "renders"
@@ -219,6 +220,45 @@ def screen_box(scene, cam, pts):
             min(c.y for c in us), max(c.y for c in us))
 
 
+def title_bvh(root):
+    """The letters as triangles, in world space, lifted 5 cm.
+
+    The lift is the same one 99_check_overlap.py uses: a car resting on the
+    pavement is not intersecting it, and coplanar triangles report as
+    overlapping.
+    """
+    verts, faces = [], []
+    for ob in root.children:
+        if ob.type != "MESH":
+            continue
+        mw = ob.matrix_world
+        n = len(verts)
+        verts.extend((mw @ v.co) + Vector((0, 0, 0.05))
+                     for v in ob.data.vertices)
+        ob.data.calc_loop_triangles()
+        faces.extend(tuple(i + n for i in lt.vertices)
+                     for lt in ob.data.loop_triangles)
+    return BVHTree.FromPolygons(verts, faces)
+
+
+def touches(bvh, ob):
+    """Does this object's actual geometry cut a letter?
+
+    Sampling points and asking whether each one is inside was tried twice, at
+    eight directions and then at thirty-two, and it kept missing: a canopy can
+    straddle the bar of an A with every sample point falling in the daylight
+    either side of it. Four trees survived both versions and every one of them
+    had branches inside a letter. This asks the triangles.
+    """
+    mw = ob.matrix_world
+    verts = [(mw @ v.co) for v in ob.data.vertices]
+    ob.data.calc_loop_triangles()
+    faces = [tuple(lt.vertices) for lt in ob.data.loop_triangles]
+    if not faces:
+        return False
+    return bool(BVHTree.FromPolygons(verts, faces).overlap(bvh))
+
+
 def clear_ground(scene, root):
     """Take out whatever the earlier steps left standing inside the letters.
 
@@ -228,11 +268,23 @@ def clear_ground(scene, root):
     this camera and obvious from any other.
     """
     kit = set(bpy.data.collections["KIT"].objects)
+    # the box the words stand in, plus the widest thing that could lean into
+    # them. Without this the ray casts below run on all seven thousand objects
+    # in the city and the step takes minutes; almost none of them are within a
+    # block of the title.
+    tp = title_points(root)
+    tx0, tx1 = min(p.x for p in tp) - 12.0, max(p.x for p in tp) + 12.0
+    ty0, ty1 = min(p.y for p in tp) - 12.0, max(p.y for p in tp) + 12.0
+    bvh = title_bvh(root)
     doomed = []
     for ob in scene.objects:
         if ob.type != "MESH" or ob.parent == root:
             continue
-        if ob.name in ("site", "markings", "buildings", "landmarks"):
+        if ob.name in ("site", "markings", "buildings", "landmarks",
+                       "porteno"):
+            continue
+        lx, ly = ob.location.x, ob.location.y
+        if not (tx0 <= lx <= tx1 and ty0 <= ly <= ty1):
             continue
         # never the KIT masters. They live near the origin, so the title lands
         # on top of them, and deleting one takes every instance of that asset
@@ -249,7 +301,22 @@ def clear_ground(scene, root):
         # step, and the TypeError left the step exiting 0 as if it had worked
         pts = [mw.translation] + [mw @ vs[i].co
                                   for i in range(0, len(vs), step)]
-        if any(inside(root, p) for p in pts):
+        # plus a ring at the object's own plan radius. A tree standing just
+        # clear of a letter still puts its canopy through the wall, and every
+        # sampled vertex of it can be outside while the volume is not: the
+        # overlap check found exactly one of these and it was a tree.
+        rad = max((math.hypot(p.x - mw.translation.x, p.y - mw.translation.y)
+                   for p in pts), default=0.0)
+        if rad > 0.5:
+            # two rings, not one. Eight points at the full radius fall
+            # between the strokes of a letter often enough to miss: four
+            # trees survived that version and every one of them had its
+            # canopy inside an O.
+            pts += [mw.translation +
+                    Vector((math.cos(k * math.pi / 8) * rad * f,
+                            math.sin(k * math.pi / 8) * rad * f, 0))
+                    for k in range(16) for f in (1.0, 0.6)]
+        if any(inside(root, p) for p in pts) or touches(bvh, ob):
             doomed.append(ob)
     for ob in doomed:
         bpy.data.objects.remove(ob, do_unlink=True)

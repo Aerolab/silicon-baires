@@ -12,7 +12,8 @@ TEST B — floating instances. Trees, cars, people, street furniture and roof
 units are whole assets whose origin is their point of contact, so the question
 "is there a surface right under it" is meaningful for them. The ray is cast
 against the site, the buildings and the landmarks specifically, never against
-the asset itself, so nothing can shadow its own test.
+the asset itself, so nothing can shadow its own test. The AIR collection is
+exempt: the helicopter in it is supposed to be 78 m off the ground.
 
 Deliberately NOT tested: individual pieces inside the merged building mesh. A
 facade band has nothing directly under it by design, and testing it produced
@@ -30,7 +31,9 @@ from mathutils import Vector
 R = ROOT / "renders"
 BURIED = -0.25            # metres below ground before we call it buried
 GAP = 0.4                 # metres of air under an instance before it floats
-SUPPORTS = ("site", "buildings", "landmarks")
+SUPPORTS = ("site", "buildings", "landmarks", "porteno")
+# the one collection whose whole point is that it is not resting on anything
+AIRBORNE = "AIR"
 
 
 def world_min_z(ob):
@@ -65,6 +68,8 @@ def main():
     floating, tested = [], 0
     for ob in scene.objects:
         if ob.type != "MESH" or ob.hide_render or ob.data.name not in kit:
+            continue
+        if any(c.name == AIRBORNE for c in ob.users_collection):
             continue
         if ob.data.name not in base_cache:
             base_cache[ob.data.name] = local_min_z(ob.data)

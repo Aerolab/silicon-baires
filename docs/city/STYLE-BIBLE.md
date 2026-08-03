@@ -231,6 +231,64 @@ Ours says BUENOS AIRES. The construction is the reference's; the words are not.
 - The letter buildings are **squat**: about 25 m tall against a 22 m cap height.
   Taller and each letter becomes a tower and the word stops reading from above.
 
+## 10b. The company signs
+
+We are not reproducing the branding, so the companies are invented. What is
+reproduced is how a logo is physically mounted, because that is what shows.
+
+- **Parapet letters.** Individual extruded letters standing on the roof edge and
+  projecting about 0.45 m past the facade, cap height ~4.2 m, extruded ~0.9 m.
+  They break the roofline, which is why they read from furthest away. Put them
+  on a wall the camera can see: from azimuth 45 that means +x or +y.
+- **Roofmark.** A flat panel lying on the deck, about 0.42 of the smaller roof
+  dimension, with a single flat mark on it. Costs no height at all and is the
+  commonest type in the reference.
+- **Mast disc.** A large disc on a pole, standing clear of the roof, turned to
+  face the camera. One or two in frame at most: it is a hero.
+
+The mark is a silhouette and nothing else — a disc, a ring, a square, a
+triangle, a chevron, three bars. At this distance there is no such thing as a
+detailed logo. Saturated face, flat ink, matte: nothing here is emissive.
+
+Roof units and signs compete for the same roof, and the sign wins. Whatever
+places the units has to know where the sign is going first.
+
+## 10c. What makes it Buenos Aires
+
+The test is whether it survives being twelve pixels tall from a high oblique
+view. Almost nothing that makes the city recognisable at eye level does: the
+tiled pavements, the cafés on the footpath, the kiosks, the painted party walls
+are all invisible from here. Silhouette and colour are what is left.
+
+| Cue | Why it survives |
+|---|---|
+| **Jacarandás in flower** | violet against green reads at any size. One street tree in five; at one in two the city turns into a fantasy |
+| **Taxis**, black body, `#f2c300` roof | this camera sees mostly roof, and the roof is the livery |
+| **Colectivos**, flat two-tone per line | a small bright rectangle among the cars |
+| **The Obelisco**, 67.5 m on a 6.8 m base | taller than every building here, so it is the only vertical in frame |
+| **Cúpulas** on corner buildings, oxidised `#4a6b63` | a dome is a silhouette, not a texture |
+| **Floralis Genérica**, 23 m of steel | the only polished thing in the city |
+
+Rejected for this camera, and worth recording so they are not tried again:
+veredas, medianeras, café tables, kioscos, laundry on terraces. All real, all
+invisible from 1450 m.
+
+## 10d. Movement
+
+Two linear keyframes per object. No rig, no path constraint, no physics: what
+sells movement at this scale is the whole frame drifting in several directions
+at once, not any single vehicle being convincing.
+
+- Everything in a **lane** shares a speed, so nothing can run into the car in
+  front. Variety comes from lane to lane: 7–10 m/s local, 11–14.5 on an avenue,
+  3–4.5 for one lane in six.
+- **Crossings** are decided before the first frame and can be computed. Hold one
+  car back along its own lane until the other has cleared; take off the road
+  whatever that cannot settle.
+- **People walk along the pavement axis**, and have to be told which axis it is.
+- One helicopter, high, in a straight line: the only thing in frame that is not
+  on the grid.
+
 ## 11. The failure modes to watch for
 
 1. **Grid syndrome** — everything on the same axis at the same height. Fix: street

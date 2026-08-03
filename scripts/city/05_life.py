@@ -13,14 +13,72 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from _common import collection, instance, mat, rng, counts
+from _solids import Solids
 
 R = ROOT / "renders"
 
-TREES = ["Tree0", "Tree1", "Tree2", "Tree3", "Conifer0", "Conifer1"]
-CARS = ["CarRed", "CarWhite", "CarTeal", "CarBlue", "CarDark", "CarSilver"]
+# Three jacaranda entries against twelve of everything else: one street tree
+# in five is in flower. The first version put six against six and half the
+# city came out violet, which reads as a fantasy rather than as November.
+TREES = (["Tree0", "Tree1", "Tree2", "Tree3", "Conifer0", "Conifer1"] * 2 +
+         ["Jacaranda0", "Jacaranda1", "Jacaranda2"])
+# a taxi is one car in five here, which is not far off the real proportion in
+# the middle of Buenos Aires and is the cheapest of all the cues: from this
+# camera a car is mostly its roof, and this one has a yellow roof
+CARS = ["CarRed", "CarWhite", "CarTeal", "CarBlue", "CarDark", "CarSilver",
+        "Taxi", "Taxi", "Taxi"]
+COLECTIVOS = [f"Colectivo{i}" for i in range(4)]
 PEOPLE = [f"Person{i}" for i in range(8)]
 AVENUE = 22.0
 SUPER = None          # set from the JSON: the block the title stands on
+
+# Clearance each kind of object asks for, in metres. A person is queried at
+# almost nothing on purpose: somebody standing against a shop window is right,
+# somebody standing inside the shop is not.
+SOLIDS = Solids()
+CLEAR = {"tree": 3.2, "shrub": 1.6, "bench": 1.2, "person": 0.4,
+         "car": 2.4, "pole": 0.8}
+# Measured off the KIT meshes, not guessed. The canopy is what goes through a
+# wall, not the trunk, and these differ by a factor of two and a half: one
+# blanket clearance either lets Tree2 into the building or refuses Tree3 for
+# nothing, and 790 street trees were refused on a number that fitted neither.
+# It is the largest hypot(x, y), not the largest x or y, because every one of
+# these is dropped in at a random rotation about Z.
+RAD = {"Tree0": 3.33, "Tree1": 2.60, "Tree2": 4.38, "Tree3": 1.84,
+       "Conifer0": 2.73, "Conifer1": 2.08, "Shrub": 1.13,
+       "Jacaranda0": 3.53, "Jacaranda1": 4.68, "Jacaranda2": 4.71}
+# a bus is two and a half cars long. One "car" clearance let the buses through
+VEHICLE = {"Bus": 5.6, "Truck": 4.2, "Colectivo0": 5.7, "Colectivo1": 5.7,
+           "Colectivo2": 5.7, "Colectivo3": 5.7}
+SKIPPED = {}
+
+
+def free(kind, x, y, z=0.0):
+    """Is there room for this here? Counts its refusals so they get reported.
+
+    Silence is the failure mode of a filter like this one: if the footprints
+    ever stop being published the query returns True for everything and the
+    trees go back into the walls with nothing in the log to say so.
+    """
+    if SOLIDS.hit(x, y, z, CLEAR[kind]) is None:
+        return True
+    SKIPPED[kind] = SKIPPED.get(kind, 0) + 1
+    return False
+
+
+def fit_tree(name, sc, x, y, z):
+    """The largest of these that fits here, or None.
+
+    Refusing outright leaves a bare pavement in front of every building, which
+    is the opposite of the reference. A narrower species, or the same one
+    smaller, is what a real street does when the setback is tight.
+    """
+    for nm, s in ((name, sc), (name, sc * 0.7), ("Tree3", 0.85),
+                  ("Shrub", 1.3)):
+        if SOLIDS.hit(x, y, z, RAD[nm] * s) is None:
+            return nm, s
+    SKIPPED["tree"] = SKIPPED.get("tree", 0) + 1
+    return None
 
 
 def in_super(x, y, pad=0.0):
@@ -33,8 +91,14 @@ def in_super(x, y, pad=0.0):
     return x0 - pad <= x <= x1 + pad and y0 - pad <= y <= y1 + pad
 
 
-def street_trees(kit, coll, lots, r):
-    """A row down every block edge, with gaps so it is not a regiment."""
+def street_trees(kit, coll, lots, walk, r):
+    """A row down every block edge, with gaps so it is not a regiment.
+
+    On the pavement, which is outside the lot interior. The first version put
+    the row 1.2 m inside the interior edge and the buildings come to within
+    0.75 m of that same edge, so nearly half the street trees were standing
+    inside an office: 917 of them, once there was a test that could count.
+    """
     n = 0
     for lot in lots:
         cx, cy = lot["x"], lot["y"]
@@ -42,7 +106,7 @@ def street_trees(kit, coll, lots, r):
         lift = lot["lift"]
         for axis in (0, 1):
             length = w if axis == 0 else d
-            edge = (d if axis == 0 else w) / 2 - 1.2
+            edge = (d if axis == 0 else w) / 2 + walk * 0.5
             span = length - 8.0
             count = max(1, int(span / 8.5))
             for side in (-1, 1):
@@ -52,19 +116,33 @@ def street_trees(kit, coll, lots, r):
                     t = -span / 2 + k * span / count
                     x, y = ((cx + t, cy + side * edge) if axis == 0
                             else (cx + side * edge, cy + t))
-                    instance(kit[r.choice(TREES)], coll,
-                             (x + r.uniform(-1.6, 1.6),
-                              y + r.uniform(-1.6, 1.6), lift),
-                             r.uniform(0, 6.28), r.uniform(1.0, 1.5))
+                    # Every draw happens whether or not the tree is placed:
+                    # the whole city comes out of one stream, so a conditional
+                    # draw would reshuffle every lot downstream of the first
+                    # refusal. The jitter runs along the pavement and barely
+                    # across it: 1.6 m across a 2.5 m walk is the road.
+                    name = r.choice(TREES)
+                    a = r.uniform(-2.2, 2.2)
+                    b = r.uniform(-0.5, 0.5)
+                    px, py = ((x + a, y + b) if axis == 0 else (x + b, y + a))
+                    rot, sc = r.uniform(0, 6.28), r.uniform(1.0, 1.5)
+                    got = fit_tree(name, sc, px, py, lift)
+                    if got is None:
+                        continue
+                    instance(kit[got[0]], coll, (px, py, lift), rot, got[1])
                     n += 1
     return n
 
 
 def clump(kit, coll, cx, cy, rw, rd, lift, count, r):
     for _ in range(count):
-        instance(kit[r.choice(TREES)], coll,
-                 (cx + r.uniform(-rw, rw), cy + r.uniform(-rd, rd), lift),
-                 r.uniform(0, 6.28), r.uniform(1.0, 1.8))
+        name = r.choice(TREES)
+        px, py = cx + r.uniform(-rw, rw), cy + r.uniform(-rd, rd)
+        rot, sc = r.uniform(0, 6.28), r.uniform(1.0, 1.8)
+        got = fit_tree(name, sc, px, py, lift)
+        if got is None:
+            continue
+        instance(kit[got[0]], coll, (px, py, lift), rot, got[1])
 
 
 def planting(kit, coll, lots, r):
@@ -79,22 +157,22 @@ def planting(kit, coll, lots, r):
         if kind == "park":
             clump(kit, coll, cx, cy, w * 0.42, d * 0.42, lift, int(34 * n), r)
             for _ in range(8):
-                instance(kit["Shrub"], coll,
-                         (cx + r.uniform(-w / 3, w / 3),
-                          cy + r.uniform(-d / 3, d / 3), lift),
-                         r.uniform(0, 6.28), r.uniform(0.9, 1.5))
+                px, py = cx + r.uniform(-w / 3, w / 3), cy + r.uniform(-d / 3, d / 3)
+                rot, sc = r.uniform(0, 6.28), r.uniform(0.9, 1.5)
+                if free("shrub", px, py, lift):
+                    instance(kit["Shrub"], coll, (px, py, lift), rot, sc)
             for _ in range(5):
-                instance(kit["Bench"], coll,
-                         (cx + r.uniform(-w / 3, w / 3),
-                          cy + r.uniform(-d / 3, d / 3), lift),
-                         r.uniform(0, 6.28))
+                px, py = cx + r.uniform(-w / 3, w / 3), cy + r.uniform(-d / 3, d / 3)
+                rot = r.uniform(0, 6.28)
+                if free("bench", px, py, lift):
+                    instance(kit["Bench"], coll, (px, py, lift), rot)
         elif kind == "plaza":
             clump(kit, coll, cx, cy, w * 0.36, d * 0.36, lift, int(12 * n), r)
             for _ in range(int(3 * n)):
-                instance(kit["Bench"], coll,
-                         (cx + r.uniform(-w / 3, w / 3),
-                          cy + r.uniform(-d / 3, d / 3), lift),
-                         r.uniform(0, 6.28))
+                px, py = cx + r.uniform(-w / 3, w / 3), cy + r.uniform(-d / 3, d / 3)
+                rot = r.uniform(0, 6.28)
+                if free("bench", px, py, lift):
+                    instance(kit["Bench"], coll, (px, py, lift), rot)
         elif kind == "parking":
             clump(kit, coll, cx, cy, w * 0.42, d * 0.42, lift, int(8 * n), r)
 
@@ -115,7 +193,7 @@ def lights_and_signals(kit, coll, data, r):
                         x, y = ((b + t, off) if axis == 0 else (off, b + t))
                         rot = (math.pi / 2 if axis == 0 else 0.0)
                         rot += math.pi if side > 0 else 0.0
-                        if in_super(x, y, -1.0):
+                        if in_super(x, y, -1.0) or not free("pole", x, y):
                             continue
                         instance(kit["StreetLight"], coll, (x, y, 0.0), rot)
                         n += 1
@@ -127,7 +205,7 @@ def lights_and_signals(kit, coll, data, r):
             for k, (dx, dy) in enumerate(((1, 1), (-1, -1))):
                 x = sx + dx * ((wx - walk * 2) / 2 + 1.4)
                 y = sy + dy * ((wy - walk * 2) / 2 + 1.4)
-                if in_super(x, y, -1.0):
+                if in_super(x, y, -1.0) or not free("pole", x, y):
                     continue
                 instance(kit["TrafficLight"], coll, (x, y, 0.0),
                          math.pi * (0.5 if k == 0 else 1.5))
@@ -149,14 +227,28 @@ def traffic(kit, coll, data, r):
                 while pos < span:
                     pos += r.uniform(13.0, 44.0)
                     x, y = ((pos, s + lane) if axis == 0 else (s + lane, pos))
-                    name = r.choice(["Bus", "Truck"]) if r.random() < 0.08 \
-                        else r.choice(CARS)
+                    name = (r.choice(COLECTIVOS + ["Truck"])
+                            if r.random() < 0.09 else r.choice(CARS))
                     if in_super(x, y, -1.0):
+                        continue
+                    if SOLIDS.hit(x, y, 0.0, VEHICLE.get(name, 2.4)):
+                        SKIPPED["car"] = SKIPPED.get("car", 0) + 1
                         continue
                     rot = 0.0 if axis == 0 else math.pi / 2
                     if direction < 0:
                         rot += math.pi
-                    instance(kit[name], coll, (x, y, 0.0), rot)
+                    ob = instance(kit[name], coll, (x, y, 0.0), rot)
+                    # which lane this vehicle is in, so step 11 can drive it
+                    # without having to reconstruct the street layout from the
+                    # position it ended up at
+                    ob["axis"] = axis
+                    ob["lane"] = s + lane
+                    ob["dir"] = direction
+                    ob["avenue"] = 1 if w >= AVENUE else 0
+                    # where it started, so step 11 can be run twice. It moves
+                    # cars along their lane to keep them out of each other,
+                    # and without this the second run moves the moved ones
+                    ob["p0"] = x if axis == 0 else y
                     n += 1
     return n
 
@@ -175,13 +267,16 @@ def parked(kit, coll, lots, r):
                 if r.random() < 0.15:
                     continue
                 x = cx - w / 2 + 3.8 + k * (w - 5) / (count - 1)
-                instance(kit[r.choice(CARS)], coll, (x, y, lot["lift"] + 0.02),
+                name = r.choice(CARS)
+                if not free("car", x, y, lot["lift"]):
+                    continue
+                instance(kit[name], coll, (x, y, lot["lift"] + 0.02),
                          math.pi / 2)
                 n += 1
     return n
 
 
-def crowds(kit, coll, lots, data, r):
+def crowds(kit, coll, lots, data, walk, r):
     n = 0
     for lot in lots:                                   # along the pavements
         cx, cy = lot["x"], lot["y"]
@@ -189,19 +284,34 @@ def crowds(kit, coll, lots, data, r):
         for _ in range(r.randint(14, 30)):
             axis, side = r.randint(0, 1), r.choice((-1, 1))
             length = w if axis == 0 else d
-            edge = (d if axis == 0 else w) / 2 - r.uniform(0.5, 2.2)
+            # outside the lot interior, like the trees: the pavement is the
+            # band between the interior edge and the kerb, and people walking
+            # 2.2 m the other side of that line are walking through a wall
+            edge = (d if axis == 0 else w) / 2 + r.uniform(0.3, walk - 0.3)
             t = r.uniform(-length / 2 + 4, length / 2 - 4)
             x, y = ((cx + t, cy + side * edge) if axis == 0
                     else (cx + side * edge, cy + t))
-            instance(kit[r.choice(PEOPLE)], coll, (x, y, lot["lift"]),
-                     r.uniform(0, 6.28))
+            name = r.choice(PEOPLE)
+            rot = r.uniform(0, 6.28)
+            if not free("person", x, y, lot["lift"]):
+                continue
+            ob = instance(kit[name], coll, (x, y, lot["lift"]), rot)
+            # the pavement runs along one axis and this is the only place that
+            # knows which. Step 11 walks these; without it a walking figure
+            # has to guess a heading and half of them set off into a wall.
+            if r.random() < 0.55:
+                ob["walk"] = [1.0, 0.0] if axis == 0 else [0.0, 1.0]
+                if r.random() < 0.5:
+                    ob["walk"] = [-ob["walk"][0], -ob["walk"][1]]
             n += 1
         if lot["kind"] in ("park", "plaza"):
             for _ in range(r.randint(10, 22)):
-                instance(kit[r.choice(PEOPLE)], coll,
-                         (cx + r.uniform(-w / 3, w / 3),
-                          cy + r.uniform(-d / 3, d / 3), lot["lift"]),
-                         r.uniform(0, 6.28))
+                name = r.choice(PEOPLE)
+                px, py = cx + r.uniform(-w / 3, w / 3), cy + r.uniform(-d / 3, d / 3)
+                rot = r.uniform(0, 6.28)
+                if not free("person", px, py, lot["lift"]):
+                    continue
+                instance(kit[name], coll, (px, py, lot["lift"]), rot)
                 n += 1
 
     for sx in data["streets_x"]:                       # knots at the crossings
@@ -211,18 +321,18 @@ def crowds(kit, coll, lots, data, r):
             for _ in range(r.randint(3, 9)):
                 a, dd = r.uniform(0, 6.28), r.uniform(9.0, 16.0)
                 px, py = sx + dd * math.cos(a), sy + dd * math.sin(a)
-                if in_super(px, py, -1.0):
+                name = r.choice(PEOPLE)
+                rot = r.uniform(0, 6.28)
+                if in_super(px, py, -1.0) or not free("person", px, py):
                     continue
-                instance(kit[r.choice(PEOPLE)], coll, (px, py, 0.0),
-                         r.uniform(0, 6.28))
+                instance(kit[name], coll, (px, py, 0.0), rot)
                 n += 1
     return n
 
 
 def rooftop_people(kit, coll, r):
-    """ROOFPROPS only. CAMPUSROOF is deliberately left empty: the title plates
-    sit half a metre over those parapets and anyone standing there would be
-    speared by a letter, which this camera hides completely."""
+    """ROOFPROPS only. CAMPUSROOF exists but is empty: the title blocks carry
+    the letters themselves now, so there are no campus roofs to stand on."""
     n = 0
     for ob in list(bpy.data.collections["ROOFPROPS"].objects):
         if r.random() < 0.10:
@@ -240,10 +350,15 @@ def main():
     kit = {ob.name: ob for ob in bpy.data.collections["KIT"].objects}
     data = json.loads((R / "city_lots.json").read_text())
     lots = data["lots"]
-    global SUPER
+    global SUPER, SOLIDS
     SUPER = data.get("superblock")
+    SOLIDS = Solids.load(R / "city_solids.json")
+    if not SOLIDS.boxes:
+        raise SystemExit("no city_solids.json: run steps 04 and 06 first, or "
+                         "everything below plants itself inside a wall")
+    print(f"  {len(SOLIDS.boxes)} footprints to keep clear of")
 
-    for name in ("NATURE", "FURNITURE", "TRAFFIC", "PEOPLE"):
+    for name in ("NATURE", "FURNITURE", "TRAFFIC", "PEOPLE", "ROOFPEOPLE"):
         if name in bpy.data.collections:
             c = bpy.data.collections[name]
             for ob in list(c.objects):
@@ -253,15 +368,22 @@ def main():
     fur = collection("FURNITURE")
     tra = collection("TRAFFIC")
     ppl = collection("PEOPLE")
+    # their own collection because they are standing on roofs, which is inside
+    # a building footprint on purpose. Mixed in with the pavement crowd they
+    # made the footprint check fail 63 times a run, correctly and uselessly.
+    rpl = collection("ROOFPEOPLE")
 
+    walk = data["walk"]
     r = rng(31337)
-    street_trees(kit, nat, lots, r)
+    street_trees(kit, nat, lots, walk, r)
     planting(kit, nat, lots, r)
     li = lights_and_signals(kit, fur, data, r)
     ca = traffic(kit, tra, data, r) + parked(kit, tra, lots, r)
-    pe = crowds(kit, ppl, lots, data, r) + rooftop_people(kit, ppl, r)
+    pe = crowds(kit, ppl, lots, data, walk, r) + rooftop_people(kit, rpl, r)
 
     print(f"\n  trees {len(nat.objects)}  furniture {li}  cars {ca}  people {pe}")
+    print("  refused for want of room: " +
+          ("  ".join(f"{k} {v}" for k, v in sorted(SKIPPED.items())) or "none"))
     u, t = counts()
     print(f"  triangles: {u} unique / {t} total   objects {len(bpy.data.objects)}")
 
