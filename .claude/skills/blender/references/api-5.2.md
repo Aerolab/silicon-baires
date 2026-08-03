@@ -22,6 +22,46 @@ ffmpeg.codec           : H264 H265 AV1 WEBM PRORES DNXHD FFV1 THEORA ...
 returns an incomplete list in background mode. To learn which values are really valid,
 try assigning them inside a `try`.
 
+## The compositor moved into a node group
+
+`scene.node_tree` **no longer exists**. Compositing is a node group hung off the
+scene, and several classic nodes are gone:
+
+```python
+scene.view_layers[0].use_pass_z = True          # do this first: it adds the socket
+ng = bpy.data.node_groups.new("Comp", "CompositorNodeTree")
+ng.interface.new_socket("Image", in_out="OUTPUT", socket_type="NodeSocketColor")
+scene.compositing_node_group = ng
+
+rl = ng.nodes.new("CompositorNodeRLayers"); rl.scene = scene
+out = ng.nodes.new("NodeGroupOutput")           # NOT CompositorNodeComposite
+```
+
+| Gone in 5.2 | Use instead |
+|---|---|
+| `CompositorNodeComposite` | `NodeGroupOutput` |
+| `CompositorNodeMixRGB` | `ShaderNodeMix` (`data_type="RGBA"`; sockets `[0]` fac, `[6]`/`[7]` A/B, output `[2]`) |
+| `CompositorNodeMath` | `ShaderNodeMath` |
+| `CompositorNodeTexture` | `CompositorNodeImageCoordinates` + `ShaderNodeTexWhiteNoise` |
+
+Shader nodes work inside a compositor tree now. `CompositorNodeBlur` lost
+`filter_type` and `size_x/size_y`: both are input sockets (`Type`, `Size`), and
+because `Size` is a socket you can link an image into it for a **variable
+blur** — which is how you fake depth of field on an orthographic camera, where
+`CompositorNodeDefocus` produces nothing at all.
+
+## Sky Texture — Nishita was renamed
+
+```python
+sky.sky_type = "NISHITA"        # TypeError on 5.2
+sky.sky_type = "MULTIPLE_SCATTERING"   # this is the Nishita model now
+```
+
+Valid values: `SINGLE_SCATTERING`, `MULTIPLE_SCATTERING`, `PREETHAM`,
+`HOSEK_WILKIE`. `dust_density` also became `aerosol_density`. The rest of the
+properties kept their names: `sun_elevation`, `sun_rotation`, `sun_disc`,
+`sun_intensity`, `altitude`, `air_density`, `ozone_density`.
+
 ## Principled BSDF — exact socket names
 
 ```

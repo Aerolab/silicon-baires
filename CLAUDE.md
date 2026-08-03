@@ -43,6 +43,24 @@ blib.render("renders/out.png", "EEVEE")         # and then: look at the PNG
 
 Iterate in EEVEE (0.65s), move to Cycles only for the final image.
 
+## The city
+
+The main piece of work in this repo is a city in the style of the *Silicon Valley*
+title sequence: `renders/city.blend`, built by the numbered scripts in
+`scripts/city/`, in order.
+
+```bash
+./bl scripts/city/03_ground.py     # each script opens city.blend, adds its layer, saves
+./bl scripts/city/07_look.py final # the final Cycles frame
+```
+
+Read `docs/city/STYLE-BIBLE.md` before touching the look, and `docs/city/PLAN.md`
+for how the build is organised and which decisions were already settled (roads as
+negative space, orthographic camera, depth of field from the Z pass).
+
+The `.blend` is the deliverable, not the scripts. There is no city generator and
+there should not be one: when a building looks wrong, fix that building.
+
 ## Layout
 
 ```
