@@ -74,11 +74,15 @@ adding a step. The graph is declared in the code as well — every step opens wi
 stops the run with the command that fixes it, instead of surfacing thirty lines
 later as a `KeyError` or not surfacing at all.
 
-Three numbers are shared and each one is shared because two steps disagreed
+Four numbers are shared and each one is shared because two steps disagreed
 about it once, silently:
 
 - **How long the shot is** — `_common.FPS / FRAMES / MOVE`. Change it there,
   then re-run **11 and then 12**, in that order.
+- **Where the camera goes** — `_common.SHOT_*`, with `shot_at()` and
+  `shot_cover()`. Step 12 flies the move and step 04 plans a company sign for
+  every roof the move passes over, so they read one path. Change it, then
+  re-run **04, 10, then 12**.
 - **How wide the hero frame is** — `_common.HERO_WIDTH`. The move has to land on
   the framing the still is rendered at.
 - **Every colour** — `scripts/city/_palette.py`, one table, applied on the way
@@ -100,7 +104,7 @@ existing instance orphaned, so it **must** be followed by the whole chain from
 `03_ground.py`, and `02b_porteno_kit.py` has to run again too because its assets
 live in the same collection.
 
-Six standing checks, because none of these failures raise an exception:
+Seven standing checks, because none of these failures raise an exception:
 
 ```bash
 ./bl scripts/city/99_check_overlap.py           # nothing is standing inside a building
@@ -108,8 +112,14 @@ Six standing checks, because none of these failures raise an exception:
 ./bl scripts/city/95_check_traffic.py           # right-hand traffic, and on the road
 ./bl scripts/city/94_check_road.py              # and nothing green ON the road
 ./bl scripts/city/96_check_title_move.py        # the title from other angles
+./bl scripts/city/93_check_signs.py             # how many brands the shot delivers
 python3 scripts/city/97_check_title.py renders/city_08_title_only.png
 ```
+
+`93_check_signs.py` counts the thing the video is actually for. The signs are
+planned for a camera that crosses the city on one diagonal, so "77 signs built"
+and "how many a viewer sees" are different numbers by a factor of four, and only
+the second one matters.
 
 `99_check_overlap.py` is the one to run after touching anything that places
 objects. A tree inside an office wall is invisible from the hero camera — it
@@ -139,7 +149,10 @@ and every wrong version measured well.
 Three files travel with the `.blend` and are read by later steps, so do not
 delete them: `renders/city_solids.json`, the rectangle every solid thing
 occupies; `renders/city_signs.json`, the manifest of company signs (name,
-position, orientation, face size) for dropping real artwork on later; and
+position, orientation, face size, and `owner` — the building it belongs to,
+recorded by the step that places it because an L is several overlapping wings
+and recovering the address afterwards is a guess) for dropping real artwork on
+later; and
 `renders/city_lots.json`, the street and block tables, which also carry the
 section of the Avenida 9 de Julio under `avenue9j` — steps 05 and 06b build
 from that key rather than from a second copy of the numbers.

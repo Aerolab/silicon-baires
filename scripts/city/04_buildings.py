@@ -18,8 +18,58 @@ import bpy, blib
 from mathutils import Matrix, Vector
 from _common import (Mesh, collection, instance, mat, paint, rng, counts,
                      R, LOTS, SOLIDS, SIGNS, open_city, save_city, purge,
-                     preview)
+                     preview, ASPECT, FRAMES, screen_xy, shot_at, shot_cover)
 from _solids import Solids
+
+
+# --- the signs are for the camera, and the camera goes one way -------------
+# This file used to plan signs evenly over the whole city, which sounds neutral
+# and is not: the shot crosses a 700 m city on one 320 m diagonal, so an even
+# spread put 59 of 77 signs where the film never looks. Measured, not guessed -
+# 93_check_signs.py is the instrument and it reported 18 in frame and twelve
+# distinct brands.
+#
+# Three rules now, and all three are enforced rather than hoped for:
+#
+#   IN THE SHOT       a roof the camera passes over is worth a sign; one it
+#                     does not pass over is scenery. CORRIDOR_FILL is the extra
+#                     chance a building in the strip gets one anyway.
+#   ONE PER BUILDING  two brands on one address reads as one company with two
+#                     logos.
+#   NOT STUCK TOGETHER  two signs landing on the same corner of the frame read
+#                     as one busy patch. MIN_GAP is how far apart they stay.
+#
+# The last two are enforced in the SECOND PASS, at the bottom of this file, and
+# that is deliberate: dropping a sign after every building is published costs
+# the shared RNG nothing, so the city itself comes out identical to the run
+# before. Enforcing them during placement would have reshuffled all eighty lots
+# and changed a frame that was already approved, to fix a problem that has
+# nothing to do with where the buildings are.
+IN_SHOT_SECS = 1.0        # in frame this long to count as being in the shot
+CORRIDOR_FILL = 1.00      # extra chance of a sign on a roof the shot crosses
+CORRIDOR_GROW = 1.45      # and how much bigger it is built, once it is in it
+MIN_GAP = 0.10            # closest two signs may get, in frame widths.
+BRANDS_WANTED = 30        # the brief. Reported against, not silently missed.
+MIN_FRAC = 0.05           # 96 px at 1080p: under this a wordmark is a smudge
+MIN_SECS = 1.0            # and under this the eye has no time to land on it
+
+# HOW WIDE THE BRAND TABLES WERE WHEN THE CITY WAS APPROVED, and the strangest
+# looking pair of numbers in this file. They are pinned because the brand drawn
+# during placement is a PLACEHOLDER - assign_brands() overwrites every one of
+# them at the end of the run - but the DRAW still has to cost the random
+# generator exactly what it used to.
+#
+# random.choice() does not consume a fixed amount of the stream. It calls
+# _randbelow(n), which pulls n.bit_length() bits and rejects out-of-range
+# values, so a 30-name list takes five bits a draw where a 14-name list takes
+# four. Widening the tables therefore reshuffled every building placed after
+# every sign in the city: the buildings mesh went from 258704 vertices to
+# 257868, entirely invisibly, because nothing about a longer list of company
+# names looks like it could move a building.
+#
+# Found by hashing the mesh against the previous .blend, which is the only way
+# it could have been found. It renders perfectly either way.
+DRAW_WIDTH, AV_DRAW_WIDTH = 14, 12
 
 
 # NO GRID CONSTANTS HERE. This file used to open with
@@ -69,6 +119,13 @@ CAMPUS = {(4, 4), (4, 5)}
 # reproducing the branding, so these are made up, and made up with an ear for
 # where the city is: they are the names a Buenos Aires tech park would have.
 # (text, mark, face colour, ink colour)
+# THIRTY, and the number is the brief: thirty distinct brands have to go past
+# the camera. It was fourteen, which was plenty while the assignment was a
+# random draw per sign - a fourteen-name table drawn from randomly puts the
+# same name on camera twice long before it runs out, and it did: ANDA, ASADO
+# and KETZAL each appeared twice in a pass that delivered twelve brands.
+# The table is sized for the shot now, and assign_brands() below is what makes
+# the size mean something, by dealing from it instead of drawing from it.
 SIGN_FACES = [
     ("ZONDA", "chevron", "#e8532a", "#ffffff"),
     ("OMBU", "disc", "#1d7fc4", "#ffffff"),
@@ -84,6 +141,22 @@ SIGN_FACES = [
     ("TANGO", "square", "#22201c", "#f2b705"),
     ("KETZAL", "disc", "#0d8a86", "#ffffff"),
     ("NUBE", "bars", "#e8e4da", "#5c3d8f"),
+    ("TALA", "chevron", "#2f8f4e", "#f7f3e8"),
+    ("AUSTRAL", "square", "#0f4c81", "#ffffff"),
+    ("LINCE", "triangle", "#7a3b12", "#f2b705"),
+    ("CARDON", "bars", "#8f2a1c", "#f7f3e8"),
+    ("NODO", "ring", "#e8532a", "#22201c"),
+    ("ARROYO", "disc", "#1a7f3c", "#ffffff"),
+    ("FARO", "chevron", "#f2b705", "#2b2f77"),
+    ("RAMBLA", "square", "#d9d5cc", "#2f8f4e"),
+    ("CUARZO", "triangle", "#5c3d8f", "#e8e4da"),
+    ("SALTO", "bars", "#0d8a86", "#f7f3e8"),
+    ("TRAMA", "ring", "#c8102e", "#f7f3e8"),
+    ("PILAR", "disc", "#22201c", "#0f9bd7"),
+    ("VELA", "chevron", "#0f9bd7", "#22201c"),
+    ("SEIBO", "square", "#ef7d1a", "#ffffff"),
+    ("PUERTO", "triangle", "#123a8f", "#f2b705"),
+    ("TIMBO", "bars", "#7a4b9f", "#f7f3e8"),
 ]
 
 # The avenue advertises to drivers, not to recruiters, so it carries a
@@ -103,6 +176,12 @@ AV_FACES = [
     ("SUBTE", "ring", "#2b2f77", "#f2b705"),
     ("ASADO", "triangle", "#8f2a1c", "#f7f3e8"),
     ("BOCA", "bars", "#0d3b8f", "#f2b705"),
+    ("MILONGA", "ring", "#3b1f13", "#e8e4da"),
+    ("PORRON", "disc", "#1a7f3c", "#f2b705"),
+    ("TOTORA", "bars", "#0d8a86", "#ffffff"),
+    ("CHACRA", "square", "#8f2a1c", "#f7f3e8"),
+    ("VIENTO", "chevron", "#0f9bd7", "#22201c"),
+    ("MOSTO", "triangle", "#7a3b12", "#f7f3e8"),
 ]
 
 # How often a building that looks at the avenue carries each format, and how
@@ -436,7 +515,50 @@ def mast_fits(sol, cx, cy, rot, disc, z):
     return None
 
 
-def plan_sign(bx, by, w, d, top, floors, r, signs, sol=None):
+def own(owner, bx, by):
+    """Which building this sign belongs to, as a key the second pass can group on.
+
+    It is recorded rather than worked out later on purpose. An L is several
+    overlapping wing rectangles and a mural hangs off one wall of one of them,
+    so recovering the owner from the published footprints means guessing which
+    of four overlapping boxes was meant - and guessing wrong merges two
+    neighbours into one address, or splits one address into two. The step that
+    places the sign is the only one that knows, so it writes it down.
+    """
+    ox, oy = (bx, by) if owner is None else owner
+    return [round(ox, 2), round(oy, 2)]
+
+
+_shot = {}
+
+
+def in_shot(x, y, z):
+    """Does the camera pass over this roof, and stay on it long enough to see?
+
+    Memoised on a 4 m grid. shot_cover samples the move 78 times and this is
+    asked once per building, which is cheap; it is asked again per sign in the
+    second pass, which is where the repeats are.
+    """
+    key = (round(x / 4), round(y / 4), round(z / 4))
+    if key not in _shot:
+        _shot[key] = shot_cover(x, y, z)[0]
+    return _shot[key] >= IN_SHOT_SECS
+
+
+def sign_rng(bx, by):
+    """This building's own stream for the corridor fill.
+
+    Same device as avenue_rng() and the same justification: adding one coin
+    flip to the shared stream reshuffles every lot downstream of it, so a change
+    to the SIGNS would come back as a change to the BUILDINGS. Seeded off the
+    position, so it is still deterministic and still varies building to
+    building. The 613/149 differ from avenue_rng's 977/131 so that a building on
+    the avenue does not get two correlated streams.
+    """
+    return rng(int(round(abs(bx) * 613 + abs(by) * 149)) + 7)
+
+
+def plan_sign(bx, by, w, d, top, floors, r, signs, sol=None, owner=None):
     """Reserve a place for a company sign, and record where it is.
 
     Step 04 decides, step 10 builds. It has to be this way round: this step
@@ -457,10 +579,77 @@ def plan_sign(bx, by, w, d, top, floors, r, signs, sol=None):
         kind = "roofmark"
     elif r.random() < 0.14:
         kind = "mast"
+    # SECOND CHANCE, and only inside the strip the camera crosses. The draws
+    # above are unchanged and are still made from the shared stream, so a
+    # building that got a sign before gets the same sign now; this only fills
+    # roofs that came up empty AND are in the shot.
+    #
+    # It draws from a stream of this building's own, seeded off its position,
+    # for the reason avenue_rng() already documents: taken from `r` it would
+    # cost the shared stream a draw per empty roof in the corridor and reshuffle
+    # every lot after the first one. Same trick, same reason - the city's
+    # geometry must not move because the signs did.
+    pick, grow, order = r, 1.0, [kind]
+    if in_shot(bx, by, top):
+        grow = CORRIDOR_GROW
     if kind is None:
+        if grow == 1.0:
+            return None                      # not in the shot: nothing to gain
+        pick = sign_rng(bx, by)
+        if pick.random() >= CORRIDOR_FILL:
+            return None
+        # the biggest format the roof can take FIRST, then down. Not a random
+        # one: these are the signs added specifically to be read, so a 7 m panel
+        # on a 20 m roof - 3 per cent of the frame, under the legibility floor -
+        # is not worth the roof it costs. And not one format only: three roofs
+        # the camera flies straight over ended up bald because the first choice
+        # ran into a neighbour and there was no second choice.
+        order = ["parapet", "roofmark", "mast"] if floors >= 3 and w >= 20 \
+            else ["roofmark", "mast"] if w * d > 380 else ["mast", "roofmark"]
+    elif kind is None:
         return None
     idx = len(signs)
-    face = r.choice(SIGN_FACES)
+    r = pick
+    face = r.choice(SIGN_FACES[:DRAW_WIDTH])
+    made = None
+    for attempt in order:
+        made = shape_sign(attempt, bx, by, w, d, top, r, sol, grow)
+        if made is not None:
+            kind = attempt
+            break
+    if made is None:
+        return None
+    rec, keep = made
+    rec.update(name=f"Sign.{idx:03d}", text=face[0], mark=face[1],
+               face=face[2], ink=face[3], owner=own(owner, bx, by))
+    signs.append(rec)
+    return keep
+
+
+def shape_sign(kind, bx, by, w, d, top, r, sol, grow):
+    """The geometry of one format on one roof, or None if it does not fit.
+
+    Split out of plan_sign so the corridor can TRY MORE THAN ONE. It could not
+    before: the format was chosen, and if it did not fit the building simply
+    went without. Three roofs the camera passes directly over were bald for
+    that reason - a parapet word that ran into the neighbour, on a roof that
+    would have taken a panel without complaint.
+
+    Trying again is only safe on the corridor path, where the draws come from
+    this building's private stream. On the ordinary path a second attempt would
+    be a second set of draws out of the shared one, and the city would move.
+    """
+    # A SIGN IN THE SHOT IS BUILT BIGGER, and this is the half of the problem
+    # that filling empty roofs does not touch. Nineteen signs reached the frame
+    # and seven of them were under 5 per cent of its width - 96 px at 1080p,
+    # which is where a mark stops being a mark and becomes a coloured dot. They
+    # were not badly placed, they were sized for a city seen from 620 m in the
+    # step's own control render rather than for the 170 m frame that ships.
+    #
+    # A multiplier and not a redraw: changing the KIND here would change how
+    # many numbers this function takes out of the shared stream, and that
+    # reshuffles every lot after it. A size costs no draws, so the buildings
+    # stay exactly where they were and only the sign on them grows.
     if kind == "parapet":
         # On the +y wall, turned to face it, because that is a wall this
         # camera can see. The hero camera sits at azimuth 45, so it looks at
@@ -471,26 +660,29 @@ def plan_sign(bx, by, w, d, top, floors, r, signs, sol=None):
         # 0.55 and 22, not 0.62 and 26: an L or a U is several wings and the
         # word was running off the end of the one it is mounted on and into
         # the next one along
-        length = min(w * 0.55, 22.0)
+        # the ceiling grows with the wall, not past it: 0.80 of the wall still
+        # leaves a tenth of it clear at each end, which is what stops a word
+        # from reading as a stripe painted across the whole parapet.
+        length = min(w * 0.55 * grow, 22.0 * grow, w * 0.80)
         if sol is not None:
             length = sign_fits(sol, bx, by + d / 2, length, top, 4.6)
             if length is None:
                 return None
-        rec = dict(kind=kind, x=bx, y=by + d / 2, z=top, rot=math.pi,
-                   w=length, h=min(4.6, length * 0.26))
-        keep = (0.0, d / 2 - 2.0, length + 2.0, 5.0)
-    elif kind == "roofmark":
+        return (dict(kind=kind, x=bx, y=by + d / 2, z=top, rot=math.pi,
+                     w=length, h=min(4.6, length * 0.26)),
+                (0.0, d / 2 - 2.0, length + 2.0, 5.0))
+    if kind == "roofmark":
         # a flat panel lying on the deck, like the orange square in the
         # reference: the only type that costs no height at all
         # same reason: a panel that drifts far enough off centre ends up
         # sitting across a neighbouring wing's parapet
-        side = min(w, d) * 0.36
+        side = min(min(w, d) * 0.36 * grow, min(w, d) * 0.62)
         rec = dict(kind=kind, x=bx + r.uniform(-w * 0.07, w * 0.07),
                    y=by + r.uniform(-d * 0.07, d * 0.07), z=top - 0.83,
                    rot=r.choice([0.0, math.pi / 2]), w=side, h=side)
-        keep = (rec["x"] - bx, rec["y"] - by, side + 2.0, side + 2.0)
+        return rec, (rec["x"] - bx, rec["y"] - by, side + 2.0, side + 2.0)
     else:
-        disc = min(min(w, d) * 0.55, 16.0)
+        disc = min(min(w, d) * 0.55 * grow, 16.0 * grow, min(w, d) * 0.80)
         rec = dict(kind=kind, x=bx + r.uniform(-w * 0.2, w * 0.2),
                    y=by + r.uniform(-d * 0.2, d * 0.2), z=top,
                    # +135, not -45. The disc is a cylinder stood on edge, so
@@ -498,11 +690,14 @@ def plan_sign(bx, by, w, d, top, floors, r, signs, sol=None):
                    # azimuth 45: at -45 the face pointed exactly away and every
                    # mast in the city showed its blank back.
                    rot=math.radians(135), w=disc, h=disc)
-        keep = (rec["x"] - bx, rec["y"] - by, disc + 2.0, disc + 2.0)
-    rec.update(name=f"Sign.{idx:03d}", text=face[0], mark=face[1],
-               face=face[2], ink=face[3])
-    signs.append(rec)
-    return keep
+        # the mast is the fallback format and it is the one that reaches
+        # furthest sideways, so it is the one that most needs asking. It used
+        # to be checked only in the second pass, by which time it had already
+        # taken the roof off the list.
+        if sol is not None and mast_fits(sol, rec["x"], rec["y"], rec["rot"],
+                                         disc, rec["z"]) is None:
+            return None
+        return rec, (rec["x"] - bx, rec["y"] - by, disc + 2.0, disc + 2.0)
 
 
 def avenue_bank(av, bx, by, w, d):
@@ -551,7 +746,7 @@ def panel_fits(sol, wx, wy, rot, length, z):
     return None
 
 
-def plan_medianera(side, bx, by, w, d, top, r, signs, sol):
+def plan_medianera(side, bx, by, w, d, top, r, signs, sol, owner=None):
     """A mural on a blind party wall. The format the avenue is famous for.
 
     No letters and no relief: one panel with a face colour and a mark, because
@@ -600,16 +795,17 @@ def plan_medianera(side, bx, by, w, d, top, r, signs, sol):
     # whatever is in front of it, which is the entire reason a medianera is
     # worth renting.
     base = max(base0, wall - 1.2 - height)
-    face = r.choice(AV_FACES)
+    face = r.choice(AV_FACES[:AV_DRAW_WIDTH])
     rec = dict(kind="medianera", x=wx, y=wy, z=base, rot=rot,
                w=length, h=height, run=run, wall=wall,
                name=f"Sign.{len(signs):03d}", text=face[0], mark=face[1],
-               face=face[2], ink=face[3])
+               face=face[2], ink=face[3], owner=own(owner, bx, by))
     signs.append(rec)
     return rec
 
 
-def plan_billboard(bx, by, w, d, top, rot, r, signs, siblings, ox, oy):
+def plan_billboard(bx, by, w, d, top, rot, r, signs, siblings, ox, oy,
+                   owner=None):
     """A panel on legs on the roof, turned to face the camera.
 
     Returned in wing-local coordinates as a keep-out for the roof units, the
@@ -644,11 +840,11 @@ def plan_billboard(bx, by, w, d, top, rot, r, signs, siblings, ox, oy):
     ly = max(-my, min(my, r.uniform(-d * 0.12, d * 0.12)))
     if straddles(lx, ly, rad, ox, oy, siblings):
         return None                          # standing on a neighbour's parapet
-    face = r.choice(AV_FACES)
+    face = r.choice(AV_FACES[:AV_DRAW_WIDTH])
     rec = dict(kind="billboard", x=bx + lx, y=by + ly, z=top - 0.83, rot=rot,
                w=board, h=high, lift=BOARD_LIFT,
                name=f"Sign.{len(signs):03d}", text=face[0], mark=face[1],
-               face=face[2], ink=face[3])
+               face=face[2], ink=face[3], owner=own(owner, bx, by))
     signs.append(rec)
     return (lx, ly, 2 * rad + 1.0, 2 * rad + 1.0)
 
@@ -680,7 +876,7 @@ def avenue_rng(bx, by):
 
 
 def plan_avenue(bank, bx, by, w, d, top, floors, r, signs, sol, siblings,
-                ox, oy, board=None):
+                ox, oy, board=None, owner=None):
     """The mural first, and the rooftop board only if there is no mural.
 
     Art. 12.16.2 prohibits rooftop structures on this stretch, so the board is
@@ -715,7 +911,8 @@ def plan_avenue(bank, bx, by, w, d, top, floors, r, signs, sol, siblings,
         # and for the same reason.
         gx, gy, gw, gd = board if board is not None else (ox, oy, w, d)
         keep = plan_billboard(bx - ox + gx, by - oy + gy, gw, gd, top,
-                              math.radians(135), ar, signs, siblings, gx, gy)
+                              math.radians(135), ar, signs, siblings, gx, gy,
+                              owner=owner)
         if keep is not None:
             # the keep-out comes back in the board wing's local frame and the
             # caller works in the mural wing's, so it is rebased here rather
@@ -730,13 +927,14 @@ def plan_avenue(bank, bx, by, w, d, top, floors, r, signs, sol, siblings,
     got = False
     if ar.random() < AV_MEDIANERA:
         got = plan_medianera(side, bx, by, w, d, top, ar, signs,
-                             sol) is not None
+                             sol, owner=owner) is not None
     # and the cross-street wall of a west-bank building, which is a second
     # party wall and not a second sign on the same one. Only west: on the east
     # bank "y" is already the wall the mural went on, and "x" there is the -x
     # face this camera never sees.
     if bank == "west" and ar.random() < AV_MED_CROSS:
-        if plan_medianera("y", bx, by, w, d, top, ar, signs, sol) is not None:
+        if plan_medianera("y", bx, by, w, d, top, ar, signs, sol,
+                          owner=owner) is not None:
             got = True
     return got, None
 
@@ -813,10 +1011,11 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
             planned, keep = plan_avenue(bank, bx + hx, by + hy, hw, hd, top,
                                         floors, r, signs, sol, wings, hx, hy,
                                         board=max(wings,
-                                                  key=lambda s: s[2] * s[3]))
+                                                  key=lambda s: s[2] * s[3]),
+                                        owner=(bx, by))
         if not planned:
             keep = plan_sign(bx + hx, by + hy, hw, hd, top, floors, r, signs,
-                             sol)
+                             sol, owner=(bx, by))
         if keep is not None:
             keep = (keep[0] + hx, keep[1] + hy, keep[2], keep[3])
         # A U has two arms on the avenue and a T has an arm and a flank, so
@@ -833,13 +1032,118 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
                     continue
                 if plan_medianera("x" if b2 == "west" else "y",
                                   bx + ox2, by + oy2, ww2, dd2, top, ar2,
-                                  signs, sol) is not None:
+                                  signs, sol, owner=(bx, by)) is not None:
                     break
         for (ox, oy, ww, dd) in wings:
             roof_props(kit, coll, bx + ox, by + oy, ww, dd, roof, 0.0, r,
                        ww * dd > 700, siblings=wings, ox=ox, oy=oy, keep=keep)
         tops.append(top)
     return tops
+
+
+def track(rec, step=8):
+    """When this sign is inside the frame, and how wide the frame is then.
+
+    Under an orthographic camera at a fixed azimuth and elevation the sign's
+    screen position is FIXED in metres - the move only slides the window over
+    it - so the distance between two signs on screen never changes, and only the
+    frame width does. That is what makes the crowding test exact and cheap
+    instead of a per-frame render.
+    """
+    sx, sy = screen_xy(rec["x"], rec["y"], rec["z"])
+    out = {}
+    for f in range(1, FRAMES + 1, step):
+        width, (tx, ty) = shot_at(f)
+        ox, oy = screen_xy(tx, ty, 0.0)
+        if abs(sx - ox) < width / 2 and abs(sy - oy) < width * ASPECT / 2:
+            out[f] = width
+    return out
+
+
+def thin(signs):
+    """Enforce one sign per building, and no two of them stuck together.
+
+    Both rules are about what the frame reads as, so they are settled here,
+    after every building is published, and not during placement. Placement
+    would have had to refuse signs while walking the lots in an order that has
+    nothing to do with the camera, which means the sign that survives a
+    collision would be whichever came first in the lot table rather than
+    whichever the shot actually shows. Ranked by apparent size instead, the big
+    legible one wins and the one behind it goes.
+
+    Returns (kept, dropped_owner, dropped_gap).
+    """
+    ranked = []
+    for rec in signs:
+        secs, frac = shot_cover(rec["x"], rec["y"], rec["z"],
+                                rec["w"], rec["h"])
+        ranked.append((secs >= MIN_SECS and frac >= MIN_FRAC, frac, secs, rec))
+    # biggest on camera first, then the rest. `id` breaks ties without ever
+    # comparing two dicts, which raises.
+    ranked.sort(key=lambda t: (t[0], t[1], t[2]), reverse=True)
+
+    kept, seen_owner, tracks = [], set(), {}
+    lost_owner = lost_gap = 0
+    for good, frac, secs, rec in ranked:
+        key = tuple(rec.get("owner") or (rec["x"], rec["y"]))
+        if key in seen_owner:
+            lost_owner += 1
+            continue
+        mine = track(rec) if good else {}
+        if mine:
+            sx, sy = screen_xy(rec["x"], rec["y"], rec["z"])
+            crowded = False
+            for other, (ox_, oy_, otrack) in tracks.items():
+                shared = mine.keys() & otrack.keys()
+                if not shared:
+                    continue
+                # max, not min. Two signs sit a FIXED distance apart in metres;
+                # what changes is the frame they are measured against, so they
+                # look closest together in the WIDEST frame that holds both -
+                # the opening. Taking the narrowest was the permissive reading
+                # of the same numbers and it let a pair through at 0.096 that
+                # 93_check_signs then reported, which is the check earning its
+                # keep on the very rule it was written for.
+                if math.hypot(sx - ox_, sy - oy_) < MIN_GAP * max(
+                        mine[f] for f in shared):
+                    crowded = True
+                    break
+            if crowded:
+                lost_gap += 1
+                continue
+            tracks[rec["name"]] = (sx, sy, mine)
+        seen_owner.add(key)
+        kept.append(rec)
+    return kept, lost_owner, lost_gap
+
+
+def assign_brands(signs):
+    """Deal the names out instead of drawing them at random.
+
+    A random draw per sign is what put ANDA on camera twice and delivered twelve
+    brands out of a fourteen-name table: with fourteen names and eighteen signs
+    a collision is not unlucky, it is certain, and it was landing on the signs
+    that show. So the names are DEALT - the most visible sign takes the first
+    unused name, and a name only comes round again once the table is spent.
+
+    The two registers stay apart. The office park advertises to recruiters and
+    the avenue to drivers, and a bank of soft drinks in the middle of the campus
+    is the one thing this would break if it drew from one list.
+    """
+    pools = {True: list(AV_FACES), False: list(SIGN_FACES)}
+    used = {True: 0, False: 0}
+    ranked = sorted(
+        signs,
+        key=lambda rec: shot_cover(rec["x"], rec["y"], rec["z"],
+                                   rec["w"], rec["h"])[1],
+        reverse=True)
+    for rec in ranked:
+        av = rec["kind"] in ("medianera", "billboard")
+        pool = pools[av]
+        face = pool[used[av] % len(pool)]
+        used[av] += 1
+        rec.update(text=face[0], mark=face[1], face=face[2], ink=face[3])
+    return used
 
 
 def build_campus(m, kit, coll, ccoll, lots, r):
@@ -877,7 +1181,8 @@ def build_towers(m, kit, coll, sol, signs, lots, r):
         sol.add(cx, cy, w + 0.9, d + 0.9, 0.0, 0.0, top)
         # a tower always gets a sign: in the reference the tall buildings are
         # exactly the ones that carry a name
-        keep = plan_sign(cx, cy, w, d, top, floors, r, signs, sol)
+        keep = plan_sign(cx, cy, w, d, top, floors, r, signs, sol,
+                         owner=(cx, cy))
         roof_props(kit, coll, cx, cy, w, d, top - 0.83, 0.0, r, True,
                    keep=keep)
 
@@ -954,6 +1259,32 @@ def main():
             rec["w"] = fit
     if dropped:
         print(f"  {dropped} signs dropped: no room once every building was in")
+
+    # Then the two rules that are about the frame rather than about the roof.
+    signs, lost_owner, lost_gap = thin(signs)
+    if lost_owner or lost_gap:
+        print(f"  {lost_owner} dropped: a second sign on the same building")
+        print(f"  {lost_gap} dropped: too close to a bigger sign on screen")
+    # Renamed after the thinning, not before: Sign.NNN is what step 10 builds
+    # and what the artwork manifest is keyed on, and a manifest with holes in
+    # its numbering invites everyone downstream to guess whether the missing
+    # ones failed or never existed.
+    for i, rec in enumerate(signs):
+        rec["name"] = f"Sign.{i:03d}"
+    assign_brands(signs)
+
+    on_camera = [s for s in signs
+                 if all(v >= lim for v, lim in
+                        zip(shot_cover(s["x"], s["y"], s["z"], s["w"], s["h"]),
+                            (MIN_SECS, MIN_FRAC)))]
+    brands = {s["text"] for s in on_camera}
+    print(f"  brands delivered to camera: {len(brands)} "
+          f"of {BRANDS_WANTED} wanted, on {len(on_camera)} signs")
+    if len(brands) < BRANDS_WANTED:
+        # said out loud, because it is exactly the kind of shortfall that looks
+        # like a finished render. Raise CORRIDOR_FILL, or widen the tables.
+        print(f"  ✗ {BRANDS_WANTED - len(brands)} short. "
+              f"CORRIDOR_FILL is {CORRIDOR_FILL}")
 
     sol.merge_into(SOLIDS, "buildings")
     (SIGNS).write_text(json.dumps(signs, indent=1))

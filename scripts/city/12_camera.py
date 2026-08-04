@@ -63,7 +63,9 @@ sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Vector
 from _common import (FPS, FRAMES, MOVE, HERO_WIDTH, AZIMUTH, ELEVATION,
-                     open_city, save_city, place_hero, R)
+                     open_city, save_city, place_hero, R,
+                     SHOT_TARGET0, SHOT_TARGET1, SHOT_OBELISCO, SHOT_TRAVEL,
+                     SHOT_WIDTH0, EASE_IN, EASE_OUT, shot_progress, shot_pan)
 
 KEYS = 41   # the shot length, the framing and the orbit come from _common
 
@@ -71,11 +73,18 @@ KEYS = 41   # the shot length, the framing and the orbit come from _common
 # down rather than read off the camera: this step ANIMATES the camera, so a
 # version that read the target back would frame the shot from whatever the last
 # run happened to leave. A composition is a decision and belongs in the file.
-TARGET1 = Vector((-51.84, 22.83, 0.0))
-OBELISCO = Vector((120.0, -167.0, 0.0))         # what the shot travels past
-TRAVEL = 320.0
-HEADING = (TARGET1 - OBELISCO).normalized()     # (-0.671, +0.741)
-TARGET0 = TARGET1 - HEADING * TRAVEL            # (163, -214)
+#
+# THEY LIVE IN _common NOW. This step used to own them, which was right while
+# it was the only step that cared where the camera goes. Step 04 cares too: it
+# plans a company sign for every roof the shot passes over, so it has to trace
+# the same path this file flies. Two copies of a camera move is the same setup
+# as the FRAMES bug and the HERO_WIDTH bug already recorded in _common, except
+# that this one fails even more quietly - the signs would simply be planned
+# along a route the camera does not take, and every frame would still render.
+TARGET1 = Vector((*SHOT_TARGET1, 0.0))
+OBELISCO = Vector((*SHOT_OBELISCO, 0.0))        # what the shot travels past
+TRAVEL = SHOT_TRAVEL
+TARGET0 = Vector((*SHOT_TARGET0, 0.0))          # (163, -214)
 
 # THE HEADING IS THE OBELISCO'S, NOT THE REFERENCE'S, and that is a trade rather
 # than an oversight.
@@ -116,55 +125,18 @@ TARGET0 = TARGET1 - HEADING * TRAVEL            # (163, -214)
 # 07_look renders the still at. It was written out as 170.0 here, in 07 and in
 # 11, which is the FRAMES bug from _common waiting to happen a second time.
 SCALE1 = HERO_WIDTH
-SCALE0 = SCALE1 * 1.479        # 251 m, the measured ratio
+SCALE0 = SHOT_WIDTH0           # the opening width. See _common: it was the
+                               # reference's x1.479 and is now x1.80, opened so
+                               # the move crosses more of the city and can carry
+                               # more company signs past the camera.
 
-EASE_IN, EASE_OUT = 0.10, 0.16  # fraction of the move spent accelerating/braking
-
-
-def _ramp(x):
-    """Integral of smoothstep 3x^2-2x^3 from 0 to x. Half the area of the box."""
-    return x ** 3 - x ** 4 / 2.0
-
-
-def _covered(u, a, b):
-    """Distance covered by time u under a trapezoidal velocity profile.
-
-    Speed ramps up over [0, a], holds at 1, ramps down over [1-b, 1]. Integrated
-    in closed form rather than sampled, so the profile is exact and the keys can
-    be placed anywhere.
-    """
-    if u <= a:
-        return a * _ramp(u / a)
-    s = a * _ramp(1.0) + min(u, 1.0 - b) - a
-    if u <= 1.0 - b:
-        return s
-    return s + b * (_ramp(1.0) - _ramp((1.0 - u) / b))
-
-
-def progress(t):
-    """Eased time. Drives the zoom directly, and the pan through pan_of()."""
-    a, b = EASE_IN, EASE_OUT
-    return _covered(t, a, b) / _covered(1.0, a, b)
-
-
-def pan_of(q):
-    """Fraction of the travel covered by eased time q.
-
-    NOT q. The first version of this step panned linearly in world units, and
-    tracking our own render against the reference is what showed that up: our
-    apparent speed accelerated from 0.005 to 0.083 frame-widths per second while
-    the reference held 0.07 flat. Constant world speed cannot look constant in a
-    shot that is closing, because the same metres cover more of a narrower frame.
-
-    So the camera advances in proportion to the CURRENT frame width, which makes
-    the apparent speed constant and the world speed decay with the zoom. That is
-    not a guess: fitting dx/dq proportional to W^n over the body of the reference
-    puts n at 1.10, and n=1 fits ten times better than the n=0 we had.
-
-    With W = W0 * r^q the integral is closed form.
-    """
-    r = SCALE1 / SCALE0
-    return (1.0 - r ** q) / (1.0 - r)
+# progress() and pan_of() moved to _common as shot_progress and shot_pan, with
+# the easing constants, for the same reason the path did: step 04 has to walk
+# the move to know which roofs are in it. What they do and why is documented
+# there - in particular pan_of, which advances the camera in proportion to the
+# CURRENT frame width rather than linearly, because constant world speed cannot
+# look constant in a shot that is closing.
+progress, pan_of = shot_progress, shot_pan
 
 
 def linear(ob):

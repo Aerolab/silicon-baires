@@ -65,10 +65,143 @@ AZIMUTH = 45.0
 ELEVATION = 30.6
 DISTANCE = 1450.0                # ortho: affects clipping only, not framing
 HERO_WIDTH = 170.0               # metres of city across the final frame
+ASPECT = 1080 / 1920             # the deliverable's frame, and what decides
+                                 # how much of the city is above and below
+
+# --- where the shot actually goes ------------------------------------------
+# These were private to 12_camera, and that was fine while 12 was the only step
+# that cared where the camera goes. It is not any more: step 04 has to know
+# which buildings the shot passes over, because a company sign outside that
+# strip is a sign nobody will ever see. 77 of them were planned and 18 reached
+# the frame - not because the other 59 were badly made, but because they were
+# spread evenly over a 700 m city that the camera crosses on one 320 m
+# diagonal. Even distribution is the bug.
+#
+# So the path lives here now and 12 imports it, the same arrangement FRAMES and
+# HERO_WIDTH already have and for the same reason: two steps need one fact.
+SHOT_TARGET1 = (-51.84, 22.83)   # the approved hero framing: where it lands
+SHOT_OBELISCO = (120.0, -167.0)  # what it travels past, which fixes the heading
+SHOT_TRAVEL = 320.0
+# THE OPENING WIDTH, and the one number here that is no longer the reference's.
+# 1.479 was measured off the reference clip and shipped for a long time. It was
+# opened to 1.80 for one reason: the shot has to carry company signs past the
+# camera, and at 1.479 the move crosses 25 buildings, which caps the whole film
+# at about that many brands however well the signs are made.
+#
+# 1.80 IS A CEILING, NOT A PREFERENCE, and it was found by rendering frame 1 and
+# looking at it rather than by arithmetic - the first attempt at the corner
+# arithmetic said the edge of the world was already showing at 1.479, and it is
+# not. At 1.80 the opening frame is still full of city. At 1.90 a wedge of bare
+# site opens in the top left corner, because the shot starts over the southeast
+# of the city and a wider frame reaches past its corner. Past that the only way
+# to open further is to build more city to the southeast.
+#
+# What it costs: the zoom is now x1.80 where the reference does x1.48, so the
+# shot closes a little harder than the thing it was measured from. The pan is
+# tied to the width by shot_pan(), so the apparent speed stays constant and the
+# move still lands on exactly the approved framing - the far end of the shot is
+# untouched, and only the opening is wider.
+SHOT_ZOOM = 1.80                 # was 1.479, the measured start/end ratio
+EASE_IN, EASE_OUT = 0.10, 0.16   # fraction of the move spent accelerating
+
+_h = (SHOT_TARGET1[0] - SHOT_OBELISCO[0], SHOT_TARGET1[1] - SHOT_OBELISCO[1])
+_hn = math.hypot(*_h)
+SHOT_HEADING = (_h[0] / _hn, _h[1] / _hn)
+SHOT_TARGET0 = (SHOT_TARGET1[0] - SHOT_HEADING[0] * SHOT_TRAVEL,
+                SHOT_TARGET1[1] - SHOT_HEADING[1] * SHOT_TRAVEL)
+SHOT_WIDTH0 = HERO_WIDTH * SHOT_ZOOM
 
 
 def mat(name):
     return bpy.data.materials[name]
+
+
+# --- the screen, without a camera ------------------------------------------
+# The hero camera is ORTHOGRAPHIC at a fixed azimuth and elevation, which is
+# what makes all of this arithmetic rather than rendering: the projection is one
+# fixed linear map from world to screen, and the camera moving only translates
+# the result. So "where does this end up in frame" is answerable in a step that
+# has no camera in it yet, and "are these two signs too close on screen" is
+# answerable once for the whole shot instead of frame by frame.
+_a, _e = math.radians(AZIMUTH), math.radians(ELEVATION)
+_fwd = (-math.cos(_a) * math.cos(_e), -math.sin(_a) * math.cos(_e),
+        -math.sin(_e))
+SCREEN_RIGHT = (-math.sin(_a), math.cos(_a), 0.0)
+SCREEN_UP = (SCREEN_RIGHT[1] * _fwd[2] - SCREEN_RIGHT[2] * _fwd[1],
+             SCREEN_RIGHT[2] * _fwd[0] - SCREEN_RIGHT[0] * _fwd[2],
+             SCREEN_RIGHT[0] * _fwd[1] - SCREEN_RIGHT[1] * _fwd[0])
+
+
+def screen_xy(x, y, z=0.0):
+    """Where a world point lands on screen, in metres, relative to the target.
+
+    Note the z: it is not decoration. A sign 30 m up projects half its height
+    further up the frame than its own footprint does, so answering this in plan
+    puts every rooftop sign in the wrong place by a third of a frame height.
+    """
+    p = (x, y, z)
+    return (sum(p[i] * SCREEN_RIGHT[i] for i in range(3)),
+            sum(p[i] * SCREEN_UP[i] for i in range(3)))
+
+
+def _ramp(u):
+    """Integral of smoothstep 3u^2-2u^3 from 0 to u. Half the area of the box."""
+    return u ** 3 - u ** 4 / 2.0
+
+
+def _covered(u, a, b):
+    """Distance covered by time u under a trapezoidal velocity profile."""
+    if u <= a:
+        return a * _ramp(u / a)
+    s = a * _ramp(1.0) + min(u, 1.0 - b) - a
+    if u <= 1.0 - b:
+        return s
+    return s + b * (_ramp(1.0) - _ramp((1.0 - u) / b))
+
+
+def shot_progress(t):
+    """Eased time over the move. Drives the zoom, and the pan through shot_pan."""
+    return _covered(t, EASE_IN, EASE_OUT) / _covered(1.0, EASE_IN, EASE_OUT)
+
+
+def shot_pan(q):
+    """Fraction of the travel covered by eased time q. NOT q - see 12_camera."""
+    r = HERO_WIDTH / SHOT_WIDTH0
+    return (1.0 - r ** q) / (1.0 - r)
+
+
+def shot_at(frame):
+    """(width, target) of the hero camera on this frame. The move, in one call."""
+    t = min(1.0, max(0.0, (frame - 1) / (MOVE - 1)))
+    q = shot_progress(t)
+    p = shot_pan(q)
+    return (SHOT_WIDTH0 * (HERO_WIDTH / SHOT_WIDTH0) ** q,
+            (SHOT_TARGET0[0] + (SHOT_TARGET1[0] - SHOT_TARGET0[0]) * p,
+             SHOT_TARGET0[1] + (SHOT_TARGET1[1] - SHOT_TARGET0[1]) * p))
+
+
+def shot_cover(x, y, z=0.0, w=0.0, h=0.0, step=8):
+    """How much of the shot a thing of this size spends fully inside the frame.
+
+    Returned as (seconds, largest fraction of the frame width it ever fills).
+    Both numbers are needed and they answer different questions: a sign can be
+    on screen for the whole shot and be four pixels wide, and it can be huge
+    for six frames and gone. A sign worth planning has to pass both.
+
+    Sampled every `step` frames rather than solved, because the pan is eased and
+    the zoom is exponential: closed form here would be a second copy of the move
+    that could disagree with the first one.
+    """
+    secs, biggest = 0.0, 0.0
+    sx, sy = screen_xy(x, y, z)
+    for f in range(1, FRAMES + 1, step):
+        width, (tx, ty) = shot_at(f)
+        ox, oy = screen_xy(tx, ty, 0.0)
+        dx, dy = sx - ox, sy - oy
+        if abs(dx) < width / 2 - w / 2 and abs(dy) < width * ASPECT / 2 - h / 2:
+            secs += step / FPS
+            biggest = max(biggest, w / width)
+    return secs, biggest
 
 
 def median_runs(blocks, plaza_c, plaza_half, margin=3.0, clear=2.0,

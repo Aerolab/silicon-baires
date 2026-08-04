@@ -54,7 +54,7 @@ emptied and rebuilt on every run, so anything else that writes into it is lost.
 | `12_camera` | `TITLE`, `TRAFFIC` | — | the camera animation |
 | `07_look` | `BUILDINGS`, `TITLE` | — | the compositor |
 
-## The five couplings that have actually broken
+## The six couplings that have actually broken
 
 Each of these cost a rebuild at least once, and each is now enforced in one
 place instead of being remembered in two.
@@ -68,6 +68,16 @@ where it has not happened yet. Change it there, then re-run **11 and then 12**.
 `170.0` in three files: `07_look.CAM_WIDTH`, `12_camera.SCALE1` and a literal in
 `11_animate`. The move has to LAND on the framing the still is rendered at, so
 they are the same number by definition.
+
+**2b. Where the camera goes.** `_common.SHOT_*` and `shot_at / shot_cover`. The
+move used to be private to step 12, which was right while 12 was the only step
+that cared. Step 04 cares now: it plans a company sign for every roof the shot
+passes over, so it has to trace the same path 12 flies. Two copies of a camera
+move fails more quietly than any of the others here — the signs would simply be
+planned along a route the camera does not take, and every frame still renders.
+
+Change the path or `SHOT_ZOOM` and re-run **04, 10, then 12**: 04 decides which
+roofs are in the shot, 10 builds what it decided, 12 flies it.
 
 **3. Where the medians run.** `_common.median_runs`. Step 03 builds the medians
 and step 05 plants them, and they disagreed: 03 dropped both stubs of the plaza
@@ -156,8 +166,18 @@ from the hero camera.
 ./bl scripts/city/95_check_traffic.py    # right-hand traffic, and on the road
 ./bl scripts/city/94_check_road.py       # nothing green ON the road
 ./bl scripts/city/96_check_title_move.py # the title from other angles
+./bl scripts/city/93_check_signs.py      # how many brands the shot delivers
 python3 scripts/city/97_check_title.py renders/city_08_title_only.png
 ```
+
+`93_check_signs.py` answers the question the build could not answer at all
+before it existed: **how many distinct company brands actually go past the
+camera.** Signs were planned evenly over a 700 m city that the shot crosses on
+one 320 m diagonal, so 77 were built and 18 reached the frame, of which twelve
+were distinct — the rest were beautiful and off camera. It also enforces the
+two rules that are about what the frame reads as rather than about the roof:
+one sign per building, and no two of them closer than `MIN_GAP` of the frame
+width while both are on screen.
 
 `99_check_overlap.py` is the one to run after touching anything that places
 objects. A tree inside an office wall is invisible from the hero camera — it
