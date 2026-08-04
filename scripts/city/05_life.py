@@ -57,6 +57,12 @@ VEHICLE = {"Bus": 5.6, "Truck": 4.2, "Colectivo0": 5.7, "Colectivo1": 5.7,
            "Colectivo2": 5.7, "Colectivo3": 5.7}
 SKIPPED = {}
 
+# The south rim: the row 03_ground bolts on outside the grid, keyed j = -1 and
+# appended to city_lots.json last. Planted from its own stream at the end of
+# main() - see the note there.
+RIM_ROW = -1
+RIM_SEED = 8123
+
 
 def free(kind, x, y, z=0.0):
     """Is there room for this here? Counts its refusals so they get reported.
@@ -539,6 +545,15 @@ def main():
                                     "PEOPLE", "ROOFPEOPLE")
 
     walk = data["walk"]
+    # The south rim comes out of its own stream, at the end. Every pass below
+    # walks the lots in order and they all share `r`, so nine more lots taken in
+    # sequence in street_trees would move where planting starts, which moves
+    # traffic, which moves the crowds: the whole city relit for the sake of a
+    # row of blocks in the corner of one frame. Same device 03 and 04 use for
+    # the same row - see 03_ground.build_rim.
+    rim = [l for l in lots if int(l["key"][1]) == RIM_ROW]
+    lots = [l for l in lots if int(l["key"][1]) != RIM_ROW]
+
     r = rng(31337)
     street_trees(kit, nat, lots, walk, r)
     med = avenue_trees(kit, nat, data, r)
@@ -547,6 +562,12 @@ def main():
     ca = traffic(kit, tra, data, r) + parked(kit, tra, lots, r)
     pe = (crowds(kit, ppl, lots, data, walk, r)
           + plaza_people(kit, ppl, data, r) + rooftop_people(kit, rpl, r))
+
+    rr = rng(RIM_SEED)
+    street_trees(kit, nat, rim, walk, rr)
+    planting(kit, nat, rim, rr)
+    ca += parked(kit, tra, rim, rr)
+    pe += crowds(kit, ppl, rim, data, walk, rr)
 
     print(f"\n  trees {len(nat.objects)} ({med} down the 9 de Julio medians)"
           f"  furniture {li}  cars {ca}  people {pe}")

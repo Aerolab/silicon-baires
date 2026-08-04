@@ -148,6 +148,16 @@ Read off the frames:
 - **Depth of field is shallow and it is the whole trick.** A band across the middle is
   sharp; the top of frame and the bottom corners go soft. That single effect is what
   makes a 600 m city read as a 60 cm model.
+- **It is measured in frames, not in metres.** `07_look.FOCUS_SPREAD` is the depth that
+  stays sharp *at `HERO_WIDTH`*, and it is driven off `HeroCam.ortho_scale` so the band
+  keeps the same share of the frame all the way through the move. As a flat number of
+  metres it was right for the still and wrong for everything else: the camera is
+  orthographic, so a frame 1.8x wider spans 1.8x more depth, and the opening of the
+  shot came out fogged corner to corner while the last frame — the only one anybody
+  ever looked at — was exactly right.
+- **The video wants less of it than the still does.** `BLUR_MAX` went 13 to 9 when the
+  shot became a parade of company signs: a wordmark under a 13 px blur is a coloured
+  smudge. 6.5 is barely there, 0 removes it.
 - Frame is **densely packed edge to edge**. There is no empty foreground, no sky, no
   horizon. The city bleeds off all four sides.
 

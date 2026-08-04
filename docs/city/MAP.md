@@ -54,6 +54,39 @@ emptied and rebuilt on every run, so anything else that writes into it is lost.
 | `12_camera` | `TITLE`, `TRAFFIC` | — | the camera animation |
 | `07_look` | `BUILDINGS`, `TITLE` | — | the compositor |
 
+## The south rim
+
+`03_ground.build_rim` bolts one extra row of blocks onto the south edge,
+outside the grid, because the opening frame of the move runs off the end of the
+map: the camera starts at (163, -214) and its top-left corner reaches y = -440,
+where the built area stops at -357. 83 m of bare sheet, 7 per cent of the
+opening cut.
+
+**It is not a tenth row and it must not become one.** `axis_layout` centres the
+grid on the origin, so `EXTENT = 10` shifts every coordinate in the city by half
+a block — the Obelisco, the title, the landmarks, the approved hero framing —
+and reshuffles the stream that decides what kind every lot is on top of that.
+
+The rim lots are keyed **j = -1** and appended to `city_lots.json` after the
+superblock. Every step that walks the lots with a shared RNG skips them in its
+main pass and builds them at the end from `rng(RIM_SEED)`, which is the device
+`avenue_rng` and `sign_rng` already use:
+
+| step | where the rim is built |
+|---|---|
+| `03_ground` | `build_rim()`, after `build_blocks`. Also carries the 9 de Julio's section — busway and medians — south over the rim, since the avenue is inside the exposed wedge |
+| `04_buildings` | skipped in the main loop, built after `build_towers`. `r` is what `build_campus` and `build_towers` draw from next |
+| `05_life` | `lots` is filtered before the four shared passes and the rim is planted afterwards |
+
+Verified by diffing, not assumed: the first 80 lots of `city_lots.json` and the
+first 381 `buildings` footprints of `city_solids.json` are byte-identical to
+what they were before the rim existed.
+
+The rim medians get no trees. `_common.median_runs` is what step 05 plants from,
+so extending it would have handed 05 a longer list and moved every tree in the
+city. At that distance, out of focus and behind the last row of roofs, it is not
+a difference anyone can see.
+
 ## The six couplings that have actually broken
 
 Each of these cost a rebuild at least once, and each is now enforced in one

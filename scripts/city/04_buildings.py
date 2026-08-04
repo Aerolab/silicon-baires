@@ -115,6 +115,24 @@ PORTENO = {(2, 7)}
 # set was a guess and the superblock is the fact.
 CAMPUS = {(4, 4), (4, 5)}
 
+# The south rim, the row 03_ground bolts on outside the grid so the opening
+# frame of the move does not run off the end of the map. Its lots are keyed
+# j = -1 and are appended to city_lots.json after the superblock.
+#
+# They are SKIPPED in the main loop and built at the end from their own stream.
+# The loop below walks the lots with `r`, and `r` is also what build_campus and
+# build_towers draw from afterwards, so nine extra lots taken in sequence would
+# shift every draw made after them and re-mass the campus and the four towers.
+# Same device as avenue_rng() and sign_rng(), same reason.
+#
+# Their signs are a gain rather than a side effect: the rim sits directly under
+# the opening frame, which is the widest the shot ever is, so a roof out here
+# is on camera from the first frame. That is the corridor 93_check_signs
+# measures, and it is the only part of this city where new buildings can add
+# brands rather than just add geometry.
+RIM_ROW = -1
+RIM_SEED = 8123
+
 # Invented companies. The reference is a parade of real logos and we are not
 # reproducing the branding, so these are made up, and made up with an ear for
 # where the city is: they are the names a Buenos Aires tech park would have.
@@ -1212,6 +1230,8 @@ def main():
     av = site.get("avenue9j")
     for lot in lots:
         i, j = int(lot["key"][0]), int(lot["key"][1])
+        if j == RIM_ROW:
+            continue                       # last, and out of its own stream
         if (i, j) in TALL or (i, j) in LANDMARKS or (i, j) in CAMPUS \
                 or (i, j) in PORTENO:
             continue
@@ -1220,6 +1240,17 @@ def main():
 
     build_campus(m, kit, pcoll, ccoll, lots, r)
     build_towers(m, kit, pcoll, sol, signs, lots, r)
+
+    # and now the rim, after everything `r` is responsible for. See RIM_ROW.
+    rr = rng(RIM_SEED)
+    n_rim = 0
+    for lot in lots:
+        if int(lot["key"][1]) != RIM_ROW:
+            continue
+        place_on_lot(m, kit, pcoll, sol, signs, lot["x"], lot["y"],
+                     lot["size"], lot["lift"], lot["kind"], rr, av)
+        n_rim += 1
+    print(f"  south rim: {n_rim} lots built from their own stream")
     m.build("buildings", bcoll)
 
     # Second pass over the words. A sign is planned in the same loop that

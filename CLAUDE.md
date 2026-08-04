@@ -88,6 +88,13 @@ about it once, silently:
 - **Every colour** — `scripts/city/_palette.py`, one table, applied on the way
   in by `open_city()`. Editing a hex anywhere else does nothing and says nothing.
 
+**The city has a south rim**, one row of blocks bolted on outside the grid at
+`j = -1`, because the opening frame of the move ran 83 m off the end of the map.
+Do not turn it into a tenth row: `EXTENT = 10` recentres the whole grid and moves
+the Obelisco, the title and the approved hero framing. Steps 03, 04 and 05 each
+skip it in their shared pass and build it last from `rng(RIM_SEED)`. See
+`docs/city/MAP.md`.
+
 **The camera in the `.blend` belongs to `12_camera.py`.** Any step that needs a
 different framing for a control render asks through `_common.preview()`, which
 mutes the animation, frames the shot and puts everything back.

@@ -125,6 +125,38 @@ AVENUES_X = {2, 6}            # which street indices are wide, per axis
 AVENUES_Y = {3, 7}
 BLOCK_SIZES = [64.0, 52.0, 76.0, 64.0, 58.0, 70.0, 64.0, 54.0, 72.0]
 
+# --- the south rim ---------------------------------------------------------
+# One more row of blocks, hanging off the south edge of the grid, and it exists
+# for exactly one reason: the opening frame of the move runs off the end of the
+# map. The camera starts over the southeast at (163, -214) and its top-left
+# corner reaches y = -440, where the built area stops at -357. That is 83 m of
+# bare sheet in the corner of frame 1 - 7 per cent of the opening cut, and 2.5
+# per cent even at the old x1.479 zoom, so this was already shipping before the
+# zoom was opened. The x edge is fine: the same corner arithmetic gives 8 m of
+# overshoot there, and it lands behind the buildings on the last column.
+#
+# WHY IT IS A RIM AND NOT A TENTH ROW. `EXTENT = 10` is the obvious move and it
+# is the wrong one. axis_layout centres the grid on the origin - `off = pos / 2`
+# - so one more row shifts EVERY coordinate in the city by half a block, which
+# moves the Obelisco, the title, the landmarks and the approved hero framing,
+# and reshuffles the RNG stream that decides what kind every lot is on top of
+# that. The rim is bolted on outside the grid instead: nothing in axis_layout
+# changes, no street table gains an entry, and the existing city comes out
+# byte-identical.
+#
+# The same care applies downstream. The rim lots are appended to city_lots.json
+# AFTER the superblock, and every step that walks the lots with a shared RNG -
+# 04 and 05 - skips them in its main pass and builds them at the end from a
+# private stream, the device avenue_rng() and sign_rng() already document.
+#
+# 76 m deep, which is the deepest size in the table and not a coincidence: the
+# rim has to reach past -440 on its own, because there is no second row behind
+# it to hide its far edge. 76 lands the outer pavement at -433 and the street
+# beyond it carries to -445, which clears the corner with 5 m to spare.
+RIM_DEPTH = 76.0
+RIM_STREET = 12.0             # the road along its outer side. See build_rim
+RIM_SEED = 8123
+
 # The cells that merge into the block the title stands on. Two, not four: with
 # the baseline on the street grid the word's footprint measures a*H across and
 # W + a*H along, so it wants one block wide by two long, and four left half the
@@ -335,6 +367,83 @@ def build_blocks(m, r):
     lots[SUPER_KEY] = (cx, cy, [bw - WALK * 2, bd - WALK * 2], lift, "plaza")
     print(f"  superblock {bw:.0f} x {bd:.0f} m at ({cx:.0f}, {cy:.0f})")
     return lots
+
+
+def build_rim(m, g, lots):
+    """The extra row along the south edge, so the opening frame stays in the city.
+
+    Keyed (i, -1) and appended to `lots` after the superblock, which is the
+    contract every downstream step reads: a lot whose j is -1 is rim, it came
+    last, and it must go on coming last. See the RIM_DEPTH note above for why
+    this is bolted outside the grid rather than being a tenth row.
+
+    Its own RNG, seeded once, for the same reason: pick_kind() and the lift draw
+    in build_blocks() come out of the stream that decides the kind of all eighty
+    lots, and taking nine more draws from it at any point would repaint the city.
+
+    No parks and no plazas out here. The rim is at the very corner of one frame,
+    out of focus and on screen for about three seconds, so what it has to do is
+    read as more city - which means roofs. An empty lot at that distance is
+    indistinguishable from the bare sheet it was built to cover.
+    """
+    r = rng(RIM_SEED)
+    cy = -TOTAL_Y / 2 - RIM_DEPTH / 2
+    for i, (cx, bw) in enumerate(BX):
+        kind = "std" if r.random() < 0.82 else "parking"
+        lift = round(r.uniform(0.30, 0.85), 2)
+        m.prism(ochava(cx, cy, bw, RIM_DEPTH), 0.0, lift, mat("Sidewalk"))
+        iw, idp = bw - WALK * 2, RIM_DEPTH - WALK * 2
+        m.flat(ochava(cx, cy, iw, idp), lift + 0.02, surface_mat(kind))
+        lots[(i, -1)] = (cx, cy, [iw, idp], lift, kind)
+
+    # THE AVENUE HAS TO COME WITH IT. The 9 de Julio runs down x = NINE, which
+    # is inside the exposed wedge, and build_avenue stops its busway and medians
+    # at -TOTAL_Y / 2 like everything else. Without this the widest street in
+    # the city loses its section exactly where the rim starts and turns into 70 m
+    # of plain grey - which is more conspicuous than the bare sheet was.
+    #
+    # Built here rather than by extending build_avenue's runs, and that is the
+    # whole point: those runs come out of _common.median_runs(BY, ...), which
+    # step 05 reads to plant the median trees. Adding a run there would hand 05
+    # a longer list and shift the stream that plants every tree in the city.
+    # So the rim gets its section and no trees on it - at this distance, out of
+    # focus and behind the last row of roofs, that is not a difference anyone
+    # can see.
+    north = -TOTAL_Y / 2
+    outer = north - RIM_DEPTH - RIM_STREET
+    m.quad(NINE, (north + outer) / 2, BUSWAY * 2, north - outer, 0.04,
+           mat("Busway"))
+    for side in (-1, 1):
+        mc = side * (MEDIAN[0] + MEDIAN[1]) / 2
+        mw = MEDIAN[1] - MEDIAN[0]
+        a, b = north - RIM_DEPTH, north
+        m.prism([(NINE + mc - mw / 2, a), (NINE + mc + mw / 2, a),
+                 (NINE + mc + mw / 2, b), (NINE + mc - mw / 2, b)],
+                0.0, MEDIAN_LIFT, mat("Sidewalk"))
+        g.quad(NINE + mc, (a + b) / 2, mw - 1.0, b - a,
+               MEDIAN_LIFT + 0.02, mat("Grass"))
+
+    # and the paint. One rim-length span added to what build_markings and
+    # avenue_markings already do per block: the dashed centre line of every
+    # street that runs north-south, and the lane dividers of the two lateral
+    # carriageways. Its own pass rather than an extra entry in BY, for the
+    # reason above - BY is published and read downstream.
+    mk = mat("Marking")
+    n = max(1, int((RIM_DEPTH - 8) / 7.0))
+    for k in range(n):
+        d = cy - (RIM_DEPTH - 8) / 2 + k * 7.0
+        for s, w in zip(SX, WX):
+            if abs(s - NINE) < 1.0:
+                continue                     # the avenue paints its own lanes
+            g.quad(s, d, 0.14, 3.2, MARK_Z, mk)
+        for side in (-1, 1):
+            c = side * (MEDIAN[1] + AVE9J / 2) / 2
+            for lane in (-5.25, -1.75, 1.75, 5.25):
+                g.quad(NINE + c + lane, d, 0.12, 3.2, MARK_Z, mk)
+
+    print(f"  south rim: {len(BX)} blocks at y={cy:.0f}, "
+          f"reaching {outer:.0f}")
+    return cy
 
 
 # --- Avenida 9 de Julio ----------------------------------------------------
@@ -581,6 +690,9 @@ def main():
     build_sheet(m)
     lots = build_blocks(m, r)
     build_avenue(m, mm)
+    # after build_blocks, always: the rim lots are appended to `lots` behind the
+    # superblock and every step downstream relies on them coming last
+    build_rim(m, mm, lots)
     m.build("site", site)
 
     build_markings(mm)

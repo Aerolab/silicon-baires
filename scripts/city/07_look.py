@@ -25,8 +25,26 @@ from _common import HERO_WIDTH, DISTANCE, R, open_city, save_city
 # 12_camera each carried their own copy of 170.0.
 FOCUS_D = DISTANCE         # camera sits this far out; focus on the middle
 F_STOP = 0.55              # unphysical on purpose: this is the miniature cheat
-BLUR_MAX = 13.0            # pixels at 1600 wide; scaled to the real width below
-FOCUS_SPREAD = 105.0   # metres of depth that stay acceptably sharp
+# 9.0, down from 13.0. The still could carry 13 because the still is one frame
+# and the eye has all the time it needs; the video cannot, because the thing the
+# video is for is the company signs going past, and a wordmark under a 13 px
+# blur is a coloured smudge. This is the knob to turn if the miniature effect
+# ever needs to come back or go away entirely: 13 is what the approved still
+# shipped with, 6.5 is barely there, 0 removes it.
+BLUR_MAX = 9.0             # pixels at 1600 wide; scaled to the real width below
+# METRES OF DEPTH THAT STAY SHARP, AT HERO_WIDTH, and that qualifier is the
+# whole fix. It used to be a flat 105 m, which is right for the still and wrong
+# for every other frame of the move: the camera is orthographic, so the depth
+# the frame spans is proportional to its width, and the shot opens 1.8x wider
+# than it lands. At a fixed 105 the opening frame therefore had 1.8x more of
+# itself past the sharp band and came out fogged corner to corner, while the
+# final frame - the one anybody ever looked at - was exactly right.
+#
+# It is now a ratio of the frame width, driven off HeroCam.ortho_scale, so the
+# miniature effect is the same depth of the FRAME at every point of the move.
+# The hero frame is untouched by construction: at HERO_WIDTH the driver
+# evaluates to 105.
+FOCUS_SPREAD = 105.0
 GRAIN = 0.10
 VIGNETTE = 0.22
 
@@ -71,6 +89,21 @@ def build_compositor(scene):
     sub = math("SUBTRACT", FOCUS_D, (-720, -140))
     ab = math("ABSOLUTE", None, (-560, -140))
     sc = math("DIVIDE", FOCUS_SPREAD, (-400, -140))
+    # and the driver that ties it to the frame width. See FOCUS_SPREAD.
+    #
+    # A driver rather than keyframes: 12_camera lays 41 keys on ortho_scale and
+    # a second set of keys on this socket would be a copy of the move, which is
+    # the coupling _common already exists to prevent. A driver reads the camera
+    # and cannot drift from it.
+    fc = sc.inputs[1].driver_add("default_value")
+    fc.driver.type = "SCRIPTED"
+    var = fc.driver.variables.new()
+    var.name = "w"
+    var.type = "SINGLE_PROP"
+    var.targets[0].id_type = "CAMERA"
+    var.targets[0].id = bpy.data.objects["HeroCam"].data
+    var.targets[0].data_path = "ortho_scale"
+    fc.driver.expression = f"w * {FOCUS_SPREAD / HERO_WIDTH}"
     pw = math("POWER", 1.7, (-320, -140))     # gentler falloff near the focus
     cl = math("MINIMUM", 1.0, (-250, -140))
     ng.links.new(rl.outputs["Depth"], sub.inputs[0])
