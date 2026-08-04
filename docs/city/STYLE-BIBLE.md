@@ -192,20 +192,44 @@ axis-aligned to the block. Heights are quantised to floors. Most of the city is
 **2–5 floors**; a handful of 8–12 floor slabs; exactly one or two real towers; one
 stadium; one organic "blob" building.
 
-**The stadium is El Monumental**, and three things carry that at 80 px, in the
-order they survive being small: the **athletics track**, a terracotta oval
-between the pitch and the stands, which is a hard colour break visible from
-straight above and which hardly any big ground still has; a **ring that is not
-uniform**, low at one end, which is what is left of the horseshoe the ground was
-until the Centenario stand closed it in 1978, and which is most of the
-silhouette; and an **oval rather than a circle**, roofed over the long sides
-only. The notch faces +x so this camera looks down into the bowl through it.
-The pitch is a rectangle inside the oval — a round pitch in a round track is a
-bullseye. The roof cantilevers 3.8 m and no more: an earlier one reached 7.6 m
+**The stadium is El Monumental**, and four things carry that at 80 px, in the
+order they survive being small:
+
+1. **White seats with big red chevrons.** Every photograph of the place, 1978 or
+   last week, is white and red zig-zags. It is the only cue the size of the
+   whole building, so it reads first. The pattern is painted per (segment, tier)
+   rather than with a texture, because at this scale the tiers *are* the pixels:
+   nine up the rake, forty-eight round.
+2. **A dark facade, and it has to be most of the height.** From outside, the
+   ground is a dark banded drum with a white crown, and the white and red is
+   what you see over the crown and down inside the bowl. This is the cue that
+   took three passes, and none of them was about hue. A pale wall under a pale
+   rake reads as one smooth drum; four advertising bands on that wall turn the
+   drum into a hoarding; splitting it into a low dark facade and a tall light
+   shell puts the light half straight back on top. Proportion, then trim.
+3. **A ring that is not uniform**, lower at one end — what is left of the
+   horseshoe the ground was until the Centenario stand closed it in 1978. The
+   dip faces +x so this camera looks down into the bowl through it.
+4. **An oval rather than a circle**, roofed the whole way round, with the
+   scoreboard slung on two red columns over the far end.
+
+The pitch is a rectangle inside the oval — a round pitch in a round surround is
+a bullseye. The roof cantilevers 3.8 m and no more: an earlier one reached 7.6 m
 and turned the stadium into a covered dish, because a camera at 30° sees the
 rake, and the rake is the only reason to model a stadium instead of a drum.
-This is the long-standing configuration; the 2023–24 remodelling has not been
-checked against it.
+
+This is the ground **as it is now**: the 2023–24 remodelling lowered the pitch
+and took the athletics track out. `TRACK` in `06_landmarks.py` puts the track
+back for the configuration the place had for most of its life; everything else
+is shared, since the remodelling rebuilt the inside of the bowl and left the
+drum around it alone.
+
+One trap worth carrying beyond the stadium: `pbrmat` returns an existing
+material **untouched**, and the city's materials live in `city.blend` with a
+fake user. Editing a colour in a script therefore changes nothing on a rebuild —
+the render simply keeps the old look, and nothing raises. `06_landmarks.py`
+wraps it in `repaint()`, which forces the base colour so the file wins over the
+`.blend`.
 
 **Facade.** The dominant pattern is **horizontal banding**, repeated per floor:
 

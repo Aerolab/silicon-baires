@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
-from _common import Mesh, collection, instance, mat, pbrmat, rng, counts
+from _common import Mesh, collection, instance, mat, pbrmat, rng, counts, srgb
 from _solids import Solids
 
 R = ROOT / "renders"
@@ -22,6 +22,23 @@ BLOCK, PITCH, HALF = 64.0, 76.0, 4.0
 
 CELLS = {"stadium": (6, 1), "blob": (1, 6), "garage": (7, 4)}
 SITE = [(5, 7), (2, 0)]     # (4, 5) now carries the title
+
+
+def repaint(name, hex_col, roughness=0.8):
+    """pbrmat, but the colour in this file wins over the one in the .blend.
+
+    pbrmat fetches an existing material by name and returns it untouched, which
+    is right for the hundred materials this city shares and wrong for the ones
+    being art-directed: darkening the stadium facade here changed nothing at all
+    for two rebuilds, because the pale version was already saved in city.blend
+    with a fake user and it was that one that came back every time. Nothing
+    raises when this happens - the render simply keeps the old look.
+    """
+    m = pbrmat(name, hex_col, roughness)
+    b = m.node_tree.nodes["Principled BSDF"]
+    b.inputs["Base Color"].default_value = tuple(srgb(hex_col)) + (1.0,)
+    b.inputs["Roughness"].default_value = roughness
+    return m
 
 
 def cell(i, j):
@@ -54,41 +71,55 @@ def arc_poly(r0, r1, a0, a1, segs=2):
 # block. So these are not the real stadium's metres, they are its proportions.
 #
 # The first version was a smooth white drum with a lawn in the hole, and it read
-# as "a stadium" and nothing more. Three things carry which ground it is, in the
-# order they survive being 80 px wide:
+# as "a stadium" and nothing more. The second added a track and a notch and read
+# as "a stadium with a track". What was still wrong is the thing a photograph of
+# the ground makes obvious in a second: from outside you SEE THE BOWL. The
+# facade is low and the white-and-red rake stands above it. The old code ran the
+# outer wall from the ground to the top of the stands, which is a drum with a
+# lawn in it however good the lawn is.
 #
-#   1. THE ATHLETICS TRACK. A terracotta oval between the pitch and the stands.
-#      Hardly any big stadium still has one and it is the fastest thing to read,
-#      because it is a hard colour break against the green and it is visible
-#      from directly above, which is where this camera is.
-#   2. A RING THAT IS NOT UNIFORM. The ground was a horseshoe, open at one end,
-#      until the Centenario stand closed it for the 1978 World Cup, and the ring
-#      has never levelled out since. A perfect donut reads as any stadium; the
-#      notch is most of the silhouette. It is put on the +x side so the camera,
-#      which looks along -x, sees down into the bowl through it.
-#   3. AN OVAL RATHER THAN A CIRCLE, with the roof over the two long sides only
-#      and the ends open.
+# Four things carry which ground it is, in the order they survive being 80 px
+# wide:
 #
-# NOTE ON WHICH MONUMENTAL. This is the long-standing configuration, the one
-# with the running track. The 2023-24 remodelling lowered the pitch and rebuilt
-# the lower ring, and I have not verified what became of the track - so this is
-# the ground as it has looked for most of its life, not necessarily as it looks
-# this season. Worth checking before anyone calls it current.
-# THE WHOLE THING HAS TO FIT ITS LOT, which is 59 m inside a 64 m block. The
-# first rebuild forgot that: deeper stands and stair towers took the outside
+#   1. THE SEATS: white with big red chevrons. Every photograph of this place,
+#      from 1978 to last week, is white and red zig-zags. It is the only cue
+#      that is a colour break the size of the whole building, so it is the one
+#      that reads first, and it is the one the model did not have at all.
+#   2. THE FACADE IS LOWER THAN THE STANDS, mid-grey concrete banded with
+#      advertising, with the white rake and the roof rim rising over it. This is
+#      the whole silhouette. Under 40 px it is all that is left.
+#   3. A RING THAT IS NOT UNIFORM. The ground was a horseshoe until the
+#      Centenario stand closed it for 1978, and the ends have stayed lower.
+#      The dip is on the +x side, so the camera, which looks along -x, still
+#      sees down into the bowl.
+#   4. AN OVAL RATHER THAN A CIRCLE, roofed the whole way round, with the
+#      scoreboard slung between two red columns over the far end.
+#
+# NOTE ON WHICH MONUMENTAL. This is the ground AS IT IS NOW: the 2023-24
+# remodelling lowered the pitch, rebuilt the lower ring and took the athletics
+# track out. TRACK below puts it back for the configuration this place had for
+# most of its life - the rest of the geometry is shared, since the remodelling
+# rebuilt the inside of the bowl and left the drum around it alone.
+#
+# THE WHOLE THING HAS TO FIT ITS LOT, which is 59 m inside a 64 m block. An
+# early rebuild forgot that: deeper stands and stair towers took the outside
 # radius from 27.2 to 30.6, which with the 1.30 oval is 79 m across - fifteen
 # metres wider than the block. It overhung the pavement on both sides and
-# 99_check_overlap found five trees and people standing inside it. The rake got
-# thinner rather than the pitch smaller, because the pitch and the track are the
-# cue and the depth of the bowl is not.
+# 99_check_overlap found five trees and people standing inside it. Every radius
+# here is therefore left exactly where it was; this rebuild changes what fills
+# them and how tall each piece is, and not how much ground the stadium takes.
+TRACK = False                     # the 2023-24 remodelling took it out
 PITCH_R = 10.0                    # half the short axis, inside the track
 TRACK_W = 2.9
 STAND_R0 = PITCH_R + TRACK_W + 0.6
 TIERS, TIER_W = 9, 0.88
 STAND_H = 17.5                    # the tall sides, above the block
-LOW_END = 0.50                    # what the open end keeps of that
-LOW_HALF = math.radians(42)       # how far round the notch runs
+LOW_END = 0.66                    # what the dipped end keeps of that
+LOW_HALF = math.radians(50)       # how far round the dip runs
 SEGS = 48
+LOWER = 4                         # tiers below the band of boxes
+BAND = 4                          # the dark tier: press boxes and hospitality
+FACADE_H = 10.6                   # how high the ramp towers and the ads reach
 
 
 def stand_h(a):
@@ -100,18 +131,38 @@ def stand_h(a):
     return LOW_END + (1.0 - LOW_END) * (t * t * (3.0 - 2.0 * t))
 
 
+def seat_mat(k, t, white, red):
+    """White seats, red chevrons: four V's around the upper ring.
+
+    The pattern is per (segment, tier) rather than a texture, because at this
+    scale the tiers ARE the pixels - nine of them up the rake, forty-eight
+    round - and a painted stripe on a smooth cone would not survive the
+    orthographic camera the way a step that changes colour does.
+    """
+    if t < LOWER:                             # lower ring: one red hoop
+        return red if t == LOWER - 1 else white
+    p = (k % (SEGS // 4)) / (SEGS // 4)        # 0..1 within one chevron
+    v = abs(p * 2.0 - 1.0)                     # 1 at the ends, 0 in the middle
+    u = (t - BAND - 0.5) / (TIERS - BAND - 1)  # how far up the upper ring
+    return red if abs(u - v) < 0.30 else white
+
+
 def stadium(m, cx, cy, lift):
     x = xf(cx, cy, math.radians(20), 1.30, 1.0)
-    cool, cool2 = mat("Concrete Cool"), mat("Concrete Cool2")
-    warm, red = mat("Concrete Warm"), mat("Stadium Red")
+    white, red = mat("Seat White"), mat("Seat Red")
+    facade, dark = mat("Stadium Facade"), mat("Stadium Ad Dark")
 
-    # the track, then the pitch as a RECTANGLE inside it. A round pitch inside a
-    # round track is a bullseye; the whole point of a track stadium seen from
-    # above is the rectangle sitting in the oval.
-    m.arc_band(0.0, PITCH_R + TRACK_W, 0, 2 * math.pi, lift + 0.04,
-               mat("Track Clay"), segs=56, xform=x)
-    m.box((0, 0, lift + 0.07), (18.4, 15.2, 0.06), mat("Pitch Grass"), x)
-    m.box((0, 0, lift + 0.10), (0.16, 15.2, 0.02), mat("Marking"), x)
+    # The floor of the bowl: the track if this is the old ground, a plain dark
+    # apron if it is the new one, and then the pitch as a RECTANGLE inside it.
+    # A round pitch inside a round surround is a bullseye; the point of the
+    # thing seen from above is the rectangle sitting in the oval.
+    m.arc_band(0.0, PITCH_R + TRACK_W if TRACK else STAND_R0, 0, 2 * math.pi,
+               lift + 0.04,
+               mat("Track Clay") if TRACK else mat("Stadium Apron"),
+               segs=56, xform=x)
+    pw, pd = (18.4, 15.2) if TRACK else (20.4, 16.6)
+    m.box((0, 0, lift + 0.07), (pw, pd, 0.06), mat("Pitch Grass"), x)
+    m.box((0, 0, lift + 0.10), (0.16, pd, 0.02), mat("Marking"), x)
     m.arc_band(2.6, 2.9, 0, 2 * math.pi, lift + 0.10, mat("Marking"),
                segs=28, xform=x)
 
@@ -123,35 +174,83 @@ def stadium(m, cx, cy, lift):
             r0 = STAND_R0 + t * TIER_W
             h = lift + 1.3 + (STAND_H - 1.3) * ((t + 1) / TIERS) * f
             m.prism(arc_poly(r0, r0 + TIER_W, a0, a1), lift, h,
-                    cool if t % 2 else cool2, x)
-        top = lift + 1.0 + (STAND_H + 1.4 - 1.0) * f
-        m.prism(arc_poly(outer, outer + 1.2, a0, a1), lift, top, warm, x)
-        m.prism(arc_poly(outer - 0.05, outer + 1.3, a0, a1),
-                top - 1.9, top - 0.7, red, x)
+                    dark if t == BAND else seat_mat(k, t, white, red), x)
 
-    # The roof, over the two long sides only. The long axis is local x, so the
-    # long SIDES are at plus and minus 90 degrees from it.
+        # The facade: DARK concrete nearly all the way up, banded with
+        # advertising over its lower half, and a white parapet under the roof.
+        # From outside, this ground is a dark drum with a white crown; the
+        # white and the red are what you see over that crown and inside.
+        #
+        # Three passes to get here and not one of them was about hue. A pale
+        # wall under a pale rake reads as one smooth drum. Four ad bands on it
+        # turned the drum into a hoarding. Splitting it into a low dark facade
+        # and a tall light shell put the light half straight back on top, which
+        # is the first silhouette again. What fixes it is PROPORTION: the dark
+        # has to be most of the height, and everything else is trim.
+        rim = lift + 1.0 + (STAND_H + 2.2 - 1.0) * f
+        m.prism(arc_poly(outer, outer + 1.2, a0, a1), lift, rim - 3.0,
+                facade, x)
+        m.prism(arc_poly(outer - 0.05, outer + 1.2, a0, a1),
+                rim - 3.0, rim, white, x)
+        m.prism(arc_poly(outer - 0.06, outer + 1.25, a0, a1),
+                rim - 3.0, rim - 2.6, mat("Stadium Shell"), x)
+        for z0, z1, band in ((0.3, 2.4, dark),
+                             (8.4, 9.6, mat("Stadium Red"))):
+            m.prism(arc_poly(outer - 0.05, outer + 1.3, a0, a1),
+                    lift + z0, lift + z1, band, x)
+
+        # The roof: all the way round now, following the ring, thin, and
+        # cantilevered 3.8 m and no more. An earlier one reached 7.6 m and
+        # turned the stadium into a covered dish, because a camera at 30 deg
+        # sees the rake and the rake is the only reason to model a stadium.
+        z = rim
+        # outer + 1.2 and not a centimetre more: on the long axis that radius
+        # is multiplied by 1.30, and 58.8 m of a 59 m lot is already spent.
+        m.prism(arc_poly(outer - 3.8, outer + 1.2, a0, a1),
+                z, z + 0.34, mat("Roof Deck"), x)
+        m.prism(arc_poly(outer + 0.8, outer + 1.2, a0, a1),
+                z + 0.34, z + 0.80, mat("Roof Bright"), x)
+        if k % 4 == 0:                        # the floodlight strip under it
+            m.prism(arc_poly(outer - 3.4, outer - 2.4, a0, a1),
+                    z - 0.34, z, mat("Lamp"), x)
+
+    # Stair and ramp towers, dark against the pale drum, at the quarters.
+    # The ramp towers. They are RIBS ON the facade and not boxes outside it,
+    # for the same two reasons: a box at outer + 0.2 is inside the wall and
+    # renders perfectly while being invisible, and the only radius left to put
+    # one at would overhang the pavement on the long axis, which is the mistake
+    # this stadium has already made once. Pale concrete against the dark drum,
+    # cutting the advertising, which is how they read from above anyway.
+    for k in range(6):
+        a = math.radians(28 + 61 * k)
+        m.prism(arc_poly(outer, outer + 1.35, a - 0.055, a + 0.055, segs=2),
+                lift, lift + FACADE_H + 1.6, mat("Stadium Shell"), x)
+        for s in range(4):
+            m.prism(arc_poly(outer - 0.02, outer + 1.4,
+                             a - 0.05, a + 0.05, segs=2),
+                    lift + 1.6 + s * 2.5, lift + 1.9 + s * 2.5, dark, x)
+
+    # The scoreboard over the far end, slung between the two red columns.
+    # Small, but it is the one asymmetry above the roofline, so the silhouette
+    # stops being a closed oval.
+    # It stands at the DIPPED end, on tall legs, with its top above the ring -
+    # which is where the real screen is, and it is the one thing on this
+    # building that breaks the roofline. The +x end is also the near end for
+    # this camera, so what the shot sees is the back of it, and the back is
+    # where the ground writes its own name.
     #
-    # It has to be MEAN. A first pass cantilevered 7.6 m of it inwards and the
-    # stadium turned into a covered dish: this camera looks down at 30 degrees,
-    # so a roof that covers half the rake hides the bowl, and the bowl is the
-    # only reason to model a stadium instead of a drum. 4.4 m, thin, and only
-    # over the upper tier.
-    for c in (math.pi / 2, -math.pi / 2):
-        z = lift + STAND_H + 1.9
-        m.prism(arc_poly(outer - 3.8, outer + 1.5, c - 0.80, c + 0.80, segs=12),
-                z, z + 0.42, mat("Roof Deck"), x)
-        for k in range(6):
-            a = c - 0.80 + 1.60 * k / 5
-            m.box(((outer - 3.1) * math.cos(a), (outer - 3.1) * math.sin(a),
-                   z + 0.72), (1.3, 0.42, 0.42), mat("Lamp"), x)
-
-    # stair towers at the open end, where there is no roof to break the drum
-    for k in range(3):
-        a = math.radians(-52 + 52 * k)
-        h = 1.0 + (STAND_H + 1.4 - 1.0) * stand_h(a)
-        m.box(((outer + 0.6) * math.cos(a), (outer + 0.6) * math.sin(a),
-               lift + h / 2), (1.8, 1.8, h), warm, x)
+    # Two earlier placements were both invisible and neither raised anything.
+    # At outer - 1.0 the columns were between the tiers, inside the seating.
+    # Sitting it down on the far stand put it below the rim from every angle
+    # the city is ever seen from.
+    sx = STAND_R0 + 1.4
+    foot = lift + 1.3 + (STAND_H - 1.3) * (3.0 / TIERS) * stand_h(0.0)
+    top = lift + 21.8                          # the tall side of the ring: 18.7
+    for sy in (-6.0, 6.0):
+        m.cyl((sx, sy, foot), 0.75, top - foot - 0.4,     # cyl builds from its
+              mat("Stadium Red"), segs=10, xform=x)       # base, not its middle
+    m.box((sx, 0, top - 3.0), (1.1, 13.4, 5.4), dark, x)
+    m.box((sx + 0.62, 0, top - 3.0), (0.3, 12.2, 4.2), mat("Glass Light"), x)
 
 
 # --- curved organic building ----------------------------------------------
@@ -317,9 +416,23 @@ def main():
     # rather than a tint of the road: brick dust, warm and a good deal more
     # saturated than anything else on that block, which is what makes it read
     # against the pitch from directly above.
-    pbrmat("Track Clay", "#b1573c", 0.92)
-    pbrmat("Pitch Grass", "#3f8a39", 0.94)
-    pbrmat("Stadium Red", "#bd2b2f", 0.82)
+    repaint("Track Clay", "#b1573c", 0.92)
+    repaint("Pitch Grass", "#3f8a39", 0.94)
+    repaint("Stadium Red", "#bd2b2f", 0.82)
+    # White seats and red chevrons. The white is warm and a good deal lighter
+    # than any concrete in the city, because it has to be legible as SEATS
+    # against the facade right below it, and the two are three metres apart.
+    repaint("Seat White", "#e2dfd7", 0.90)
+    repaint("Seat Red", "#c1212c", 0.86)
+    # The facade is DARK, and that is the whole point of it. At #8d8b86 it
+    # rendered the same value as the seats under this sun and the stadium went
+    # back to being one smooth white drum with a lawn in it - the rake reads
+    # from outside only because there is something darker underneath it.
+    repaint("Stadium Facade", "#403e3a", 0.90)
+    repaint("Stadium Shell", "#8b877f", 0.90)
+    repaint("Stadium Apron", "#6e716d", 0.94)
+    repaint("Stadium Ad Dark", "#26282c", 0.74)
+    repaint("Roof Bright", "#f4f3ef", 0.55)
 
     r = rng(777)
     m = Mesh()
@@ -339,8 +452,8 @@ def main():
     # inside the stands. The widest thing is the facade on the long axis and
     # the roof on the short one.
     _st_out = STAND_R0 + TIERS * TIER_W
-    FOOT = {"stadium": ((_st_out + 1.2) * 1.30 * 2 + 1.0,
-                        (_st_out + 1.5) * 2 + 1.0, math.radians(20), 17.0),
+    FOOT = {"stadium": ((_st_out + 1.4) * 1.30 * 2 + 1.0,
+                        (_st_out + 1.4) * 2 + 1.0, math.radians(20), 20.5),
             "blob": (64.0, 40.0, 0.0, 21.0),
             "garage": (56.0, 45.0, 0.0, 17.5)}
 

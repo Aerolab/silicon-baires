@@ -995,7 +995,9 @@ same size. That diff is the check, not the reasoning.
 ### The stadium, and a footprint that stopped agreeing with it
 
 The stadium was a smooth white drum with a lawn in the hole. It now reads as
-El Monumental — see the style bible for which three cues do that and why.
+El Monumental — see the style bible for which four cues do that and why, and
+for the two rebuilds it took to learn that the cue that mattered most was not
+a shape at all but the value of the facade.
 
 Two things fell out of it that are worth more than the stadium:
 
