@@ -29,9 +29,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
-from _common import Mesh, collection, mat, pbrmat, instance, counts
+from _common import (Mesh, collection, mat, pbrmat, paint, instance,
+                     counts, R, open_city, save_city)
 
-R = ROOT / "renders"
 
 # Measured off photographs of the trees in flower, not off the name of the
 # colour: jacaranda reads blue-violet in sun and closer to lilac in shade.
@@ -126,12 +126,12 @@ def colectivo(name, lower, upper, kit):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    open_city(needs_collections=("KIT",), hint="run 02_kit.py first")
     kit = bpy.data.collections["KIT"]
     for name, hexcol in JACARANDA:
         pbrmat(name, hexcol, 0.80)
-    pbrmat("Taxi Black", "#141416", 0.45)
-    pbrmat("Taxi Yellow", "#f2c300", 0.45)
+    paint("Taxi Black")
+    paint("Taxi Yellow")
     for lo, up in LIVERIES:
         pbrmat(f"Livery {lo}", lo, 0.50)
         pbrmat(f"Livery {up}", up, 0.50)
@@ -162,7 +162,7 @@ def main():
         print(f"    {n:14s} plan radius {rr:5.2f} m")
     u, t = counts()
     print(f"  triangles: {u} unique / {t} total")
-    blib.save(str(R / "city.blend"))
+    save_city()
 
 
 main()

@@ -1,28 +1,31 @@
-"""Step 00 — the empty stage.
+"""The empty stage. NOT part of the numbered chain: it DESTROYS the city.
 
 Creates renders/city.blend with nothing in it but the things every later step
-depends on: metric units, the sun and sky, the hero camera, and the palette from
-docs/city/STYLE-BIBLE.md.
+depends on: metric units, the sun and sky, the hero camera, and the palette.
 
-No city yet. The only mesh is a placeholder ground plane so the camera has
-something to land on; step 01 replaces it.
+It was called 00_setup.py, which put it at the head of a list of numbered steps
+that are all safe to re-run - and this one opens with blib.reset(). Anybody
+following the numbers wiped the city. It is underscored now, like _common and
+_palette, because it is not a step: it is the bootstrap, it runs once, and
+running it again means rebuilding everything from 02_kit.py onwards.
 
-    ./bl scripts/city/00_setup.py
+    ./bl scripts/city/_stage.py     # and then the whole chain, from 02_kit
 """
 import sys, pathlib, math
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Vector
+from _common import (R, BLEND, AZIMUTH, ELEVATION, DISTANCE, HERO_WIDTH,
+                     place_hero, apply_palette)
 
-R = ROOT / "renders"
-
-# --- the scale contract, from docs/city/PLAN.md -----------------------------
-BLOCK = 90.0          # m, block module
-STREET = 22.0         # m, street corridor
-EXTENT = 7            # blocks per side
-CITY = EXTENT * BLOCK + (EXTENT + 1) * STREET     # 806 m across
+# How big to make the placeholder ground and how far out to hang the sun. Not
+# a grid: this file used to declare BLOCK = 90, STREET = 22, EXTENT = 7 as "the
+# scale contract", and step 03 has been building 52-to-76 m blocks on 12, 22 and
+# 70 m streets for a long time. The real extent comes out of city_lots.json.
+CITY = 806.0
 
 # --- camera ----------------------------------------------------------------
 # ORTHOGRAPHIC, and this was measured, not assumed. A 150 mm perspective lens
@@ -32,10 +35,11 @@ CITY = EXTENT * BLOCK + (EXTENT + 1) * STREET     # 806 m across
 # Cost of the choice: no perspective depth cue, and camera DOF stops being
 # useful. The miniature blur therefore has to come from a compositor defocus
 # driven by the Z pass (M5), which is more controllable anyway.
-CAM_AZIMUTH = 45.0    # every street runs diagonally, every building shows two faces
-CAM_ELEVATION = 38.0
-CAM_DISTANCE = 1450.0  # ortho: affects clipping only, not framing
-CAM_WIDTH = 620.0     # metres of city across the frame
+# The orbit and the framing come from _common, so the camera this file leaves
+# in the .blend is the same one the shot lands on. It used to carry its own
+# CAM_ELEVATION = 38.0, which meant every preview render from steps 03 to 10
+# was framed at an elevation the film never uses: the move measured off the
+# reference sits at 30.6.
 
 # --- sun -------------------------------------------------------------------
 # Shadows must fall towards screen lower-left, which puts the sun at world
@@ -49,48 +53,6 @@ SUN_ENERGY = 4.0
 SKY_STRENGTH = 0.32
 SKY_SATURATION = 0.35   # how much blue the ambient keeps
 EXPOSURE = -0.5         # the warm concretes are albedo ~0.8 and clip without this
-
-
-def srgb(hex_str):
-    """#rrggbb -> linear RGB, which is what Blender sockets want."""
-    h = hex_str.lstrip("#")
-    out = []
-    for i in (0, 2, 4):
-        c = int(h[i:i + 2], 16) / 255.0
-        out.append(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4)
-    return tuple(out)
-
-
-# Straight from the style bible. Fake user so they survive a save with no
-# objects using them yet.
-PALETTE = {
-    "Concrete Warm":  ("#e6ded0", 0.85, 0.0),
-    "Concrete Warm2": ("#cfc4b2", 0.85, 0.0),
-    "Concrete Cool":  ("#b9bcbd", 0.85, 0.0),
-    "Concrete Cool2": ("#8e9295", 0.85, 0.0),
-    "Glass Light":    ("#7fa3ad", 0.12, 0.0),
-    "Glass Dark":     ("#2c3134", 0.08, 0.0),
-    "Asphalt":        ("#3a3a3c", 0.75, 0.0),
-    "Sidewalk":       ("#c9c6bd", 0.80, 0.0),
-    "Marking":        ("#eef0ee", 0.65, 0.0),
-    "Grass":          ("#4aa32a", 0.90, 0.0),
-    "Foliage Dark":   ("#2f6b25", 0.90, 0.0),
-    "Foliage Mid":    ("#4e8f2c", 0.90, 0.0),
-    "Foliage Light":  ("#79b93a", 0.90, 0.0),
-    "Trunk":          ("#7a3b2a", 0.90, 0.0),
-    "Roof Pipe":      ("#d0714a", 0.55, 0.0),
-    "Metal Painted":  ("#d8d8d6", 0.40, 0.0),
-    "Accent Red":     ("#c8302a", 0.45, 0.0),
-    "Accent Yellow":  ("#e8b520", 0.45, 0.0),
-    "Accent Magenta": ("#c9268f", 0.45, 0.0),
-}
-
-
-def build_palette():
-    for name, (hexcol, rough, metal) in PALETTE.items():
-        mat = blib.pbr(name, srgb(hexcol), roughness=rough, metallic=metal)
-        mat.use_fake_user = True
-    return len(PALETTE)
 
 
 def build_sky():
@@ -144,11 +106,10 @@ def build_sky():
 
 
 def build_camera():
-    cam = blib.camera(azimuth=CAM_AZIMUTH, elevation=CAM_ELEVATION,
-                      distance=CAM_DISTANCE)
+    cam = blib.camera(azimuth=AZIMUTH, elevation=ELEVATION, distance=DISTANCE)
     cam.name = "HeroCam"
     cam.data.type = "ORTHO"
-    cam.data.ortho_scale = CAM_WIDTH
+    place_hero(cam, HERO_WIDTH)
     cam.data.clip_start = 1.0
     cam.data.clip_end = 5000.0
 
@@ -179,18 +140,17 @@ def main():
     sc.view_settings.view_transform = "AgX"
     sc.view_settings.exposure = EXPOSURE
 
-    n = build_palette()
+    n = apply_palette()
     build_sky()
     build_ground()
     build_camera()
 
-    print(f"\n  city extent : {CITY:.0f} x {CITY:.0f} m ({EXTENT}x{EXTENT} blocks)")
-    print(f"  materials   : {n}")
+    print(f"\n  materials   : {n} from _palette.py")
     blib.report()
 
     blib.render(str(R / "city_00_setup.png"), "EEVEE", samples=32,
                 resolution=(1280, 720), view_transform="AgX", exposure=EXPOSURE)
-    blib.save(str(R / "city.blend"))
+    blib.save(str(BLEND))
 
 
 main()

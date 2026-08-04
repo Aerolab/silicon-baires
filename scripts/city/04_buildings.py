@@ -16,13 +16,20 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
-from _common import Mesh, collection, instance, mat, rng, counts
+from _common import (Mesh, collection, instance, mat, paint, rng, counts,
+                     R, LOTS, SOLIDS, SIGNS, open_city, save_city, purge,
+                     preview)
 from _solids import Solids
 
-R = ROOT / "renders"
 
-BLOCK, STREET, PITCH, WALK = 64.0, 12.0, 76.0, 2.5
-EXTENT, HALF = 9, 4.0
+# NO GRID CONSTANTS HERE. This file used to open with
+#     BLOCK, STREET, PITCH, WALK = 64.0, 12.0, 76.0, 2.5
+#     EXTENT, HALF = 9, 4.0
+# and not one of the six was ever read. They were the uniform grid from before
+# step 03 went to per-row block sizes, sitting at the top of the file that
+# builds every building in the city, saying 64 m blocks and 12 m streets to
+# anybody who opened it. The real numbers come out of city_lots.json: blocks
+# from 52 to 76, streets of 12, 22 and the 70 m of the 9 de Julio.
 FLOOR = 3.8
 GROUND = 4.6                  # taller ground floor, like the reference
 
@@ -57,7 +64,6 @@ PORTENO = {(2, 7)}
 # since the title was built, and nothing was wrong with it except that this
 # set was a guess and the superblock is the fact.
 CAMPUS = {(4, 4), (4, 5)}
-GROUND_INSET = 0.6
 
 # Invented companies. The reference is a parade of real logos and we are not
 # reproducing the branding, so these are made up, and made up with an ear for
@@ -877,33 +883,26 @@ def build_towers(m, kit, coll, sol, signs, lots, r):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    open_city(needs_collections=("KIT", "SITE"), needs_files=(LOTS,),
+              hint="run 03_ground.py first: the block table is its output")
     kit = {ob.name: ob for ob in bpy.data.collections["KIT"].objects}
-    from _common import pbrmat
-    pbrmat("Brick Warm", "#b0603c", 0.85)
-    pbrmat("Facade Teal", "#1f8478", 0.75)
-    pbrmat("Concrete Dark", "#6e7276", 0.85)
-    pbrmat("Roof Deck", "#a8a292", 0.88)
-    pbrmat("Roof Dark", "#2b2b28", 0.90)
+    paint("Brick Warm")
+    paint("Facade Teal")
+    paint("Concrete Dark")
+    paint("Roof Deck")
+    paint("Roof Dark")
 
-    for name in ("BUILDINGS", "ROOFPROPS", "CAMPUSROOF"):
-        if name in bpy.data.collections:
-            c = bpy.data.collections[name]
-            for ob in list(c.objects):
-                bpy.data.objects.remove(ob, do_unlink=True)
-            bpy.data.collections.remove(c)
-    bcoll = collection("BUILDINGS")
-    pcoll = collection("ROOFPROPS")
-    # its own collection so step 05 can leave these roofs alone: the title
-    # hangs half a metre over them and a person up there stands through a letter
-    ccoll = collection("CAMPUSROOF")
+    # its own collection for CAMPUSROOF so step 05 can leave those roofs
+    # alone: the title hangs half a metre over them and a person up there
+    # stands through a letter
+    bcoll, pcoll, ccoll = purge("BUILDINGS", "ROOFPROPS", "CAMPUSROOF")
 
     r = rng(90210)
     m = Mesh()
     sol = Solids()
     signs = []
 
-    site = json.loads((R / "city_lots.json").read_text())
+    site = json.loads((LOTS).read_text())
     lots = site["lots"]
     av = site.get("avenue9j")
     for lot in lots:
@@ -956,8 +955,8 @@ def main():
     if dropped:
         print(f"  {dropped} signs dropped: no room once every building was in")
 
-    sol.merge_into(R / "city_solids.json", "buildings")
-    (R / "city_signs.json").write_text(json.dumps(signs, indent=1))
+    sol.merge_into(SOLIDS, "buildings")
+    (SIGNS).write_text(json.dumps(signs, indent=1))
     kinds = {}
     for s in signs:
         kinds[s["kind"]] = kinds.get(s["kind"], 0) + 1
@@ -969,15 +968,12 @@ def main():
     print(f"\n  roof props: {len(pcoll.objects)}")
     print(f"  triangles: {u} unique / {t} total")
 
-    cam = bpy.data.objects["HeroCam"]
     exposure = bpy.context.scene.view_settings.exposure
-    blib.render(str(R / "city_04_hero.png"), "EEVEE", samples=64,
-                resolution=(1600, 900), exposure=exposure)
-    cam.data.ortho_scale = 200.0
-    blib.render(str(R / "city_04_closeup.png"), "EEVEE", samples=64,
-                resolution=(1600, 900), exposure=exposure)
-    cam.data.ortho_scale = 700.0
-    blib.save(str(R / "city.blend"))
+    for tag, width in (("hero", 620.0), ("closeup", 200.0)):
+        with preview(width, target=(0, 0, 0)):
+            blib.render(str(R / f"city_04_{tag}.png"), "EEVEE", samples=64,
+                        resolution=(1600, 900), exposure=exposure)
+    save_city()
 
 
 main()

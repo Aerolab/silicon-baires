@@ -14,35 +14,20 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
-from _common import Mesh, collection, instance, mat, pbrmat, rng, counts, srgb
+from _common import (Mesh, collection, instance, mat, pbrmat, rng, counts,
+                     srgb, R, LOTS, SOLIDS, open_city, save_city, purge,
+                     preview, paint)
 from _solids import Solids
 
-R = ROOT / "renders"
-BLOCK, PITCH, HALF = 64.0, 76.0, 4.0
+# NO GRID CONSTANTS HERE, and that is the point. This file used to open with
+# BLOCK, PITCH, HALF = 64.0, 76.0, 4.0 feeding a cell(i, j) that nothing ever
+# called: the uniform-grid formula from the layout BEFORE step 03 went to
+# per-row block sizes. The real grid is in city_lots.json, where the blocks run
+# 52 to 76 m and the streets 12, 22 or 70. Anything that needs a plot reads the
+# lots table, like main() does.
 
 CELLS = {"stadium": (6, 1), "blob": (1, 6), "garage": (7, 4)}
 SITE = [(5, 7), (2, 0)]     # (4, 5) now carries the title
-
-
-def repaint(name, hex_col, roughness=0.8):
-    """pbrmat, but the colour in this file wins over the one in the .blend.
-
-    pbrmat fetches an existing material by name and returns it untouched, which
-    is right for the hundred materials this city shares and wrong for the ones
-    being art-directed: darkening the stadium facade here changed nothing at all
-    for two rebuilds, because the pale version was already saved in city.blend
-    with a fake user and it was that one that came back every time. Nothing
-    raises when this happens - the render simply keeps the old look.
-    """
-    m = pbrmat(name, hex_col, roughness)
-    b = m.node_tree.nodes["Principled BSDF"]
-    b.inputs["Base Color"].default_value = tuple(srgb(hex_col)) + (1.0,)
-    b.inputs["Roughness"].default_value = roughness
-    return m
-
-
-def cell(i, j):
-    return (i - HALF) * PITCH, (j - HALF) * PITCH
 
 
 def xf(cx, cy, rot=0.0, sx=1.0, sy=1.0):
@@ -398,41 +383,35 @@ def construction(m, kit, coll, cx, cy, lift, r, frame=True):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    open_city(needs_collections=("KIT", "SITE"), needs_files=(LOTS,),
+              hint="run 03_ground.py first")
     kit = {ob.name: ob for ob in bpy.data.collections["KIT"].objects}
     lots = {tuple(l["key"]): l for l in
-            json.loads((R / "city_lots.json").read_text())["lots"]}
+            json.loads((LOTS).read_text())["lots"]}
 
-    for name in ("LANDMARKS", "LANDMARK_PROPS"):
-        if name in bpy.data.collections:
-            c = bpy.data.collections[name]
-            for ob in list(c.objects):
-                bpy.data.objects.remove(ob, do_unlink=True)
-            bpy.data.collections.remove(c)
-    lm = collection("LANDMARKS")
-    lp = collection("LANDMARK_PROPS")
+    lm, lp = purge("LANDMARKS", "LANDMARK_PROPS")
 
     # The track is the loudest cue in the stadium, so it gets a real colour
     # rather than a tint of the road: brick dust, warm and a good deal more
     # saturated than anything else on that block, which is what makes it read
     # against the pitch from directly above.
-    repaint("Track Clay", "#b1573c", 0.92)
-    repaint("Pitch Grass", "#3f8a39", 0.94)
-    repaint("Stadium Red", "#bd2b2f", 0.82)
+    paint("Track Clay")
+    paint("Pitch Grass")
+    paint("Stadium Red")
     # White seats and red chevrons. The white is warm and a good deal lighter
     # than any concrete in the city, because it has to be legible as SEATS
     # against the facade right below it, and the two are three metres apart.
-    repaint("Seat White", "#e2dfd7", 0.90)
-    repaint("Seat Red", "#c1212c", 0.86)
+    paint("Seat White")
+    paint("Seat Red")
     # The facade is DARK, and that is the whole point of it. At #8d8b86 it
     # rendered the same value as the seats under this sun and the stadium went
     # back to being one smooth white drum with a lawn in it - the rake reads
     # from outside only because there is something darker underneath it.
-    repaint("Stadium Facade", "#403e3a", 0.90)
-    repaint("Stadium Shell", "#8b877f", 0.90)
-    repaint("Stadium Apron", "#6e716d", 0.94)
-    repaint("Stadium Ad Dark", "#26282c", 0.74)
-    repaint("Roof Bright", "#f4f3ef", 0.55)
+    paint("Stadium Facade")
+    paint("Stadium Shell")
+    paint("Stadium Apron")
+    paint("Stadium Ad Dark")
+    paint("Roof Bright")
 
     r = rng(777)
     m = Mesh()
@@ -494,15 +473,15 @@ def main():
             instance(kit["Truck"], lp, (tx, ty, 0.0), trot)
 
     m.build("landmarks", lm)
-    sol.merge_into(R / "city_solids.json", "landmarks")
+    sol.merge_into(SOLIDS, "landmarks")
     u, t = counts()
     print(f"\n  triangles: {u} unique / {t} total")
 
-    cam = bpy.data.objects["HeroCam"]
     exposure = bpy.context.scene.view_settings.exposure
-    blib.render(str(R / "city_06_hero.png"), "EEVEE", samples=64,
-                resolution=(1600, 900), exposure=exposure)
-    blib.save(str(R / "city.blend"))
+    with preview(620.0, target=(0, 0, 0)):
+        blib.render(str(R / "city_06_hero.png"), "EEVEE", samples=64,
+                    resolution=(1600, 900), exposure=exposure)
+    save_city()
 
 
 main()

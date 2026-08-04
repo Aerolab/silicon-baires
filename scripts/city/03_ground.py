@@ -31,10 +31,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
-from _common import (Mesh, collection, mat, pbrmat, rng, counts, srgb,
-                     median_runs)
+from _common import (Mesh, collection, mat, rng, counts, srgb, R,
+                     median_runs, LOTS, open_city, save_city, purge, preview)
 
-R = ROOT / "renders"
 
 EXTENT = 9                    # blocks per side
 WALK = 2.5                    # sidewalk inside the block edge
@@ -276,13 +275,6 @@ def surface_mat(kind):
     return {"park": mat("Grass"), "parking": mat("Asphalt Lot"),
             "plaza": mat("Paving"), "construction": mat("Dirt"),
             "std": mat("Grass")}[kind]
-
-
-def retint(name, hex_col):
-    m = bpy.data.materials[name]
-    c = srgb(hex_col)
-    m.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = \
-        (c[0], c[1], c[2], 1.0)
 
 
 # ---------------------------------------------------------------------------
@@ -568,50 +560,20 @@ def build_parking(m, lots):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    open_city(needs_collections=("KIT",),
+              hint="run 02_kit.py then 02b_porteno_kit.py first")
     if "GROUND_placeholder" in bpy.data.objects:
         bpy.data.objects.remove(bpy.data.objects["GROUND_placeholder"],
                                 do_unlink=True)
-    pbrmat("Paving", "#6e6a5e", 0.85)
-    pbrmat("Dirt", "#8a7355", 0.92)
-    pbrmat("Asphalt Lot", "#26231e", 0.80)
-    # the busway is asphalt with a warm cast, not a painted red lane: the real
-    # corridor is not colour-coded and a red stripe down the middle of the
-    # frame would be the loudest thing in the city
-    pbrmat("Busway", "#332a24", 0.86)
-    # dark grey with a white line down it, off the photograph. Pale, the
-    # shelters were the brightest thing on the avenue and pulled the eye off
-    # the monument; dark, they sit into the asphalt and the line does the
-    # reading.
-    pbrmat("Station Roof", "#3b3e42", 0.72)
-    pbrmat("Station Line", "#eceae4", 0.60)
-    # and then retint both, because pbrmat only ever CREATES. It fetches an
-    # existing material unchanged - which is what makes it idempotent and safe
-    # to call every run - so changing a colour in this file does nothing at all
-    # to a material that is already in the .blend. The shelters stayed pale
-    # through a full rebuild for exactly this reason.
-    retint("Station Roof", "#3b3e42")
-    retint("Station Line", "#eceae4")
-    # the reference's road sits at 0.18 luminance and is warm; the first pass
-    # was 0.38 and cool grey, which left no dark values in the frame at all
-    retint("Asphalt", "#211e19")
-    retint("Sidewalk", "#98938a")
-    retint("Marking", "#d8d8d2")
-    retint("Grass", "#4d9c26")
-    retint("Foliage Dark", "#2a6b1c")
-    retint("Foliage Mid", "#4a9422")
-    retint("Foliage Light", "#7cc32e")
-    retint("Trunk", "#7a3a22")
-    retint("Concrete Warm", "#e9dcc0")
-    retint("Concrete Warm2", "#d8c4a0")
-    retint("Concrete Cool", "#b6bcbd")
-    retint("Concrete Cool2", "#8d9599")
-    retint("Glass Light", "#5f97a6")
-    retint("Glass Dark", "#15181b")
+    # The colours of the site used to be set here twice - once with pbrmat(),
+    # which only ever CREATES, and then again with a local retint() because of
+    # it. Both tables now live in _palette.py and open_city() has already
+    # applied them, so the notes that justified the values live there too:
+    # the road at 0.18 luminance and warm, the bus shelters dark so they sit
+    # into the asphalt instead of pulling the eye off the monument, the busway
+    # a warm cast rather than a painted red lane.
 
-    site = collection("SITE")
-    for ob in list(site.objects):
-        bpy.data.objects.remove(ob, do_unlink=True)
+    site = purge("SITE")
 
     r = rng(4711)
     m = Mesh()
@@ -626,7 +588,7 @@ def main():
     build_parking(mm, lots)
     mm.build("markings", site)
 
-    (R / "city_lots.json").write_text(json.dumps({
+    (LOTS).write_text(json.dumps({
         "lots": [{"key": [str(i), str(j)], "x": cx, "y": cy, "size": size,
                   "lift": lift, "kind": kind}
                  for (i, j), (cx, cy, size, lift, kind) in lots.items()],
@@ -645,12 +607,11 @@ def main():
     u, t = counts()
     print(f"  triangles: {u} unique / {t} total")
 
-    cam = bpy.data.objects["HeroCam"]
-    cam.data.ortho_scale = CITY * 1.15
-    blib.render(str(R / "city_03_plan.png"), "EEVEE", samples=32,
-                resolution=(1500, 850),
-                exposure=bpy.context.scene.view_settings.exposure)
-    blib.save(str(R / "city.blend"))
+    with preview(CITY * 1.15, target=(0, 0, 0)):
+        blib.render(str(R / "city_03_plan.png"), "EEVEE", samples=32,
+                    resolution=(1500, 850),
+                    exposure=bpy.context.scene.view_settings.exposure)
+    save_city()
 
 
 main()

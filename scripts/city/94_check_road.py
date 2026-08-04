@@ -27,9 +27,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy
+from _common import open_city, R, LOTS, SOLIDS
 from mathutils import Vector
 
-R = ROOT / "renders"
 # Where a vehicle belongs and a tree does not. "Asphalt Lot" is not here: that
 # is the surface of a car park, which is inside a block, and the planting in
 # those is on purpose.
@@ -57,7 +57,8 @@ def surfacer(site):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    open_city(needs_collections=('SITE', 'NATURE'),
+              hint="run the chain in CLAUDE.md first")
     # frame 1, for the same reason 99_check_overlap says so out loud: this file
     # is left on whatever frame ran last, and half the scene is animated
     bpy.context.scene.frame_set(1)

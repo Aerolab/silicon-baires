@@ -167,6 +167,13 @@ Measured off the frames.
 
 | Role | Colour | Notes |
 |---|---|---|
+> **The hexes in this table are the intent, not the city.** The colours that
+> actually render live in `scripts/city/_palette.py`, one table, read back out
+> of the .blend. Several of them were art-directed after this document was
+> written and the two drifted: asphalt is listed below as `#3a3a3c` and has been
+> `#211e19` since step 03 darkened the roads to put some black back in the
+> frame. Change a colour in `_palette.py`; use this table for the reasoning.
+
 | Warm concrete | cream / beige `#e6ded0` → `#cfc4b2` | the dominant building tone |
 | Cool concrete | grey `#b9bcbd` → `#8e9295` | second family, for the greyer campuses |
 | Glass, light | desaturated teal `#7fa3ad` | office banding, always slightly reflective |

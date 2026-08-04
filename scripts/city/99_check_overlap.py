@@ -38,8 +38,8 @@ import bpy
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 from _solids import Solids
+from _common import open_city, R, LOTS, SOLIDS
 
-R = ROOT / "renders"
 EPS = 0.05                       # lift before testing: contact is not overlap
 SUPPORTS = ("buildings", "landmarks", "porteno")
 LOOSE = ("NATURE", "FURNITURE", "TRAFFIC", "PEOPLE", "ROOFPEOPLE",
@@ -96,7 +96,8 @@ def where(verts, faces, idx):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    open_city(needs_collections=('BUILDINGS',),
+              hint="run the chain in CLAUDE.md first")
     # Frame 1, always, and said out loud because it matters: this file may be
     # left on any frame by the step that ran last, and the vehicles are
     # animated. Reading "the current frame" makes the result depend on where
@@ -104,7 +105,7 @@ def main():
     bpy.context.scene.frame_set(1)
     scene = bpy.context.scene
 
-    solids = Solids.load(R / "city_solids.json")
+    solids = Solids.load(SOLIDS)
     print(f"\n  {len(solids.boxes)} footprints published by steps 04 and 06")
 
     supports = [bpy.data.objects[n] for n in SUPPORTS if n in bpy.data.objects]

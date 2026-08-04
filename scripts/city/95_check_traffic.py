@@ -26,8 +26,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy
+from _common import open_city, R, LOTS, SOLIDS
 
-R = ROOT / "renders"
 COLECTIVO = "Colectivo"
 
 
@@ -36,13 +36,14 @@ def nearest(value, table):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    open_city(needs_collections=('TRAFFIC',),
+              hint="run the chain in CLAUDE.md first")
     # Frame 1, always, and said out loud because it matters: this file may be
     # left on any frame by the step that ran last, and the vehicles are
     # animated. Reading "the current frame" makes the result depend on where
     # somebody happened to leave the playhead.
     bpy.context.scene.frame_set(1)
-    data = json.loads((R / "city_lots.json").read_text())
+    data = json.loads((LOTS).read_text())
     av = data.get("avenue9j")
     lots = [(l["x"], l["y"], l["size"][0], l["size"][1]) for l in data["lots"]]
 

@@ -16,9 +16,9 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
-from _common import Mesh, collection, instance, mat, pbrmat, counts
+from _common import (Mesh, collection, instance, mat, counts, R,
+                     open_city, save_city, preview)
 
-R = ROOT / "renders"
 KIT = None
 
 
@@ -117,7 +117,6 @@ def _disc(cx, cy, cz, radius, width, segs=8):
     return v, f
 
 
-HELI_MAST = 3.0                   # where the rotor plane sits above the body
 # Blade length from the hub, so the disc is twice this. It was 8.0, which is a
 # 16 m disc over a 4 m fuselage - four times the body length, where a real
 # helicopter runs about two and a half. The overlapping pairs hid it: half the
@@ -318,34 +317,10 @@ def pingpong(name):
 
 
 # --- palette additions -----------------------------------------------------
-EXTRA = [
-    ("Car Red", "#c0332c", 0.35), ("Car Teal", "#1f9e93", 0.35),
-    ("Car Blue", "#3d6fb5", 0.35), ("Car White", "#e8e9e6", 0.35),
-    ("Car Dark", "#2f3336", 0.35), ("Car Yellow", "#e0a81c", 0.35),
-    ("Car Silver", "#a8adb0", 0.30), ("Car Glass", "#9fc4cc", 0.10),
-    ("Tire", "#1c1d1f", 0.85), ("Pole", "#9a9d9e", 0.45),
-    ("Lamp", "#f2efe2", 0.30), ("Signal Body", "#232628", 0.60),
-    ("Signal Red", "#d02b22", 0.35), ("Signal Amber", "#e2a01c", 0.35),
-    ("Signal Green", "#2fa04a", 0.35), ("Metal Dark", "#3c4043", 0.55),
-    ("Solar", "#26436e", 0.20), ("Bench Wood", "#8a5a34", 0.70),
-    ("Table Green", "#1c7a46", 0.55), ("Skin Light", "#e0b48c", 0.75),
-    ("Skin Mid", "#b57f52", 0.75), ("Skin Dark", "#6f4a30", 0.75),
-    ("Hair Dark", "#2b2320", 0.80), ("Hair Blonde", "#d9b25e", 0.80),
-    ("Hair Red", "#a4482a", 0.80), ("Hair Grey", "#b9b6b0", 0.80),
-    ("Shirt Blue", "#3f6fa8", 0.75), ("Shirt Red", "#b83b34", 0.75),
-    ("Shirt Green", "#3f8f52", 0.75), ("Shirt White", "#e6e6e2", 0.75),
-    ("Shirt Purple", "#6a4b9c", 0.75), ("Shirt Teal", "#2f9c93", 0.75),
-    ("Shirt Orange", "#d97b28", 0.75), ("Shirt Grey", "#7e8386", 0.75),
-    ("Pants Navy", "#2c3a52", 0.75), ("Pants Denim", "#4a6484", 0.75),
-    ("Pants Khaki", "#a89168", 0.75), ("Pants Dark", "#33363a", 0.75),
-    ("Water", "#6fb6cc", 0.08), ("Glass Roof", "#c8d6d8", 0.10),
-]
-
-
 def build_kit():
-    for name, hexcol, rough in EXTRA:
-        pbrmat(name, hexcol, roughness=rough)
-
+    # The materials the kit needs used to be listed here as a 40-line EXTRA
+    # table, which was the palette written out a second time. They live in
+    # _palette.py now and open_city() has already applied them.
     assets = {}
     fol = ["Foliage Dark", "Foliage Mid", "Foliage Light"]
     for i, (h, lobes) in enumerate([(9.0, 3), (7.0, 4), (11.0, 3), (6.2, 2)]):
@@ -412,18 +387,18 @@ def contact_sheet(assets):
         y = ((i // cols) - (len(names) / cols - 1) / 2) * 12.0
         instance(assets[n], show, location=(x, y, 0))
 
-    cam = bpy.data.objects["HeroCam"]
-    cam.data.ortho_scale = 108.0
-    blib.render(str(R / "kit_contact.png"), "EEVEE", samples=64,
-                resolution=(1800, 1000),
-                exposure=bpy.context.scene.view_settings.exposure)
+    with preview(108.0, target=(0, 0, 0)):
+        blib.render(str(R / "kit_contact.png"), "EEVEE", samples=64,
+                    resolution=(1800, 1000),
+                    exposure=bpy.context.scene.view_settings.exposure)
     bpy.data.collections.remove(show)
-    cam.data.ortho_scale = 620.0
 
 
 def main():
     global KIT
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    # The one step with no prerequisites: it builds the assets everything else
+    # instances. It does need the palette, which open_city() applies.
+    open_city()
     KIT = collection("KIT")
 
     # Purge before rebuilding, and understand what that does before running it.
@@ -450,7 +425,7 @@ def main():
     KIT.hide_render = KIT.hide_viewport = True
     u, t = counts()
     print(f"  triangles: {u} unique / {t} total")
-    blib.save(str(R / "city.blend"))
+    save_city()
 
 
 main()

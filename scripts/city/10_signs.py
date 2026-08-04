@@ -59,10 +59,10 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
-from _common import Mesh, collection, mat, pbrmat, rng, counts
+from _common import (Mesh, collection, mat, pbrmat, rng, counts, R, SIGNS,
+                     SOLIDS, open_city, save_city, purge, preview)
 from _solids import Solids
 
-R = ROOT / "renders"
 FONT = "/Users/bilune/Library/Fonts/PPMonumentNormal-Black.otf"
 CAP = 4.2                 # letter height on a parapet, metres
 DEPTH = 0.9               # how far a letter is extruded
@@ -297,16 +297,11 @@ def build(rec, coll):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
-    pbrmat("Sign Frame", "#2b2b28", 0.55)
-    plan = json.loads((R / "city_signs.json").read_text())
+    open_city(needs_collections=("BUILDINGS",), needs_files=(SIGNS,),
+              hint="run 04_buildings.py first: it plans the signs this builds")
+    plan = json.loads((SIGNS).read_text())
 
-    if "SIGNS" in bpy.data.collections:
-        c = bpy.data.collections["SIGNS"]
-        for ob in list(c.objects):
-            bpy.data.objects.remove(ob, do_unlink=True)
-        bpy.data.collections.remove(c)
-    coll = collection("SIGNS")
+    coll = purge("SIGNS")
 
     sol = Solids()
     for rec in plan:
@@ -328,7 +323,7 @@ def main():
         else:
             sol.add(rec["x"], rec["y"], rec["w"] + 1.0, rec["w"] + 1.0,
                     0.0, min(zs), max(zs))
-    sol.merge_into(R / "city_solids.json", "signs")
+    sol.merge_into(SOLIDS, "signs")
 
     kinds = {}
     for rec in plan:
@@ -338,11 +333,11 @@ def main():
     u, t = counts()
     print(f"  triangles: {u} unique / {t} total")
 
-    cam = bpy.data.objects["HeroCam"]
     exposure = bpy.context.scene.view_settings.exposure
-    blib.render(str(R / "city_10_signs.png"), "EEVEE", samples=64,
-                resolution=(1600, 900), exposure=exposure)
-    blib.save(str(R / "city.blend"))
+    with preview(target=(0, 0, 0)):
+        blib.render(str(R / "city_10_signs.png"), "EEVEE", samples=64,
+                    resolution=(1600, 900), exposure=exposure)
+    save_city()
 
 
 main()

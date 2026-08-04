@@ -13,16 +13,17 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
+from _common import HERO_WIDTH, DISTANCE, R, open_city, save_city
 
-R = ROOT / "renders"
-
-# Measured against the reference with a car as the ruler: it runs about 14 px
-# per metre, so its frame spans roughly 140 m. The first pass was 590 m, four
-# times too wide, which is why every piece of detail read as a speck. Tightened
-# again from 210 when the title went on the grid: the word is pinned to its
-# block now, so the frame is what sizes it.
-CAM_WIDTH = 170.0
-FOCUS_D = 1450.0           # camera sits this far out; focus on the middle
+# The frame width was measured against the reference with a car as the ruler:
+# it runs about 14 px per metre, so its frame spans roughly 140 m. The first
+# pass was 590 m, four times too wide, which is why every piece of detail read
+# as a speck. Tightened again from 210 when the title went on the grid: the
+# word is pinned to its block now, so the frame is what sizes it.
+#
+# It lives in _common because the camera move has to LAND on it. This file and
+# 12_camera each carried their own copy of 170.0.
+FOCUS_D = DISTANCE         # camera sits this far out; focus on the middle
 F_STOP = 0.55              # unphysical on purpose: this is the miniature cheat
 BLUR_MAX = 13.0            # pixels at 1600 wide; scaled to the real width below
 FOCUS_SPREAD = 105.0   # metres of depth that stay acceptably sharp
@@ -122,10 +123,16 @@ def build_compositor(scene):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
-    scene = bpy.context.scene
+    scene = open_city(needs_collections=("BUILDINGS", "TITLE"),
+                      hint="run the whole chain from 03_ground.py first")
     cam = bpy.data.objects["HeroCam"]
-    cam.data.ortho_scale = CAM_WIDTH
+    # Deliberately NOT set here any more. After step 12 the camera is animated
+    # and ortho_scale is driven by an fcurve, so assigning it did nothing at
+    # render time and the still came out right only because 12's last keyframe
+    # happens to hold the same width. The still is the last frame of the move,
+    # and now it says so.
+    if not blib.fcurves(cam.data):
+        cam.data.ortho_scale = HERO_WIDTH
     cam.data.dof.focus_distance = FOCUS_D
     cam.data.dof.aperture_fstop = F_STOP
 
@@ -156,7 +163,7 @@ def main():
         blib.render(str(R / "city_07_look.png"), "EEVEE", samples=96,
                     resolution=(1600, 900), exposure=exposure)
     scene.render.use_motion_blur = blur
-    blib.save(str(R / "city.blend"))
+    save_city()
 
 
 main()

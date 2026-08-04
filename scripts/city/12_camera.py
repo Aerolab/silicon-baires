@@ -62,14 +62,10 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Vector
-from _common import FPS, FRAMES, MOVE
+from _common import (FPS, FRAMES, MOVE, HERO_WIDTH, AZIMUTH, ELEVATION,
+                     open_city, save_city, place_hero, R)
 
-R = ROOT / "renders"
-KEYS = 41                      # FPS, FRAMES and MOVE come from _common
-
-AZIMUTH = 45.0                 # structural: two faces per building
-ELEVATION = 30.6               # measured, and constant, which is the whole point
-DIST = 1450.0                  # only sets where the camera sits on the ray
+KEYS = 41   # the shot length, the framing and the orbit come from _common
 
 # The end of the move is the framing that was already approved. It is written
 # down rather than read off the camera: this step ANIMATES the camera, so a
@@ -115,7 +111,11 @@ TARGET0 = TARGET1 - HEADING * TRAVEL            # (163, -214)
 # revealed by the camera. Ours cannot pop in, they are twenty-four buildings, so
 # the camera has to do it.
 
-SCALE1 = 170.0                 # final frame width, unchanged
+# The move ENDS on the hero framing, so the final width is not a number this
+# file gets to have an opinion about: it is _common.HERO_WIDTH, the same one
+# 07_look renders the still at. It was written out as 170.0 here, in 07 and in
+# 11, which is the FRAMES bug from _common waiting to happen a second time.
+SCALE1 = HERO_WIDTH
 SCALE0 = SCALE1 * 1.479        # 251 m, the measured ratio
 
 EASE_IN, EASE_OUT = 0.10, 0.16  # fraction of the move spent accelerating/braking
@@ -167,16 +167,6 @@ def pan_of(q):
     return (1.0 - r ** q) / (1.0 - r)
 
 
-def place(cam, scale, target):
-    a, e = math.radians(AZIMUTH), math.radians(ELEVATION)
-    eye = target + Vector((math.cos(a) * math.cos(e),
-                           math.sin(a) * math.cos(e),
-                           math.sin(e))) * DIST
-    cam.location = eye
-    cam.rotation_euler = (target - eye).to_track_quat("-Z", "Y").to_euler()
-    cam.data.ortho_scale = scale
-
-
 def linear(ob):
     for fc in blib.fcurves(ob):
         for kp in fc.keyframe_points:
@@ -184,8 +174,11 @@ def linear(ob):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
-    scene = bpy.context.scene
+    # After 11, or it animates a camera over cars that step 11 has not placed
+    # yet - and 11 resets the scene to frame 1, which undoes the hold this step
+    # leaves the file on.
+    scene = open_city(needs_collections=("TITLE", "TRAFFIC"),
+                      hint="run 08_title.py then 11_animate.py first")
     scene.render.fps = FPS
     scene.frame_start, scene.frame_end = 1, FRAMES
 
@@ -207,7 +200,7 @@ def main():
         # is what the reference does, and it reads as a steady closing rather
         # than a rush at one end. The pan is then tied to it, see pan_of()
         scale = SCALE0 * (SCALE1 / SCALE0) ** q
-        place(cam, scale, TARGET0.lerp(TARGET1, pan_of(q)))
+        place_hero(cam, scale, TARGET0.lerp(TARGET1, pan_of(q)))
         cam.keyframe_insert("location", frame=frame)
         cam.keyframe_insert("rotation_euler", frame=frame)
         cam.data.keyframe_insert("ortho_scale", frame=frame)
@@ -241,7 +234,7 @@ def main():
         blib.render(str(R / f"city_12_cam_{f:03d}.png"), "EEVEE", samples=48,
                     resolution=(1280, 720), exposure=exposure)
     scene.frame_set(FRAMES)
-    blib.save(str(R / "city.blend"))
+    save_city()
 
     # Two of them, and the difference is 18 minutes.
     #

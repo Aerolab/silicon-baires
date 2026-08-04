@@ -12,10 +12,11 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
-from _common import collection, instance, mat, rng, counts, median_runs
+from _common import (collection, instance, mat, rng, counts, median_runs, R,
+                     LOTS, SOLIDS as SOLIDS_JSON, open_city,
+                     save_city, purge, preview)
 from _solids import Solids
 
-R = ROOT / "renders"
 
 # Three jacaranda entries against twelve of everything else: one street tree
 # in five is in flower. The first version put six against six and half the
@@ -514,32 +515,28 @@ def rooftop_people(kit, coll, r):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    open_city(needs_collections=("KIT", "SITE", "BUILDINGS"),
+              needs_files=(LOTS, SOLIDS_JSON),
+              hint="run 03, 04, 06, 06b and 10 first: this step queries the "
+                   "footprints they publish, and an empty table plants a whole "
+                   "city of trees inside the buildings")
     kit = {ob.name: ob for ob in bpy.data.collections["KIT"].objects}
-    data = json.loads((R / "city_lots.json").read_text())
+    data = json.loads((LOTS).read_text())
     lots = data["lots"]
     global SUPER, SOLIDS
     SUPER = data.get("superblock")
-    SOLIDS = Solids.load(R / "city_solids.json")
+    SOLIDS = Solids.load(SOLIDS_JSON)
     if not SOLIDS.boxes:
         raise SystemExit("no city_solids.json: run steps 04 and 06 first, or "
                          "everything below plants itself inside a wall")
     print(f"  {len(SOLIDS.boxes)} footprints to keep clear of")
 
-    for name in ("NATURE", "FURNITURE", "TRAFFIC", "PEOPLE", "ROOFPEOPLE"):
-        if name in bpy.data.collections:
-            c = bpy.data.collections[name]
-            for ob in list(c.objects):
-                bpy.data.objects.remove(ob, do_unlink=True)
-            bpy.data.collections.remove(c)
-    nat = collection("NATURE")
-    fur = collection("FURNITURE")
-    tra = collection("TRAFFIC")
-    ppl = collection("PEOPLE")
-    # their own collection because they are standing on roofs, which is inside
-    # a building footprint on purpose. Mixed in with the pavement crowd they
-    # made the footprint check fail 63 times a run, correctly and uselessly.
-    rpl = collection("ROOFPEOPLE")
+    # ROOFPEOPLE get their own collection because they are standing on roofs,
+    # which is inside a building footprint on purpose. Mixed in with the
+    # pavement crowd they made the footprint check fail 63 times a run,
+    # correctly and uselessly.
+    nat, fur, tra, ppl, rpl = purge("NATURE", "FURNITURE", "TRAFFIC",
+                                    "PEOPLE", "ROOFPEOPLE")
 
     walk = data["walk"]
     r = rng(31337)
@@ -558,12 +555,11 @@ def main():
     u, t = counts()
     print(f"  triangles: {u} unique / {t} total   objects {len(bpy.data.objects)}")
 
-    cam = bpy.data.objects["HeroCam"]
     exposure = bpy.context.scene.view_settings.exposure
-    cam.data.ortho_scale = 200.0
-    blib.render(str(R / "city_05_closeup.png"), "EEVEE", samples=64,
-                resolution=(1600, 900), exposure=exposure)
-    blib.save(str(R / "city.blend"))
+    with preview(200.0, target=(0, 0, 0)):
+        blib.render(str(R / "city_05_closeup.png"), "EEVEE", samples=64,
+                    resolution=(1600, 900), exposure=exposure)
+    save_city()
 
 
 main()

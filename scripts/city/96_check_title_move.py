@@ -31,16 +31,17 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
+from _common import open_city, R, LOTS, SOLIDS
 from mathutils import Vector
 
-R = ROOT / "renders"
 SHOTS = [("wide", 45, 38, 420), ("hero", 45, 38, 210),
          ("early", 20, 45, 300), ("late", 70, 33, 260),
          ("low", 45, 26, 240)]
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    open_city(needs_collections=('TITLE',),
+              hint="run the chain in CLAUDE.md first")
     scene = bpy.context.scene
     title = bpy.data.collections["TITLE"]
     # TitleRoot is an Empty and has no mesh: ob.data is None and this died on

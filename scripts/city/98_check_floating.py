@@ -25,10 +25,11 @@ import sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy
+from _common import open_city, R, LOTS, SOLIDS
 from mathutils import Vector
 
-R = ROOT / "renders"
 BURIED = -0.25            # metres below ground before we call it buried
 GAP = 0.4                 # metres of air under an instance before it floats
 SUPPORTS = ("site", "buildings", "landmarks", "porteno")
@@ -47,7 +48,8 @@ def local_min_z(me):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
+    open_city(needs_collections=('KIT',),
+              hint="run the chain in CLAUDE.md first")
     # Frame 1, always, and said out loud because it matters: this file may be
     # left on any frame by the step that ran last, and the vehicles are
     # animated. Reading "the current frame" makes the result depend on where

@@ -42,19 +42,21 @@ sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
-from _common import collection, pbrmat, srgb
+from _common import (collection, paint, srgb, R, LOTS, open_city,
+                     save_city, purge, preview, HERO_WIDTH)
 
-R = ROOT / "renders"
 
 LINES = ("BUENOS", "AIRES")
 FONT = "/Users/bilune/Library/Fonts/PPMonumentNormal-Black.otf"
-RED = "#ac0300"
-EDGE = "#1a1210"     # the parapet, near black in the reference
 # What the letter buildings are made of. Dark glass against pale concrete
 # turned every letter into a zebra and fought the red; the reference's title
 # buildings are ordinary offices in the city's own commonest pair.
 FAM = ("Concrete Warm", "Glass Light")
-ROUGH, SPEC = 0.55, 0.02
+
+# The two title colours themselves live in _palette.py. This is the one thing
+# the palette does not model: at the default specular level a matte red roof
+# catches enough white sky to come back from the render as salmon, not scarlet.
+SPEC = 0.02
 
 CAP = 20.0           # metres. Sized off the block, not off the frame: at
                      # TRACKING 0.93 BUENOS runs 5.2 caps long, so 20 fills the
@@ -73,8 +75,6 @@ PARAPET = 0.9
 # where the title lands in frame, as a fraction of it, measured off the
 # reference: it is all but centred, and it is big
 TARGET_CX, TARGET_CY = 0.479, 0.546
-CAM_WIDTH = 170.0    # tighter than the 210 the city was framed at, and closer
-                     # to the ~140 m the reference actually spans
 
 
 def plan(x, y):
@@ -92,19 +92,16 @@ def plan(x, y):
 
 
 def materials():
-    """Set every time, never fetched: pbrmat() is idempotent by design, so a
-    material already in city.blend keeps whatever colour it was first given
-    and every later tweak silently does nothing."""
-    for name, col, rough in (("Title Red", RED, ROUGH),
-                             ("Title Edge", EDGE, 0.7)):
-        m = pbrmat(name, col, rough)
-        n = m.node_tree.nodes["Principled BSDF"]
-        c = srgb(col)
-        n.inputs["Base Color"].default_value = (c[0], c[1], c[2], 1.0)
-        n.inputs["Roughness"].default_value = rough
-        # at the default specular level a matte red roof catches enough white
-        # sky to come back from the render as salmon rather than scarlet
-        n.inputs["Specular IOR Level"].default_value = SPEC
+    """The two title colours live in _palette.py like every other colour.
+
+    What stays here is the one thing the palette does not model: at the
+    default specular level a matte red roof catches enough white sky to come
+    back from the render as salmon rather than scarlet.
+    """
+    for name in ("Title Red", "Title Edge"):
+        m = paint(name)
+        m.node_tree.nodes["Principled BSDF"] \
+            .inputs["Specular IOR Level"].default_value = SPEC
 
 
 def font_curve(body, size, spacing, offset, extrude):
@@ -368,16 +365,14 @@ def inside(root, w):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
-    scene = bpy.context.scene
+    # After 05, always: this step clears the ground it stands on, and
+    # anything 05 placed there would otherwise survive inside the letters.
+    scene = open_city(needs_collections=("BUILDINGS", "NATURE"),
+                      needs_files=(LOTS,),
+                      hint="run 04_buildings.py and 05_life.py first")
     materials()
 
-    if "TITLE" in bpy.data.collections:
-        c = bpy.data.collections["TITLE"]
-        for ob in list(c.objects):
-            bpy.data.objects.remove(ob, do_unlink=True)
-        bpy.data.collections.remove(c)
-    coll = collection("TITLE")
+    coll = purge("TITLE")
 
     root = bpy.data.objects.new("TitleRoot", None)
     coll.objects.link(root)
@@ -399,7 +394,7 @@ def main():
 
     # Centre it on the block it was sized for. The block is the constraint
     # now, not the frame: the word has to sit on real ground.
-    data = json.loads((R / "city_lots.json").read_text())
+    data = json.loads((LOTS).read_text())
     x0, x1, y0, y1 = data["superblock"]
     pts = title_points(root)
     cx = (min(p.x for p in pts) + max(p.x for p in pts)) / 2
@@ -415,50 +410,56 @@ def main():
     # Then frame it by moving the CAMERA. The title is pinned to its block, so
     # the camera is the only thing left free; an orthographic camera slid
     # perpendicular to its own axis just shifts the frame.
-    cam = bpy.data.objects["HeroCam"]
-    cam.data.ortho_scale = CAM_WIDTH
+    #
+    # Inside preview(), because the framing solved here is a MEASUREMENT, not
+    # the shot. Step 12 owns the camera in the .blend and overwrites all of
+    # this with keyframes; what this loop is for is the roof bbox printed
+    # below, which is the number that gets compared to the reference. Leaving
+    # the camera where the solve put it just meant the file carried whichever
+    # framing the last step to run happened to want.
     scene.render.resolution_x, scene.render.resolution_y = 2560, 1440
     aspect = scene.render.resolution_y / scene.render.resolution_x
-    right = cam.matrix_world.col[0].to_3d().normalized()
-    up = cam.matrix_world.col[1].to_3d().normalized()
+    with preview(HERO_WIDTH) as cam:
+        right = cam.matrix_world.col[0].to_3d().normalized()
+        up = cam.matrix_world.col[1].to_3d().normalized()
 
-    for _ in range(4):
+        for _ in range(4):
+            bpy.context.view_layer.update()
+            u0, u1, v0, v1 = screen_box(scene, cam, title_points(root, True))
+            du = (TARGET_CX - (u0 + u1) / 2) * HERO_WIDTH
+            dv = (TARGET_CY - (v0 + v1) / 2) * HERO_WIDTH * aspect
+            cam.location -= right * du + up * dv
         bpy.context.view_layer.update()
         u0, u1, v0, v1 = screen_box(scene, cam, title_points(root, True))
-        du = (TARGET_CX - (u0 + u1) / 2) * CAM_WIDTH
-        dv = (TARGET_CY - (v0 + v1) / 2) * CAM_WIDTH * aspect
-        cam.location -= right * du + up * dv
-    bpy.context.view_layer.update()
-    u0, u1, v0, v1 = screen_box(scene, cam, title_points(root, True))
-    print(f"\n  roof bbox {u1 - u0:.3f} x {v1 - v0:.3f}   "
-          f"(reference 0.642 x 0.437)")
-    print(f"  centre     {(u0 + u1) / 2:.3f}, {(v0 + v1) / 2:.3f}   "
-          f"(reference {TARGET_CX}, {TARGET_CY})")
-    print(f"  root at    ({root.location.x:.1f}, {root.location.y:.1f})")
-    clear_ground(scene, root)
-    footing(scene, root)
+        print(f"\n  roof bbox {u1 - u0:.3f} x {v1 - v0:.3f}   "
+              f"(reference 0.642 x 0.437)")
+        print(f"  centre     {(u0 + u1) / 2:.3f}, {(v0 + v1) / 2:.3f}   "
+              f"(reference {TARGET_CX}, {TARGET_CY})")
+        print(f"  root at    ({root.location.x:.1f}, {root.location.y:.1f})")
+        clear_ground(scene, root)
+        footing(scene, root)
 
-    blib.render(str(R / "city_08_title.png"), "EEVEE", samples=64,
-                resolution=(1600, 900),
-                exposure=scene.view_settings.exposure)
+        blib.render(str(R / "city_08_title.png"), "EEVEE", samples=64,
+                    resolution=(1600, 900),
+                    exposure=scene.view_settings.exposure)
 
-    # an isolation pass, so measuring the title does not mean picking it out of
-    # a city that also contains red cars and a red rooftop sign
-    hidden = [ob for ob in scene.objects
-              if ob.type == "MESH" and ob not in coll.objects[:]
-              and not ob.hide_render]
-    for ob in hidden:
-        ob.hide_render = True
-    was = scene.render.film_transparent
-    scene.render.film_transparent = True
-    blib.render(str(R / "city_08_title_only.png"), "EEVEE", samples=32,
-                resolution=(1600, 900),
-                exposure=scene.view_settings.exposure)
-    scene.render.film_transparent = was
-    for ob in hidden:
-        ob.hide_render = False
+        # an isolation pass, so measuring the title does not mean picking it
+        # out of a city that also contains red cars and a red rooftop sign
+        hidden = [ob for ob in scene.objects
+                  if ob.type == "MESH" and ob not in coll.objects[:]
+                  and not ob.hide_render]
+        for ob in hidden:
+            ob.hide_render = True
+        was = scene.render.film_transparent
+        scene.render.film_transparent = True
+        blib.render(str(R / "city_08_title_only.png"), "EEVEE", samples=32,
+                    resolution=(1600, 900),
+                    exposure=scene.view_settings.exposure)
+        scene.render.film_transparent = was
+        for ob in hidden:
+            ob.hide_render = False
 
-    blib.save(str(R / "city.blend"))
+    save_city()
 
 
 main()

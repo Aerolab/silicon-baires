@@ -1,21 +1,41 @@
-"""Mesh plumbing shared by the city scripts.
+"""What every city script shares: the numbers, the plumbing, the step scaffold.
 
-Primitives and instancing, nothing about cities. Each asset is accumulated into
-one mesh with several material slots, so placing it later is one object sharing
-one mesh datablock: the cheapest instancing Blender offers.
+Three things live here, and each one is here for the same reason - two steps
+needed the same fact and disagreed about it:
+
+  THE NUMBERS   how long the shot is, how wide the hero frame is, where the
+                files are, where the medians run.
+  THE PLUMBING  Mesh, instancing, collections. Primitives, nothing about
+                cities. Each asset is accumulated into one mesh with several
+                material slots, so placing it later is one object sharing one
+                mesh datablock: the cheapest instancing Blender offers.
+  THE SCAFFOLD  open_city / purge / preview / save_city, which is the shape
+                every step has, written once instead of sixteen times.
 """
-import bpy, math, random
+import bpy, math, random, pathlib
+from contextlib import contextmanager
 from mathutils import Vector, Matrix, Euler
+from _palette import PALETTE, srgb, define, paint, apply_palette
 
-ROOT = None
+# --- where everything is ---------------------------------------------------
+# The three JSON files travel with the .blend and are read by later steps. They
+# are named here rather than spelled out in a dozen scripts, because a typo in
+# one of those spellings is a step that silently reads nothing.
+ROOT = pathlib.Path(__file__).resolve().parents[2]
+R = ROOT / "renders"
+BLEND = R / "city.blend"
+LOTS = R / "city_lots.json"       # street and block tables, written by 03
+SOLIDS = R / "city_solids.json"   # footprints, written by 04, 06, 06b, 08, 10
+SIGNS = R / "city_signs.json"     # the sign manifest, planned by 04, built by 10
 
-# How long the shot is. It lives here because steps 11 and 12 both need it and
-# they disagreed once: step 12 lengthened the shot to 21 s and step 11 went on
-# animating 10 s of traffic, so every car in the city stopped dead at frame 240
-# and stood there for the rest of the shot. Nothing raises an exception when the
-# traffic freezes, and the standing checks read frame 1, where it has not
-# happened yet. 95_check_traffic reads it too, so its samples cover the whole
-# shot rather than the first half of it.
+# --- how long the shot is --------------------------------------------------
+# It lives here because steps 11 and 12 both need it and they disagreed once:
+# step 12 lengthened the shot to 21 s and step 11 went on animating 10 s of
+# traffic, so every car in the city stopped dead at frame 240 and stood there
+# for the rest of the shot. Nothing raises an exception when the traffic
+# freezes, and the standing checks read frame 1, where it has not happened yet.
+# 95_check_traffic reads it too, so its samples cover the whole shot rather
+# than the first half of it.
 FPS = 24
 FRAMES = 624                     # 26 s
 # 22 s of camera move, then FOUR seconds held on the title. It was two, and two
@@ -24,6 +44,27 @@ FRAMES = 624                     # 26 s
 # through the hold - the cars do not stop when the camera does - so the extra
 # time is not a freeze frame, it is the shot settling.
 MOVE = 528
+
+# --- the camera ------------------------------------------------------------
+# The same three numbers were written into four files. HERO_WIDTH in particular
+# was 170.0 in 07_look (as CAM_WIDTH), in 12_camera (as SCALE1) and in
+# 11_animate (as a literal), which is the identical setup to the FRAMES bug
+# above, waiting to happen.
+#
+# ELEVATION is 30.6 and it was MEASURED off the reference, not chosen: a ground
+# line along +x projects to a screen line with tan(theta) = sin(e)*cot(azimuth),
+# so a gradient-orientation histogram over the whole frame recovers it. The
+# .blend used to carry a static camera at 38, left over from step 00, which
+# meant every preview render from steps 03 to 10 was framed at an elevation the
+# film never uses.
+#
+# AZIMUTH stays 45. The measurement says 46.2, which is inside the error, and
+# 45 is structural: it is what gives every building two visible faces of equal
+# weight.
+AZIMUTH = 45.0
+ELEVATION = 30.6
+DISTANCE = 1450.0                # ortho: affects clipping only, not framing
+HERO_WIDTH = 170.0               # metres of city across the final frame
 
 
 def mat(name):
@@ -54,23 +95,33 @@ def median_runs(blocks, plaza_c, plaza_half, margin=3.0, clear=2.0,
     return out
 
 
-def srgb(hex_str):
-    h = hex_str.lstrip("#")
-    out = []
-    for i in (0, 2, 4):
-        c = int(h[i:i + 2], 16) / 255.0
-        out.append(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4)
-    return tuple(out)
-
-
 def pbrmat(name, hex_col, roughness=0.8, metallic=0.0):
-    """Fetch or create. Materials live in city.blend, so this is idempotent."""
-    if name in bpy.data.materials:
-        return bpy.data.materials[name]
-    import blib
-    m = blib.pbr(name, srgb(hex_col), roughness=roughness, metallic=metallic)
-    m.use_fake_user = True
-    return m
+    """Create or update a material. For generated artwork, not for the palette.
+
+    The company signs need this: steps 04 and 10 invent a `Logo <brand>` per
+    company and a private pair per avenue sign, and those are data rather than
+    art direction.
+
+    If the name IS in the palette, the palette wins and the disagreement is
+    printed. That is the whole point: this function used to fetch an existing
+    material and return it untouched, so editing a hex in a script changed
+    nothing at all and raised nothing at all, and two rebuilds were lost to it.
+    """
+    if name in PALETTE:
+        want = PALETTE[name]
+        if (hex_col.lower(), roughness, metallic) != \
+                (want[0].lower(), want[1], want[2]):
+            _clashes.setdefault(name, (hex_col, want[0]))
+        return define(name, *want)
+    return define(name, hex_col, roughness, metallic)
+
+
+_clashes = {}
+
+
+def palette_clashes():
+    """What a step asked for and the palette overruled. Printed by save_city."""
+    return _clashes
 
 
 def rng(seed):
@@ -266,3 +317,134 @@ def counts():
             seen.add(ob.data.name)
             uniq += t
     return uniq, total
+
+
+# ---------------------------------------------------------------------------
+# The shape of a step
+#
+# Every step in scripts/city does the same five things: open city.blend, check
+# that what it depends on is actually there, throw away its own layer, build it
+# again, save. That was written out longhand in every file, which is how the
+# steps drifted apart - eight different spellings of the purge loop, two of the
+# repaint helper, and prerequisite checks in two files out of fourteen.
+# ---------------------------------------------------------------------------
+
+def require(collections=(), files=(), hint=""):
+    """Fail loudly, early, and with the command that fixes it.
+
+    Without this a missing prerequisite surfaces thirty lines later as a
+    KeyError on bpy.data.collections["KIT"], or - much worse - as nothing at
+    all: step 05 planted a whole city of trees inside the buildings the first
+    time it ran before step 04, because an empty footprint table is
+    indistinguishable from a city with nothing in it.
+    """
+    missing = [f"collection {c!r}" for c in collections
+               if c not in bpy.data.collections]
+    missing += [f"file {p.name}" for p in files if not p.exists()]
+    if missing:
+        raise SystemExit(f"\n  missing: {', '.join(missing)}\n"
+                         f"  {hint or 'see CLAUDE.md for the build order'}\n")
+
+
+def open_city(needs_collections=(), needs_files=(), hint=""):
+    """Open city.blend, bring the palette up to date, check prerequisites.
+
+    The palette is applied on the way in rather than by whichever step happens
+    to create a material first, so a colour edited in _palette.py lands in the
+    very next step that runs.
+    """
+    bpy.ops.wm.open_mainfile(filepath=str(BLEND))
+    apply_palette()
+    require(needs_collections, needs_files, hint)
+    return bpy.context.scene
+
+
+def save_city():
+    if _clashes:
+        print("\n  the palette overruled these (edit _palette.py instead):")
+        for name, (asked, won) in sorted(_clashes.items()):
+            print(f"    {name:20s} asked {asked}  ->  {won}")
+    import blib
+    blib.save(str(BLEND))
+
+
+def purge(*names):
+    """Empty and drop these collections, then make them again.
+
+    Returns them in the order given, so a step reads:
+
+        nat, fur, tra = purge("NATURE", "FURNITURE", "TRAFFIC")
+
+    Deleting the objects and not just unlinking them is the point: unlinking
+    leaves the meshes behind and the file grows a little every run.
+    """
+    out = []
+    for name in names:
+        if name in bpy.data.collections:
+            c = bpy.data.collections[name]
+            for ob in list(c.objects):
+                bpy.data.objects.remove(ob, do_unlink=True)
+            bpy.data.collections.remove(c)
+        out.append(collection(name))
+    return out[0] if len(out) == 1 else out
+
+
+def place_hero(cam, width=HERO_WIDTH, target=(0, 0, 0),
+               azimuth=AZIMUTH, elevation=ELEVATION, distance=DISTANCE):
+    """Put the camera on the canonical orbit, looking at `target`."""
+    target = Vector(target)
+    a, e = math.radians(azimuth), math.radians(elevation)
+    eye = target + Vector((math.cos(a) * math.cos(e),
+                           math.sin(a) * math.cos(e),
+                           math.sin(e))) * distance
+    cam.location = eye
+    cam.rotation_euler = (target - eye).to_track_quat("-Z", "Y").to_euler()
+    cam.data.ortho_scale = width
+    return cam
+
+
+@contextmanager
+def preview(width=HERO_WIDTH, target=None, frame=None):
+    """Frame a control render, then put the camera back exactly as it was.
+
+    Two bugs live here, both of the kind that render fine and are wrong.
+
+    THE CAMERA WAS WHEREVER THE LAST STEP LEFT IT. Twelve steps set
+    ortho_scale before their preview render and then saved the .blend; one of
+    them restored it. So the framing stored in the file was a side effect of
+    which step you happened to run last, and the final still only came out
+    right because 07 sets it again and the numbers happened to agree.
+
+    THE PREVIEW IGNORED THE ANIMATION, OR THE ANIMATION IGNORED THE PREVIEW.
+    Once step 12 has keyframed the camera, setting ortho_scale does nothing at
+    render time - the fcurve wins - so re-running an earlier step after 12 gave
+    you a "close-up" rendered at whatever the move was doing on that frame.
+    Muting the action for the duration is what makes a preview mean the same
+    thing before and after the move exists.
+    """
+    scene = bpy.context.scene
+    cam = bpy.data.objects["HeroCam"]
+    keep = (cam.location.copy(), cam.rotation_euler.copy(),
+            cam.data.ortho_scale, scene.frame_current)
+    for holder in (cam, cam.data):
+        for fc in blib_fcurves(holder):
+            fc.mute = True
+    if frame is not None:
+        scene.frame_set(frame)
+    if target is not None:
+        place_hero(cam, width, target)
+    else:
+        cam.data.ortho_scale = width
+    try:
+        yield cam
+    finally:
+        for holder in (cam, cam.data):
+            for fc in blib_fcurves(holder):
+                fc.mute = False
+        cam.location, cam.rotation_euler, cam.data.ortho_scale = keep[:3]
+        scene.frame_set(keep[3])
+
+
+def blib_fcurves(ob):
+    import blib
+    return blib.fcurves(ob)

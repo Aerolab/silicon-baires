@@ -46,10 +46,10 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
-from _common import Mesh, collection, mat, pbrmat, rng, counts
+from _common import (Mesh, collection, mat, paint, rng, counts, R, LOTS,
+                     SOLIDS, open_city, save_city, purge, preview)
 from _solids import Solids
 
-R = ROOT / "renders"
 
 # The Obelisco does not stand on a block. It stands in the middle of the
 # avenue, on the island step 03 opens for it at the crossing, which is where
@@ -108,7 +108,6 @@ FLOR_STAM_LEAN = 2.8          # how far the stamens lean out of the bowl
 # already taken off it - and step 04 sets the wall back another 0.5 to 1.3,
 # then publishes the box 0.45 proud of that. So the honest gap is small and
 # the tolerance only has to cover the setback.
-CORNER_TOL = 4.5
 
 
 def taper(m, cx, cy, z0, z1, w0, w1, material, xform=None):
@@ -362,28 +361,24 @@ def republica(m, g, sol, cx, cy, rx, ry, lift):
     # person growing through a flagpole is the same error as through a wall
     sol.add(cx, fy, 5.0, 5.0, 0.0, 0.0, z + 18.0)
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
-    pbrmat("Obelisco Stone", "#d9d2c2", 0.72)
-    pbrmat("Obelisco Dark", "#2a2724", 0.80)
-    pbrmat("Paving Pale", "#a8a294", 0.85)
-    pbrmat("Steel Bright", "#c9ccd0", 0.22, metallic=0.9)
-    pbrmat("Shield Bronze", "#8a6a3c", 0.45, metallic=0.5)
+    open_city(needs_collections=("KIT", "SITE"), needs_files=(LOTS,),
+              hint="run 03_ground.py first")
+    paint("Obelisco Stone")
+    paint("Obelisco Dark")
+    paint("Paving Pale")
+    paint("Steel Bright")
+    paint("Shield Bronze")
     # the red tile of the plaza border. It is the only red on the ground in
     # the whole city, which is exactly why it works from this distance.
-    pbrmat("Tile Red", "#9c4a33", 0.85)
-    pbrmat("Flag Blue", "#74acdf", 0.70)     # the celeste of the flag, sourced
-    pbrmat("Flag White", "#f2f2ee", 0.70)    # off the official 74ACDF
+    paint("Tile Red")
+    paint("Flag Blue")     # the celeste of the flag, sourced
+    paint("Flag White")    # off the official 74ACDF
 
-    data = json.loads((R / "city_lots.json").read_text())
+    data = json.loads((LOTS).read_text())
     lots = {tuple(l["key"]): l for l in data["lots"]}
     av = data.get("avenue9j")
 
-    if "PORTENO" in bpy.data.collections:
-        c = bpy.data.collections["PORTENO"]
-        for ob in list(c.objects):
-            bpy.data.objects.remove(ob, do_unlink=True)
-        bpy.data.collections.remove(c)
-    coll = collection("PORTENO")
+    coll = purge("PORTENO")
 
     r = rng(1810)
     m = Mesh()
@@ -422,16 +417,15 @@ def main():
 
     m.build("porteno", coll)
     g.build("porteno_ground", coll)
-    sol.merge_into(R / "city_solids.json", "porteno")
+    sol.merge_into(SOLIDS, "porteno")
 
     u, t = counts()
     print(f"  triangles: {u} unique / {t} total")
-    cam = bpy.data.objects["HeroCam"]
-    cam.data.ortho_scale = 170.0
-    blib.render(str(R / "city_06b_porteno.png"), "EEVEE", samples=64,
-                resolution=(1600, 900),
-                exposure=bpy.context.scene.view_settings.exposure)
-    blib.save(str(R / "city.blend"))
+    with preview(target=(0, 0, 0)):
+        blib.render(str(R / "city_06b_porteno.png"), "EEVEE", samples=64,
+                    resolution=(1600, 900),
+                    exposure=bpy.context.scene.view_settings.exposure)
+    save_city()
 
 
 main()

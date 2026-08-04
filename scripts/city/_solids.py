@@ -11,7 +11,8 @@ volume on the ground records its footprint here, and the file travels with the
 every building in this city actually is; the round landmarks record the
 rectangle they sit inside, so they are over-protective rather than wrong.
 
-Written by steps 04, 06 and 08; read by step 05 and by 99_check_overlap.py.
+Written by steps 04, 06, 06b and 10, one tag each; read by steps 05 and 11
+and by 99_check_overlap.py. See docs/city/MAP.md.
 
     from _solids import Solids
     s = Solids()

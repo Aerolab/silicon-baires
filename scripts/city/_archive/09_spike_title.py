@@ -59,7 +59,7 @@ def clear():
 def main():
     bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
     sc = bpy.context.scene
-    pbrmat("Title Red", "#e01f18", 0.45)
+    paint("Title Red")
 
     cam = bpy.data.objects["HeroCam"]
     cam.data.ortho_scale = CAM_WIDTH

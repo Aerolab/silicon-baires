@@ -39,10 +39,10 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Vector
-from _common import instance, collection, rng, FPS, FRAMES
+from _common import (instance, collection, rng, FPS, FRAMES, R, LOTS,
+                     SOLIDS, HERO_WIDTH, open_city, save_city, purge, preview)
 from _solids import Solids
 
-R = ROOT / "renders"
 T = FRAMES / FPS
 HELI_SPEED = 34.0                 # m/s, about 120 km/h
 HELI_MAST = 3.0                   # rotor plane above the airframe origin
@@ -245,9 +245,7 @@ def helicopter(scene):
     kit = {ob.name: ob for ob in bpy.data.collections["KIT"].objects}
     if "Heli" not in kit:
         return None
-    coll = collection("AIR")
-    for ob in list(coll.objects):
-        bpy.data.objects.remove(ob, do_unlink=True)
+    coll = purge("AIR")
     ob = instance(kit["Heli"], coll, (0, 0, 0), math.radians(20), 1.6,
                   name="Heli.fly")
     start = Vector((-260.0, -60.0, 78.0))
@@ -273,11 +271,13 @@ def helicopter(scene):
 
 
 def main():
-    bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
-    scene = bpy.context.scene
+    # After 08, or it animates cars that step 08 then deletes.
+    scene = open_city(needs_collections=("TRAFFIC", "TITLE"),
+                      needs_files=(LOTS, SOLIDS),
+                      hint="run 05_life.py then 08_title.py first")
     global solids, SUPER, PLAZA
-    solids = Solids.load(R / "city_solids.json")
-    lots = json.loads((R / "city_lots.json").read_text())
+    solids = Solids.load(SOLIDS)
+    lots = json.loads((LOTS).read_text())
     SUPER = lots["superblock"]
     PLAZA = lots.get("avenue9j", {}).get("plaza")
     scene.render.fps = FPS
@@ -371,15 +371,15 @@ def main():
     print(f"  walking: {people} people ({still} left standing)   helicopter: "
           f"{'yes' if heli else 'no Heli in the kit'}")
 
-    cam = bpy.data.objects["HeroCam"]
-    cam.data.ortho_scale = 170.0
     exposure = scene.view_settings.exposure
     for f in (1, FRAMES // 2, FRAMES):
-        scene.frame_set(f)
-        blib.render(str(R / f"city_11_move_{f:03d}.png"), "EEVEE", samples=48,
-                    resolution=(1280, 720), exposure=exposure)
+        # HERO_WIDTH, not a literal 170.0: this is a control render of the
+        # traffic and it has to be the framing the shot actually lands on.
+        with preview(HERO_WIDTH, target=(0, 0, 0), frame=f):
+            blib.render(str(R / f"city_11_move_{f:03d}.png"), "EEVEE",
+                        samples=48, resolution=(1280, 720), exposure=exposure)
     scene.frame_set(1)
-    blib.save(str(R / "city.blend"))
+    save_city()
 
     if "video" in sys.argv:
         blib.render_video(str(R / "city_move.mp4"), fps=FPS, engine="EEVEE",
