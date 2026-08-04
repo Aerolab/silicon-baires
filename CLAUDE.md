@@ -63,19 +63,33 @@ dependencies are real. Each script opens `city.blend`, adds its layer and saves:
 ./bl scripts/city/11_animate.py      # after 08, or it animates cars 08 deletes
 ./bl scripts/city/12_camera.py       # the camera move. After 11: it leaves the
                                      # scene on the last frame, and 11 resets it to 1
-./bl scripts/city/07_look.py final   # the final Cycles frame, shot on frame 240
+./bl scripts/city/07_look.py final   # the final Cycles frame, shot on the last one
 ```
 
-`02_kit.py` and `02b_porteno_kit.py` run once, before all of it. Do not re-run
-`02_kit.py` casually: it makes new mesh datablocks and every instance in the
-city goes on pointing at the old ones.
+**How long the shot is lives in `scripts/city/_common.py`** (`FPS`, `FRAMES`,
+`MOVE`), because steps 11 and 12 both need it and they disagreed once: 12
+lengthened the shot and 11 went on animating the old length, so every car in the
+city stopped dead halfway through and stood there. Nothing raises an exception
+when the traffic freezes, and the checks read frame 1, where it has not happened
+yet. Change the length there, then re-run **11 and then 12**, in that order.
 
-Five standing checks, because none of these failures raise an exception:
+`02_kit.py` and `02b_porteno_kit.py` run once, before all of it, in that order.
+
+`02_kit.py` now **purges the KIT collection** before rebuilding. It used to
+build `Heli.001` alongside the old `Heli` while every instance went on pointing
+at the old one, so an edit to an asset silently did nothing. Purging fixes that
+and makes the consequence honest instead of invisible: a re-run leaves every
+existing instance orphaned, so it **must** be followed by the whole chain from
+`03_ground.py`, and `02b_porteno_kit.py` has to run again too because its assets
+live in the same collection.
+
+Six standing checks, because none of these failures raise an exception:
 
 ```bash
 ./bl scripts/city/99_check_overlap.py           # nothing is standing inside a building
 ./bl scripts/city/98_check_floating.py          # nothing buried, nothing hovering
 ./bl scripts/city/95_check_traffic.py           # right-hand traffic, and on the road
+./bl scripts/city/94_check_road.py              # and nothing green ON the road
 ./bl scripts/city/96_check_title_move.py        # the title from other angles
 python3 scripts/city/97_check_title.py renders/city_08_title_only.png
 ```
@@ -88,6 +102,14 @@ build until there was something that could count.
 `95_check_traffic.py` exists for the same reason one axis of this city drove on
 the left for weeks: every street looked completely plausible on its own, and the
 only way to see it was to follow one car or to count.
+
+`94_check_road.py` drops a ray under every tree and reads the material of the
+ground it lands on, so it answers the question against the site mesh rather than
+against the street tables the placement already read. That is the point of it:
+four trees stood in the middle of the 9 de Julio beside the Obelisco and both
+tables were correct — step 03 dropped the median across the plaza block for
+being two 9 m stubs, and step 05 planted one anyway from its own arithmetic.
+The rule now lives once, in `_common.median_runs`, and both steps read it.
 
 Read `docs/city/STYLE-BIBLE.md` before touching the look, and `docs/city/PLAN.md`
 for how the build is organised and which decisions were already settled (roads as

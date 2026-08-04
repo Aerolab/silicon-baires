@@ -85,17 +85,66 @@ Read off the frames:
 - **Long lens, far away.** Near and far buildings are nearly the same apparent scale.
 - **Azimuth 45°** throughout, so every building shows exactly two faces. It never
   moves: it is what the whole grid is composed against.
-- **Elevation descends 38° → 24°** across the shot, and the still is the last
-  frame. The elevation alone decides how wide the title reads, because the word
-  is built as buildings on the street grid: at 38° the red roof box has a true
-  aspect of 1.62 against the reference's 2.61, and solving the projection puts
-  the match at **22.5°**. So descending is the one camera axis where the
-  reference tells us which way to go. It stops at 24 rather than 22.5 because
-  the last degree and a half costs more roofscape than it buys in the word, and
-  the roof is 60 % of what this camera sees of a building.
-  Measured off the reference at 35°, from the ±30° screen angle of its grid edges.
-  Every straight street runs diagonally across frame; nothing is axis-aligned to the
-  image.
+- **Elevation 30.6°, fixed.** It never moves either. This replaces an earlier
+  descent from 38° to 24°, which was a move the reference does not make: tracking
+  the clip frame by frame shows the angle constant start to finish.
+  The number is measured, and by a better measurement than the one it replaces.
+  A ground line along +x projects to a screen line with tan θ = sin e · cot(az),
+  and along +y with tan θ = sin e · tan(az); a gradient-orientation histogram over
+  the whole frame puts the two ground axes at +28° and −26°, and the product of
+  the tangents gives sin e while the ratio gives the azimuth (46.2°, near enough
+  to our 45). That is a statistic over every edge in the image. The 22.5° that
+  used to justify 24° came from the aspect of one red roof box read off by eye,
+  and it was wrong.
+  Every straight street runs diagonally across frame; nothing is axis-aligned to
+  the image.
+- **The move is a straight line at a constant apparent speed, then a hold.**
+  Nothing rotates: with the azimuth and the elevation both fixed, the camera is a
+  pure orthographic dolly, so its path in world space is a straight segment and
+  the only other animated value is the frame width. Twenty-two seconds of
+  movement, two seconds frozen on the title.
+- **The shot is lateral first and a zoom second.** 320 m of travel, which is
+  1.84 frame widths against the reference's 0.65 — nearly three times as much
+  ground — while zooming only ×1.48, the reference's own ratio. An earlier version had
+  almost exactly the reference's travel and ×2.35 of zoom, and read as a zoom
+  with a bit of slide, which is what it was. Travel and zoom are two numbers and
+  only their ratio carries the character.
+- **Its length is set by the size of the title, not by taste.** The word is 98 m
+  wide on screen against a 170 m final frame, so starting with it outside the
+  frame and passing the Obelisco costs 1.84 frame widths of travel, and the
+  reference pans at 0.05 to 0.10 frame widths per second. Those multiply out. There is no ten-second
+  arrangement that both starts with the title off frame and moves at
+  the reference's apparent speed; speeding the result up afterwards is a decision
+  that can still be made, and a move that whips is not one that can be undone.
+- **The pan is tied to the zoom: the camera advances in proportion to the current
+  frame width.** This is the one thing that separates a move that glides from a
+  move that creeps and then rushes, and it was got wrong first. A pan that is
+  linear in metres cannot look linear in a shot that is closing, because the same
+  metres cover more of a narrower frame; measured on our own render, the apparent
+  speed accelerated from 0.005 to 0.083 frame-widths per second while the
+  reference held 0.07 flat. Fitting dx/dq ∝ Wⁿ over the body of the reference
+  puts **n at 1.10**, and n = 1 fits ten times better than the n = 0 we had.
+- **It crosses the Obelisco, and that is what costs the diagonal.** The
+  reference's travel climbs 36.3° across the screen; ours is flat, a pure lateral
+  slide, because the Obelisco and the title lie along the screen horizontal.
+  Scanning every heading that ends on the title and puts the monument in frame
+  gives a range of 0° to 13° and nothing above it, and at 13° the monument is cut
+  by the top edge. How far back the shot can start is a ceiling and not a
+  preference: the Obelisco is 177 m from the south edge of the city, and past
+  360 m of travel the bare site shows in the top left corner of the opening frame.
+  320 m was the longest run that rendered full of city.
+- **A landmark that is not in the corridor is not in the film.** The shot crosses
+  13 of the 81 blocks, so where a monument sits has to be checked against the
+  *path*, not against the hero still. The Floralis was placed at the far corner of
+  the city by a rule written for a single frame and spent the whole move 2.83
+  frame half-widths outside it. It is at (5, 3) now, on the axis and centred at
+  54 % of the move. Four of the six built landmarks are still outside.
+- **The title starts outside the frame and the camera brings it in.** It first
+  touches the frame at about 45 % of the move and is fully inside by 84 %. The
+  reference looks like this too and gets there a different way: its letters pop in
+  one at a time and out of order, so they are animated, not revealed. Ours cannot
+  pop in — they are twenty-four buildings — so the camera has to do the work, and
+  that is what forces the long travel.
 - **Depth of field is shallow and it is the whole trick.** A band across the middle is
   sharp; the top of frame and the bottom corners go soft. That single effect is what
   makes a 600 m city read as a 60 cm model.
@@ -142,6 +191,21 @@ Every building in frame decomposes into the same few moves.
 axis-aligned to the block. Heights are quantised to floors. Most of the city is
 **2–5 floors**; a handful of 8–12 floor slabs; exactly one or two real towers; one
 stadium; one organic "blob" building.
+
+**The stadium is El Monumental**, and three things carry that at 80 px, in the
+order they survive being small: the **athletics track**, a terracotta oval
+between the pitch and the stands, which is a hard colour break visible from
+straight above and which hardly any big ground still has; a **ring that is not
+uniform**, low at one end, which is what is left of the horseshoe the ground was
+until the Centenario stand closed it in 1978, and which is most of the
+silhouette; and an **oval rather than a circle**, roofed over the long sides
+only. The notch faces +x so this camera looks down into the bowl through it.
+The pitch is a rectangle inside the oval — a round pitch in a round track is a
+bullseye. The roof cantilevers 3.8 m and no more: an earlier one reached 7.6 m
+and turned the stadium into a covered dish, because a camera at 30° sees the
+rake, and the rake is the only reason to model a stadium instead of a drum.
+This is the long-standing configuration; the 2023–24 remodelling has not been
+checked against it.
 
 **Facade.** The dominant pattern is **horizontal banding**, repeated per floor:
 

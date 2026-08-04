@@ -55,13 +55,23 @@ R = ROOT / "renders"
 # avenue, on the island step 03 opens for it at the crossing, which is where
 # the real one is - Plaza de la Republica is a hole in the traffic, not a
 # square beside it. Its position comes out of city_lots.json.
-FLORALIS = (2, 7)
+FLORALIS = (5, 3)
 # One block off the title was wrong in the way that only shows once you look at
 # the whole frame: the Obelisco, the Floralis and the word were inside three
 # adjacent blocks, so the eye had three things to look at in the middle and
-# nothing anywhere else. They are now at opposite ends of the city. From the
-# hero azimuth the Obelisco falls on the left of the frame and the Floralis on
-# the right, at about the same height, which is the band a camera move sweeps.
+# nothing anywhere else. That rule still holds, and it is why this is (5, 3) and
+# not (4, 3) or (5, 4), which are equally central and both touch the title
+# superblock.
+#
+# But the answer that rule first produced - (2, 7), the far corner - was right
+# for a STILL and wrong once the camera moved. The shot sweeps a narrow diagonal
+# corridor and crosses 13 of the 81 blocks; (2, 7) is 2.83 frame half-widths off
+# the nearest point of it, so the Floralis was never in the film at all. (5, 3)
+# is 0.08 off the axis and is centred at 54 % of the move, in the gap between
+# the Obelisco leaving frame and the title arriving.
+#
+# A composition rule written for one frame does not survive a camera move by
+# itself. Check it against the corridor, not against the hero still.
 # Real numbers, checked against both Wikipedias rather than remembered, because
 # the ratio of the shaft to the base is the whole reason it reads as the
 # Obelisco and not as a generic spire.

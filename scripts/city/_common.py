@@ -9,9 +9,49 @@ from mathutils import Vector, Matrix, Euler
 
 ROOT = None
 
+# How long the shot is. It lives here because steps 11 and 12 both need it and
+# they disagreed once: step 12 lengthened the shot to 21 s and step 11 went on
+# animating 10 s of traffic, so every car in the city stopped dead at frame 240
+# and stood there for the rest of the shot. Nothing raises an exception when the
+# traffic freezes, and the standing checks read frame 1, where it has not
+# happened yet. 95_check_traffic reads it too, so its samples cover the whole
+# shot rather than the first half of it.
+FPS = 24
+FRAMES = 624                     # 26 s
+# 22 s of camera move, then FOUR seconds held on the title. It was two, and two
+# is not enough: the move arrives and the film stops on the same beat, which
+# reads as the video ending rather than the shot landing. The city keeps moving
+# through the hold - the cars do not stop when the camera does - so the extra
+# time is not a freeze frame, it is the shot settling.
+MOVE = 528
+
 
 def mat(name):
     return bpy.data.materials[name]
+
+
+def median_runs(blocks, plaza_c, plaza_half, margin=3.0, clear=2.0,
+                minimum=10.0):
+    """The stretches of the 9 de Julio that actually carry a planted median.
+
+    One run per block, reaching `margin` past the block into each crossing,
+    cut in two where the plaza stands and dropped where what is left is
+    shorter than `minimum` - a 9 m stub of kerb is not a median.
+
+    It lives here because step 03 builds the medians and step 05 plants them,
+    and they disagreed: 03 dropped both stubs of the plaza block for being 9 m
+    long, 05 went on planting from its own block arithmetic, and four trees
+    ended up standing on the bare asphalt of the avenue beside the Obelisco.
+    Nothing raises an exception when a tree grows out of the road.
+    """
+    p0, p1 = plaza_c - plaza_half - clear, plaza_c + plaza_half + clear
+    out = []
+    for (c, size) in blocks:
+        a, b = c - size / 2 - margin, c + size / 2 + margin
+        runs = [(a, b)] if not (b > p0 and a < p1) else \
+            [(a, min(b, p0)), (max(a, p1), b)]
+        out.extend((ra, rb) for ra, rb in runs if rb - ra >= minimum)
+    return out
 
 
 def srgb(hex_str):

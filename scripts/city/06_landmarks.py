@@ -41,32 +41,117 @@ def ring_poly(r0, r1, segs=48):
 
 
 # --- stadium ---------------------------------------------------------------
+def arc_poly(r0, r1, a0, a1, segs=2):
+    """Closed outline of an annulus sector, for prism(). ring_poly's wedge."""
+    ang = [a0 + (a1 - a0) * i / segs for i in range(segs + 1)]
+    p = [(r1 * math.cos(a), r1 * math.sin(a)) for a in ang]
+    p += [(r0 * math.cos(a), r0 * math.sin(a)) for a in reversed(ang)]
+    return p
+
+
+# El Monumental, at this city's scale, which is about a quarter of life size -
+# the blocks are 76 m where a real one is 110, and the stadium has to fit a
+# block. So these are not the real stadium's metres, they are its proportions.
+#
+# The first version was a smooth white drum with a lawn in the hole, and it read
+# as "a stadium" and nothing more. Three things carry which ground it is, in the
+# order they survive being 80 px wide:
+#
+#   1. THE ATHLETICS TRACK. A terracotta oval between the pitch and the stands.
+#      Hardly any big stadium still has one and it is the fastest thing to read,
+#      because it is a hard colour break against the green and it is visible
+#      from directly above, which is where this camera is.
+#   2. A RING THAT IS NOT UNIFORM. The ground was a horseshoe, open at one end,
+#      until the Centenario stand closed it for the 1978 World Cup, and the ring
+#      has never levelled out since. A perfect donut reads as any stadium; the
+#      notch is most of the silhouette. It is put on the +x side so the camera,
+#      which looks along -x, sees down into the bowl through it.
+#   3. AN OVAL RATHER THAN A CIRCLE, with the roof over the two long sides only
+#      and the ends open.
+#
+# NOTE ON WHICH MONUMENTAL. This is the long-standing configuration, the one
+# with the running track. The 2023-24 remodelling lowered the pitch and rebuilt
+# the lower ring, and I have not verified what became of the track - so this is
+# the ground as it has looked for most of its life, not necessarily as it looks
+# this season. Worth checking before anyone calls it current.
+# THE WHOLE THING HAS TO FIT ITS LOT, which is 59 m inside a 64 m block. The
+# first rebuild forgot that: deeper stands and stair towers took the outside
+# radius from 27.2 to 30.6, which with the 1.30 oval is 79 m across - fifteen
+# metres wider than the block. It overhung the pavement on both sides and
+# 99_check_overlap found five trees and people standing inside it. The rake got
+# thinner rather than the pitch smaller, because the pitch and the track are the
+# cue and the depth of the bowl is not.
+PITCH_R = 10.0                    # half the short axis, inside the track
+TRACK_W = 2.9
+STAND_R0 = PITCH_R + TRACK_W + 0.6
+TIERS, TIER_W = 9, 0.88
+STAND_H = 17.5                    # the tall sides, above the block
+LOW_END = 0.50                    # what the open end keeps of that
+LOW_HALF = math.radians(42)       # how far round the notch runs
+SEGS = 48
+
+
+def stand_h(a):
+    """Height factor of the ring at local angle a. Deliberately not constant."""
+    d = abs((a + math.pi) % (2 * math.pi) - math.pi)
+    if d >= LOW_HALF:
+        return 1.0
+    t = d / LOW_HALF
+    return LOW_END + (1.0 - LOW_END) * (t * t * (3.0 - 2.0 * t))
+
+
 def stadium(m, cx, cy, lift):
-    x = xf(cx, cy, math.radians(20), 1.22, 1.0)
-    pitch_r = 13.0
-    m.arc_band(0.0, pitch_r, 0, 2 * math.pi, lift + 0.05, mat("Grass"),
-               segs=48, xform=x)
-    m.arc_band(pitch_r * 0.55, pitch_r * 0.58, 0, 2 * math.pi, lift + 0.07,
-               mat("Marking"), segs=48, xform=x)
-    steps = 6
-    for k in range(steps):
-        r0 = pitch_r + k * 2.1
-        r1 = r0 + 2.1
-        h = lift + 1.4 + k * 2.0
-        m.prism(ring_poly(r0, r1), lift, h,
-                mat("Concrete Cool" if k % 2 else "Concrete Cool2"), x)
-    outer = pitch_r + steps * 2.1
-    m.prism(ring_poly(outer, outer + 1.6), lift, lift + 1.4 + steps * 2.0 + 1.0,
-            mat("Concrete Warm"), x)
-    # the roof ring, cantilevered inwards over the seating
-    m.prism(ring_poly(outer - 7.0, outer + 3.0),
-            lift + 1.4 + steps * 2.0 + 2.8, lift + 1.4 + steps * 2.0 + 3.5,
-            mat("Roof Deck"), x)
-    for k in range(24):
-        a = 2 * math.pi * k / 24
-        m.box(((outer + 1.0) * math.cos(a), (outer + 1.0) * math.sin(a),
-               lift + (1.4 + steps * 2.0 + 2.8) / 2),
-              (1.0, 1.0, 1.4 + steps * 2.0 + 2.8), mat("Metal Dark"), x)
+    x = xf(cx, cy, math.radians(20), 1.30, 1.0)
+    cool, cool2 = mat("Concrete Cool"), mat("Concrete Cool2")
+    warm, red = mat("Concrete Warm"), mat("Stadium Red")
+
+    # the track, then the pitch as a RECTANGLE inside it. A round pitch inside a
+    # round track is a bullseye; the whole point of a track stadium seen from
+    # above is the rectangle sitting in the oval.
+    m.arc_band(0.0, PITCH_R + TRACK_W, 0, 2 * math.pi, lift + 0.04,
+               mat("Track Clay"), segs=56, xform=x)
+    m.box((0, 0, lift + 0.07), (18.4, 15.2, 0.06), mat("Pitch Grass"), x)
+    m.box((0, 0, lift + 0.10), (0.16, 15.2, 0.02), mat("Marking"), x)
+    m.arc_band(2.6, 2.9, 0, 2 * math.pi, lift + 0.10, mat("Marking"),
+               segs=28, xform=x)
+
+    outer = STAND_R0 + TIERS * TIER_W
+    for k in range(SEGS):
+        a0, a1 = 2 * math.pi * k / SEGS, 2 * math.pi * (k + 1) / SEGS
+        f = stand_h((a0 + a1) / 2)
+        for t in range(TIERS):
+            r0 = STAND_R0 + t * TIER_W
+            h = lift + 1.3 + (STAND_H - 1.3) * ((t + 1) / TIERS) * f
+            m.prism(arc_poly(r0, r0 + TIER_W, a0, a1), lift, h,
+                    cool if t % 2 else cool2, x)
+        top = lift + 1.0 + (STAND_H + 1.4 - 1.0) * f
+        m.prism(arc_poly(outer, outer + 1.2, a0, a1), lift, top, warm, x)
+        m.prism(arc_poly(outer - 0.05, outer + 1.3, a0, a1),
+                top - 1.9, top - 0.7, red, x)
+
+    # The roof, over the two long sides only. The long axis is local x, so the
+    # long SIDES are at plus and minus 90 degrees from it.
+    #
+    # It has to be MEAN. A first pass cantilevered 7.6 m of it inwards and the
+    # stadium turned into a covered dish: this camera looks down at 30 degrees,
+    # so a roof that covers half the rake hides the bowl, and the bowl is the
+    # only reason to model a stadium instead of a drum. 4.4 m, thin, and only
+    # over the upper tier.
+    for c in (math.pi / 2, -math.pi / 2):
+        z = lift + STAND_H + 1.9
+        m.prism(arc_poly(outer - 3.8, outer + 1.5, c - 0.80, c + 0.80, segs=12),
+                z, z + 0.42, mat("Roof Deck"), x)
+        for k in range(6):
+            a = c - 0.80 + 1.60 * k / 5
+            m.box(((outer - 3.1) * math.cos(a), (outer - 3.1) * math.sin(a),
+                   z + 0.72), (1.3, 0.42, 0.42), mat("Lamp"), x)
+
+    # stair towers at the open end, where there is no roof to break the drum
+    for k in range(3):
+        a = math.radians(-52 + 52 * k)
+        h = 1.0 + (STAND_H + 1.4 - 1.0) * stand_h(a)
+        m.box(((outer + 0.6) * math.cos(a), (outer + 0.6) * math.sin(a),
+               lift + h / 2), (1.8, 1.8, h), warm, x)
 
 
 # --- curved organic building ----------------------------------------------
@@ -228,6 +313,14 @@ def main():
     lm = collection("LANDMARKS")
     lp = collection("LANDMARK_PROPS")
 
+    # The track is the loudest cue in the stadium, so it gets a real colour
+    # rather than a tint of the road: brick dust, warm and a good deal more
+    # saturated than anything else on that block, which is what makes it read
+    # against the pitch from directly above.
+    pbrmat("Track Clay", "#b1573c", 0.92)
+    pbrmat("Pitch Grass", "#3f8a39", 0.94)
+    pbrmat("Stadium Red", "#bd2b2f", 0.82)
+
     r = rng(777)
     m = Mesh()
     sol = Solids()
@@ -240,7 +333,14 @@ def main():
     # round, so their box claims more ground than they occupy: over-protective
     # is the right way to be wrong here, since the cost is a tree that could
     # have stood a metre closer.
-    FOOT = {"stadium": (66.4, 54.4, math.radians(20), 17.0),
+    # The stadium's is derived from its own constants rather than typed in:
+    # it was typed in, the stadium was rebuilt bigger, and the two silently
+    # disagreed by seven metres a side until the overlap check found trees
+    # inside the stands. The widest thing is the facade on the long axis and
+    # the roof on the short one.
+    _st_out = STAND_R0 + TIERS * TIER_W
+    FOOT = {"stadium": ((_st_out + 1.2) * 1.30 * 2 + 1.0,
+                        (_st_out + 1.5) * 2 + 1.0, math.radians(20), 17.0),
             "blob": (64.0, 40.0, 0.0, 21.0),
             "garage": (56.0, 45.0, 0.0, 17.5)}
 

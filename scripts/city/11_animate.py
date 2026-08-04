@@ -39,13 +39,23 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Vector
-from _common import instance, collection, rng
+from _common import instance, collection, rng, FPS, FRAMES
 from _solids import Solids
 
 R = ROOT / "renders"
-FPS = 24
-FRAMES = 240                      # ten seconds
 T = FRAMES / FPS
+HELI_SPEED = 34.0                 # m/s, about 120 km/h
+HELI_MAST = 3.0                   # rotor plane above the airframe origin
+
+# One turn per second, which is nowhere near a real rotor and is the only
+# honest option here. This render has NO motion blur, and without it four
+# discrete blades cannot depict fast rotation: anything near a multiple of
+# 90 degrees per frame either freezes or flips between two poses, and every
+# other fast rate strobes. A rotor that visibly turns at toy speed is
+# consistent with a city where the cars' wheels do not turn either. If motion
+# blur is ever switched on, this is the number to raise.
+ROTOR_HZ = 1.0
+
 CLEAR = 4.0                       # half a car plus half a lane, metres
 MAX_HOLD = 45.0                   # how far back a car may be held, metres
 PASSES = 6
@@ -243,9 +253,22 @@ def helicopter(scene):
     start = Vector((-260.0, -60.0, 78.0))
     heading = Vector((math.cos(math.radians(20)), math.sin(math.radians(20)), 0))
     for f, t in ((1, 0.0), (FRAMES, T)):
-        ob.location = start + heading * (34.0 * t)
+        ob.location = start + heading * (HELI_SPEED * t)
         ob.keyframe_insert("location", frame=f)
     linear(ob)
+
+    if "HeliRotor" in kit:
+        rot = instance(kit["HeliRotor"], coll, (0, 0, 0), 0.0, 1.0,
+                       name="Heli.rotor")
+        # parented, not keyframed along: the blades follow the airframe for
+        # free, including its 20 degrees of heading and its 1.6 of scale, and
+        # the only thing animated here is the one number that has to be
+        rot.parent = ob
+        rot.location = (0.0, 0.0, HELI_MAST)
+        for f, t in ((1, 0.0), (FRAMES, T)):
+            rot.rotation_euler = (0.0, 0.0, 2 * math.pi * ROTOR_HZ * t)
+            rot.keyframe_insert("rotation_euler", frame=f)
+        linear(rot)
     return ob
 
 

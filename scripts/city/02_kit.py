@@ -117,7 +117,19 @@ def _disc(cx, cy, cz, radius, width, segs=8):
     return v, f
 
 
+HELI_MAST = 3.0                   # where the rotor plane sits above the body
+# Blade length from the hub, so the disc is twice this. It was 8.0, which is a
+# 16 m disc over a 4 m fuselage - four times the body length, where a real
+# helicopter runs about two and a half. The overlapping pairs hid it: half the
+# blades were on top of each other, so the thing read as smaller than it was.
+BLADE = 4.6
+
+
 def helicopter(name):
+    """The airframe only. The rotor is a separate asset - see heli_rotor().
+
+    They used to be one mesh, which meant the blades could not turn: an instance
+    shares one datablock and there is nothing inside it to animate."""
     m = Mesh()
     body, glass = mat("Accent Red"), mat("Car Glass")
     m.sphere((0, 0, 1.5), 1.35, body, segs=8, rings=5, scale=(1.5, 0.9, 0.8))
@@ -125,13 +137,33 @@ def helicopter(name):
     m.box((-3.2, 0, 1.9), (4.2, 0.35, 0.35), body)
     m.box((-5.0, 0, 2.3), (0.3, 0.16, 1.1), body)
     m.cyl((0, 0, 2.5), 0.12, 0.5, mat("Tire"), segs=6)
-    for k in range(4):
-        a = math.pi / 2 * k
-        m.box((4.0 * math.cos(a), 4.0 * math.sin(a), 3.0), (8.0, 0.28, 0.06),
-              mat("Metal Painted"),
-              xform=_rotz(a, (0, 0, 3.0)))
     for sx in (-1, 1):
         m.box((sx * 0.9, 0, 0.35), (0.25, 2.6, 0.16), mat("Tire"))
+    return m.build(name, KIT)
+
+
+def heli_rotor(name):
+    """Four blades and the hub, built around the ORIGIN.
+
+    The origin is the axis of rotation, and that is the whole reason this is a
+    separate asset rather than a second lump of geometry in the right place: the
+    object is parented to the airframe and turned about its own Z. Geometry
+    modelled at the mast height would orbit the mast instead of spinning on it.
+    """
+    m = Mesh()
+    m.cyl((0, 0, -0.28), 0.20, 0.34, mat("Metal Dark"), segs=8)
+    for k in range(4):
+        # The centre goes at (L/2, 0) and _rotz swings it round. It used to be
+        # written as (L/2*cos a, L/2*sin a) WITH the same _rotz applied, which
+        # rotates the centre twice: blade 0 and blade 2 both landed at (+4, 0)
+        # and blades 1 and 3 both at (-4, 0), so the "four blades" were two
+        # overlapping pairs, one of them lying across the tail boom. It had been
+        # like that since the kit was written and was invisible while the rotor
+        # was a static lump - it only had to look vaguely like blades. Making it
+        # turn is what exposed it, which is the usual way: motion is a test.
+        a = math.pi / 2 * k
+        m.box((BLADE / 2, 0.0, 0.0), (BLADE, 0.26, 0.06),
+              mat("Metal Painted"), xform=_rotz(a, (0, 0, 0)))
     return m.build(name, KIT)
 
 
@@ -335,6 +367,7 @@ def build_kit():
     assets["Truck"] = car("Truck", "Car White", length=8.0, width=2.4,
                           kind="truck")
     assets["Heli"] = helicopter("Heli")
+    assets["HeliRotor"] = heli_rotor("HeliRotor")
 
     people = [("Shirt Blue", "Pants Navy", "Hair Dark", "Skin Light", 0.16),
               ("Shirt Red", "Pants Denim", "Hair Blonde", "Skin Light", 0.0),
@@ -392,6 +425,23 @@ def main():
     global KIT
     bpy.ops.wm.open_mainfile(filepath=str(R / "city.blend"))
     KIT = collection("KIT")
+
+    # Purge before rebuilding, and understand what that does before running it.
+    #
+    # Without this, a second run builds an object called Heli.001 while every
+    # instance in the city goes on pointing at Heli, so the edit appears to do
+    # nothing at all and raises no error. That is the trap CLAUDE.md warns about
+    # and this is the cause of it, not a property of the universe.
+    #
+    # Purging fixes the naming and makes the warning WORSE in the honest
+    # direction: a re-run now leaves every existing instance pointing at a mesh
+    # whose source object is gone, so it MUST be followed by the whole chain
+    # from 03. Broken loudly beats broken silently.
+    stale = len(KIT.objects)
+    for ob in list(KIT.objects):
+        bpy.data.objects.remove(ob, do_unlink=True)
+    if stale:
+        print(f"  purged {stale} stale kit objects: re-run the chain from 03")
 
     assets = build_kit()
     print(f"\n  kit: {len(assets)} assets")

@@ -12,7 +12,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
-from _common import collection, instance, mat, rng, counts
+from _common import collection, instance, mat, rng, counts, median_runs
 from _solids import Solids
 
 R = ROOT / "renders"
@@ -155,6 +155,13 @@ def avenue_trees(kit, coll, data, r):
     The median is 5 m wide, so the species are the narrow ones - and the
     jacaranda is over-represented on purpose, because the real avenue is one
     of the places people go to see them.
+
+    Where the median is: `median_runs`, the same list step 03 builds the kerbs
+    from. This used to plant off its own block arithmetic and skip a band
+    around the plaza, which agrees with step 03 everywhere except the one block
+    that matters. There, both stubs come out 9 m long and step 03 drops them,
+    so the block has no median at all - and four trees stood in the middle of
+    the avenue beside the Obelisco, floating at median height on bare asphalt.
     """
     av = data.get("avenue9j")
     if av is None:
@@ -163,6 +170,10 @@ def avenue_trees(kit, coll, data, r):
     lift = av["median_lift"]
     px, py, pw, pl = av["plaza"]
     mid = (av["median"][0] + av["median"][1]) / 2
+    # 1.5 m in from each end, so the trunk stands on kerb rather than on the
+    # chamfer of it, and the canopy does not lean over the crossing
+    runs = [(a + 1.5, b - 1.5) for a, b in
+            median_runs(data["blocks_y"], py, pl)]
     for (cy, size) in data["blocks_y"]:
         # 7 m, not 9. The median is the one planting in this city that is meant
         # to read as a continuous line rather than as a row of individuals, and
@@ -176,8 +187,10 @@ def avenue_trees(kit, coll, data, r):
                 sc = r.uniform(0.85, 1.15)
                 jitter = r.uniform(-1.1, 1.1)
                 x, y = av["x"] + side * mid, t + jitter
-                if abs(y - py) < pl + 3.0:
-                    continue                 # the plaza interrupts the median
+                if not any(a <= y <= b for a, b in runs):
+                    # no kerb here: the plaza, or a stub too short to build
+                    SKIPPED["tree"] = SKIPPED.get("tree", 0) + 1
+                    continue
                 if SOLIDS.hit(x, y, lift, RAD[name] * sc * 0.7) is not None:
                     SKIPPED["tree"] = SKIPPED.get("tree", 0) + 1
                     continue

@@ -139,6 +139,15 @@ def main():
 
     cycles = "final" in sys.argv   # not --cycles: Blender parses that itself
     exposure = scene.view_settings.exposure
+
+    # The still is a STILL, and it does not want the shot's motion blur.
+    # Step 12 turns it on and leaves it on, because it belongs to the move; the
+    # last frame is inside the two-second hold where the camera has stopped, but
+    # 1500 cars have not, so rendering the hero frame with it on smears every
+    # vehicle in the city. Off for the render, restored before the save, so the
+    # .blend still carries what the shot needs.
+    blur = scene.render.use_motion_blur
+    scene.render.use_motion_blur = False
     if cycles:
         blib.use_gpu()
         blib.render(str(R / "city_final.png"), "CYCLES", samples=256,
@@ -146,6 +155,7 @@ def main():
     else:
         blib.render(str(R / "city_07_look.png"), "EEVEE", samples=96,
                     resolution=(1600, 900), exposure=exposure)
+    scene.render.use_motion_blur = blur
     blib.save(str(R / "city.blend"))
 
 

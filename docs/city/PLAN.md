@@ -791,15 +791,274 @@ step happened to leave it.
 at five frames. That is the hole the other checks still have — they see one
 instant of an animated city — and it is now closed for the vehicles at least.
 
+## Eighth pass: the move, measured off the reference
+
+The descent above was rejected on sight. Rather than iterate on taste, the
+reference clip was tracked frame by frame, and it turned out to disagree with the
+descent on almost every axis.
+
+### How you track a camera you cannot see
+
+The reference is orthographic — its ground axes stay parallel across the frame —
+and that is the property that makes the whole measurement cheap. Under an
+orthographic camera at a fixed azimuth and elevation, **any** camera motion
+projects to a similarity on screen: one uniform scale plus a 2D translation. So
+fitting (s, tx, ty) between frame pairs recovers the entire move, with no 3D
+reconstruction and no assumptions about the scene.
+
+A grid of windows, phase correlation per window for subpixel shifts, then trimmed
+least squares to throw out the cars and the cranes and the title itself, which
+move independently of the camera. Composing the pair maps gives one trajectory.
+
+The elevation comes out of a second, independent measurement. A ground line along
++x projects to a screen line with tan θ = sin e · cot(az) and along +y with
+tan θ = sin e · tan(az), so a gradient-orientation histogram over the whole frame
+gives both angles: the product of the tangents is sin²e, the ratio is tan²(az).
+It puts the reference at **elevation 30.6°, azimuth 46.2°**. Every edge in the
+image votes, which is why it beats the arithmetic it replaced — the old 22.5°
+came from the aspect of one red roof box.
+
+### What the reference actually does
+
+| | reference, measured | what we had |
+|---|---|---|
+| elevation | **fixed, 30.6°** | 38° → 24° |
+| azimuth | fixed, 46.2° | fixed, 45° |
+| translation | **straight line** | 28 m drift on a smoothstep |
+| pan law | **constant apparent speed** | constant world speed |
+| zoom | ×1.48 continuous, ~5 %/s | ×1.24 |
+| structure | 7.4 s of move, **1.2 s frozen** | 10 s of move, no hold |
+
+**The elevation never changes.** The descent was a move the reference does not
+make. With azimuth and elevation both fixed the camera is a pure orthographic
+dolly: its world path is a straight segment, and the only other animated value is
+the frame width.
+
+### The pan is tied to the zoom, and getting that wrong is what it felt like
+
+The first rebuild fixed the angle and the straight line and still felt wrong. The
+answer came from tracking **our own render with the same tool** and putting both
+trajectories in the same units — travel expressed in final frame widths, which
+removes the unknown absolute scale and the changing pixel scale at once. Ours
+accelerated on screen from 0.005 to 0.083 frame-widths per second; the reference
+held 0.07 flat.
+
+A pan that is linear in metres cannot look linear in a shot that is closing,
+because the same metres cover more of a narrower frame. Fitting dx/dq ∝ Wⁿ over
+the body of the reference puts **n = 1.10**, and n = 1 fits ten times better than
+the n = 0 we had (rms 0.006 against 0.042). So the camera advances in proportion
+to the current frame width: apparent speed constant, world speed decaying with
+the zoom. With W = W₀ rᑫ the integral is closed form, one line.
+
+That is the whole difference between a move that glides and a move that creeps
+and then rushes, and no amount of looking at stills would have found it.
+
+### Travel and zoom are two numbers, and only the ratio carries the character
+
+The first rebuild used the *measured* travel, 156 m, and widened the opening to
+400 m so the title would fit whole in the first frame. It was rejected on sight
+again, with the right words: *it comes more from the left, it is not only a zoom*.
+
+The measurement backs that up exactly. That version and the reference cover almost
+identical ground — 0.637 against 0.649 frame widths — but the reference does it
+while zooming ×1.48 and we were zooming ×2.35. Per unit of zoom the reference
+travels nearly twice as far. Copying one number and not the other copies nothing.
+
+So: **320 m of travel and the reference's own ×1.48**. That is 1.84 frame widths
+against its 0.65, nearly three times as much ground, and deliberately — the
+constraints below force it.
+
+### The shot crosses the Obelisco, and that costs the diagonal
+
+The heading is not the measured one either. The reference's travel climbs 36.3°
+across the screen; ours is flat, because the Obelisco and the title happen to lie
+along the screen horizontal and the shot was asked to pass the monument.
+
+That was not a free choice, and scanning every heading says so: of all the
+directions that end on the title and put the Obelisco in frame at any point, the
+screen angle comes out between **0° and 13°**, and nothing above it. At 13° the
+monument is cut by the top edge of the opening frame. So the choice was a flat
+travel with the Obelisco whole, or a diagonal with no Obelisco.
+
+**How far back the shot can start is a ceiling, not a preference.** A first
+attempt at 240 m put the start exactly on the Obelisco, so the shot opened on top
+of the monument rather than travelling past it. Going further back runs into the
+south edge of the city: the Obelisco is only 177 m from it and the opening frame's
+far corner reaches a long way past its centre. At 360 m the bare site shows in the
+top left corner. **320 m** was the longest run that rendered full of city, and it
+was settled by looking at four rendered opening frames rather than by the corner
+arithmetic, which turned out to be pessimistic by about 40 m — worth remembering,
+because that arithmetic had already rejected a perfectly good frame once.
+
+At 320 the monument sits on the right of the opening frame and the camera crosses
+it during the first third, with its oval plaza, the 9 de Julio and the Metrobús.
+
+### The title cannot pop in, so the camera has to do it
+
+The same rejection came with a second observation: in the reference the title is
+not visible in the first frames. It is not, and the reason matters. Going back to
+the footage, **the letters appear one at a time and out of order** — "SI" and "ON"
+before the letters between them. They are animated. The camera does not reveal
+them.
+
+Ours cannot do that: the title is twenty-four buildings standing in the city. So
+the only way to have it absent at the start is to begin with it outside the frame
+and travel until it is inside. It first touches the frame at 13 % of the move and
+is fully in by 83 %.
+
+### And that is what sets the length of the shot
+
+This is the one number the size of our title decides rather than taste. The word
+is 98 m wide on screen against a 170 m final frame — 57 % of it — so getting it
+off the frame at the start, plus passing the Obelisco, costs 1.84 frame widths of
+screen travel. The reference pans at 0.05 to 0.10 frame widths per second, and
+those two multiply out.
+
+There is no ten-second arrangement that has the title start outside the frame
+**and** move at the reference's apparent speed. Something has to give, and what
+gives is the length: **22 s of move and 2 s of hold, at 0.084 frame widths per
+second**, inside the range the reference itself spans (0.050 to 0.097). Speeding it up in post is a decision
+that can still be made later; a move that whips cannot be slowed down afterwards.
+`renders/city_move_fast.mp4` is the same shot at ×2.4, for comparison.
+
+### The shot got longer and the traffic did not
+
+Lengthening the shot left step 11 animating 240 frames, so every car in
+the city would have stopped dead at frame 240 and stood there for nine seconds.
+Nothing raises an exception when the traffic freezes, and the standing checks read
+frame 1, where it has not happened yet. The shot length now lives in `_common.py`
+and steps 11 and 12 both import it, because it is exactly the kind of number two
+files can quietly disagree about.
+
+Re-running step 11 over 21 s costs traffic: a car covers twice the ground, so
+crossing conflicts rise from 1160 to 2062 and **594 vehicles come off the road
+instead of 282**. 920 are still driving. That is the price of the longer shot and it is worth naming.
+
+### What carried over from the seventh pass
+
+The two traps that cost the most last time are still in the file and still worth
+the words in it. **The end target is not the origin**: `blib.camera()` aims at the
+centre of the scene's bounds, (−51.8, 22.8). And **it is written down rather than
+read off the camera**, because this step *animates* the camera, so a version that
+read the target back would frame the shot from whatever the last run left behind.
+
+The move now runs frames 1–192 and holds 193–240, so the still is still the last
+frame and `07_look.py` still runs after `12_camera.py`.
+
+### The camera move made a composition rule expire
+
+The Floralis was at (2, 7), the far corner of the city, and the reasoning for
+putting it there is written in `06b_porteno.py`: the Obelisco, the Floralis and
+the word had been inside three adjacent blocks, which is a souvenir shelf, so
+they were pushed to opposite ends where they would read on opposite sides of the
+frame.
+
+That was right for a **still** and stopped being true the moment the camera
+moved. Mapping every block against the shot says so plainly:
+
+```
+   the shot crosses 13 of the 81 blocks
+   . = never in frame     number = per cent of the move when it is centred
+
+   y= 309 |   .   .   .   .   .   .   .   .   .
+   y= 234 |   .   .   .   .   .   .   .   .   .     <- the Floralis was here
+   y= 153 |   .   .   .   .   .   .   .   .   .
+   y=  74 |   .   .   .   .  88   .   .   .   .
+   y=  -2 |   .   .   .  89  87  50   .   .   .
+   y= -75 |   .   .   .   .  55  53   .   .   .     <- and is here now
+   y=-167 |   .   .   .   .   .  18   0   0   .     <- Obelisco
+   y=-243 |   .   .   .   .   .   0   0   0   .
+   y=-313 |   .   .   .   .   .   .   0   .   .
+```
+
+**Of six built landmarks the shot reached two.** The Obelisco and the stadium.
+The Floralis was 2.83 frame half-widths off the nearest point of the corridor,
+the blob 2.87, the parking structure 1.57, and both construction sites over 2.
+Four landmarks and two sites built for nobody. 84 % of the city is never seen.
+
+The Floralis moved to **(5, 3)**, 0.08 half-widths off the axis and centred at
+54 % of the move — the stretch between the Obelisco leaving frame and the title
+arriving, which was the weakest part of the shot. Not (4, 3) or (5, 4), which are
+equally central and both touch the title superblock: the original souvenir-shelf
+rule still holds, it just needed to be applied against the corridor instead of
+against the hero still.
+
+**And moving it was a two-line edit with a trap in it.** A block listed in
+`SPECIAL` returns before `pick_kind` draws, so it consumes no random number:
+adding one key silently reshuffles the kind of every block after it. The fix is
+in the file — (2, 7) keeps its key and only changes value, and (5, 4) gives its
+key up to (5, 3), which is the block immediately before it in the iteration, so
+the stream realigns at once. Verified by diffing `city_lots.json` against the
+previous build: **2 lots changed of 80**, every lot in the same place and the
+same size. That diff is the check, not the reasoning.
+
+### The stadium, and a footprint that stopped agreeing with it
+
+The stadium was a smooth white drum with a lawn in the hole. It now reads as
+El Monumental — see the style bible for which three cues do that and why.
+
+Two things fell out of it that are worth more than the stadium:
+
+**The footprint was a typed-in number.** `FOOT["stadium"]` was `66.4 × 54.4`,
+which was exactly right for the old geometry and became wrong the moment the
+geometry changed. Deeper stands took the outside radius from 27.2 to 30.6, which
+with the oval is 79 m across against a 64 m block — seven metres of overhang a
+side, onto the pavement. `99_check_overlap` caught it as five trees and people
+standing inside the stands, which is the check doing its job on a fault it was
+never designed for. The rake is thinner now so the thing fits its lot, and the
+footprint is **derived from the stadium's own constants** instead of typed
+beside them, so the two cannot drift apart again.
+
+**A check had been passing by luck.** `98_check_floating` TEST A scans every
+mesh in the scene for geometry below ground, and that includes the KIT — a
+hidden parts bin where every asset sits at the origin and is never placed. Every
+asset had happened to start above z=0, so nobody noticed, until the rotor became
+its own asset with its hub modelled 28 cm below its origin. The KIT is exempt
+now. Worth separating from the other kind of exemption: this complaint really
+was false, where the colectivo standing on the Obelisco's plaza was not.
+
+### The helicopter's blades turn, and why they turn slowly
+
+They could not turn at all before: the blades were part of the airframe mesh,
+and an instance shares one datablock, so there was nothing inside it to animate.
+The rotor is a separate asset built around **its own origin** — the axis of
+rotation — parented to the airframe, which gets it the 20° of heading and the
+1.6 of scale for free and leaves exactly one number animated.
+
+**And making it turn found a bug that had been in the kit from the start.** The
+four blades were not at 90° to each other. Each was a box built at
+`(L/2·cos a, L/2·sin a)` and *then* rotated by `a`, which rotates the centre a
+second time: blades 0 and 2 both landed at (+4, 0) and blades 1 and 3 both at
+(−4, 0), so what looked like four blades was two overlapping pairs, one of them
+lying across the tail boom. Nothing raised an error and a static lump of white
+sticks over a 4 m fuselage only has to look vaguely like a rotor. The overlap
+also hid the scale: the disc was 16 m across, four times the body length where a
+real machine runs about two and a half. It is 9.2 m now.
+
+**Motion is a test.** This is the third time in this project that animating
+something exposed a fault that had been sitting in a still frame for weeks — the
+cars driving into buildings, the walkers marching twice, and now this. A shape
+that never moves is only ever checked against "does it look about right", and
+that check passes on almost anything.
+
+**One turn per second, which is nothing like a real rotor.** This render has no
+motion blur, and without it four discrete blades cannot depict fast rotation:
+any rate near a multiple of 90° per frame either freezes or flips between two
+poses, and every other fast rate strobes. A rotor turning at toy speed is
+consistent with a city whose car wheels do not turn either. Verified by
+rendering four consecutive frames and looking at them, which is the only way
+this class of thing can be verified.
+
 ### Where the numbers landed
 
 | | |
 |---|---|
 | City | 762 × 714 m, 80 lots |
 | Avenue | 70 m at x = 120, 13 Metrobús shelters, 130 median trees |
-| Signs | 82 — 24 parapet, 32 roofmark, 10 mast, 12 medianera, 4 billboard |
-| Trees / cars / people | 1599 / 1807 / 2324 |
-| Crossing conflicts | 1160 found, 1113 held, 282 taken off the road, 0 left |
+| Signs | 77 — 23 parapet, 33 roofmark, 9 mast, 9 medianera, 3 billboard |
+| Trees / cars / people | 1617 / 1513 / 2327 |
+| Crossing conflicts | 2089 found, 1277 held, 562 taken off the road, 0 left |
+| Shot | 24 s at 24 fps: 22 s of move, 2 s held. `_common.FRAMES` |
 
 ## Verification
 

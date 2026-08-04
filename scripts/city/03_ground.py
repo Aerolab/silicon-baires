@@ -31,7 +31,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
-from _common import Mesh, collection, mat, pbrmat, rng, counts, srgb
+from _common import (Mesh, collection, mat, pbrmat, rng, counts, srgb,
+                     median_runs)
 
 R = ROOT / "renders"
 
@@ -148,14 +149,35 @@ SPECIAL = {
     # Floralis, one block either side of the word. Two monuments and a title
     # inside three blocks is a souvenir shelf: nothing has room to be the
     # thing you look at. The Obelisco has moved into the middle of the avenue,
-    # where it belongs, and the Floralis to (2, 7), which is the far side of
-    # the city and reads on the opposite side of the frame.
-    (3, 4): "std", (5, 4): "std",
+    # where it belongs.
+    (3, 4): "std",
     # "park", not "plaza". The real Floralis stands in a 4 ha park with a 44 m
     # pool and nothing built anywhere near it - it is 2.5 km from the Obelisco,
     # which is three and a half times the width of this entire city. A plaza
     # lot puts offices around it and turns it into a fountain in a forecourt.
-    (2, 7): "park",
+    #
+    # It used to be (2, 7), the far corner of the city, chosen so it would read
+    # on the opposite side of the frame from the Obelisco. That reasoning held
+    # for a STILL. Once the camera moved it stopped being true: the shot sweeps
+    # a narrow diagonal corridor and crosses 13 of the 81 blocks, and (2, 7) is
+    # 2.83 frame half-widths off the nearest point of it. The Floralis was being
+    # built for nobody.
+    #
+    # (5, 3) is 0.08 half-widths off the axis and is centred at 54 % of the move,
+    # which is the stretch between the Obelisco leaving frame and the title
+    # arriving. Not (4, 3) or (5, 4), which are just as central and are both
+    # ADJACENT to the title superblock: a monument beside the word is the
+    # souvenir-shelf mistake this file already made once.
+    (5, 3): "park",
+    # (2, 7) keeps its key and only changes its value, and (5, 4) gives its key
+    # up to (5, 3). That pair of edits is deliberate: a block listed here
+    # consumes no draw from the RNG, so ADDING a key silently reshuffles the
+    # kind of every block after it. (5, 3) and (5, 4) are consecutive in the
+    # iteration - i outer, j inner - so removing one key exactly where another
+    # is added realigns the stream immediately, and (5, 4) inherits the draw
+    # (5, 3) used to take. Everything downstream is byte-identical. Verified by
+    # diffing city_lots.json, not assumed.
+    (2, 7): "std",
     # (4, 5) carries the title now, so it is built up like the rest of the
     # campus. Keeping the key here and only changing its value matters: the
     # kinds of every other lot come out of one RNG stream, and adding or
@@ -354,30 +376,26 @@ def build_avenue(m, g):
     for a, b in ((y0, PLAZA - PLAZA_HALF), (PLAZA + PLAZA_HALF, y1)):
         m.quad(NINE, (a + b) / 2, BUSWAY * 2, b - a, 0.04, deck)
 
+    # Cut against the plaza rather than dropping the whole run: skipping any
+    # block that came near it took out two full block-lengths - 140 m of
+    # avenue with no planting at all - to clear a 60 m island. And it has to be
+    # a cut into TWO runs, not a trim of one end: the plaza sits mid-block, so
+    # it lands in the middle of a median run with planting owed on both sides.
+    #
+    # The rule lives in _common because step 05 plants what this builds, and it
+    # has to plant into the same runs rather than into its own idea of them.
+    for (ra, rb) in median_runs(BY, PLAZA, PLAZA_HALF):
+        for side in (-1, 1):
+            mc = side * (MEDIAN[0] + MEDIAN[1]) / 2
+            mw = MEDIAN[1] - MEDIAN[0]
+            m.prism([(NINE + mc - mw / 2, ra), (NINE + mc + mw / 2, ra),
+                     (NINE + mc + mw / 2, rb), (NINE + mc - mw / 2, rb)],
+                    0.0, MEDIAN_LIFT, kerb)
+            g.quad(NINE + mc, (ra + rb) / 2, mw - 1.0, rb - ra,
+                   MEDIAN_LIFT + 0.02, grass)
+
     p0, p1 = PLAZA - PLAZA_HALF - 2.0, PLAZA + PLAZA_HALF + 2.0
-    for j, (cy, size) in enumerate(BY):
-        a, b = cy - size / 2 - 3.0, cy + size / 2 + 3.0
-        # Cut against the plaza rather than dropping the whole run: skipping
-        # any block that came near it took out two full block-lengths - 140 m
-        # of avenue with no planting at all - to clear a 60 m island.
-        #
-        # And it has to be a cut into TWO runs, not a trim of one end. The
-        # plaza sits mid-block now, so it lands in the middle of a median run
-        # with planting owed on both sides of it; trimming left a 9 m stub that
-        # then failed the minimum length and took the whole block with it.
-        runs = [(a, b)] if not (b > p0 and a < p1) else \
-            [(a, min(b, p0)), (max(a, p1), b)]
-        for (ra, rb) in runs:
-            if rb - ra < 10.0:
-                continue
-            for side in (-1, 1):
-                mc = side * (MEDIAN[0] + MEDIAN[1]) / 2
-                mw = MEDIAN[1] - MEDIAN[0]
-                m.prism([(NINE + mc - mw / 2, ra), (NINE + mc + mw / 2, ra),
-                         (NINE + mc + mw / 2, rb), (NINE + mc - mw / 2, rb)],
-                        0.0, MEDIAN_LIFT, kerb)
-                g.quad(NINE + mc, (ra + rb) / 2, mw - 1.0, rb - ra,
-                       MEDIAN_LIFT + 0.02, grass)
+    for (cy, size) in BY:
         # Shelters the length of the boulevard: up to two per block, never
         # over an intersection. The real corridor is 3 km with 17 stations,
         # which is 175-185 m apart, or one every three blocks at our size, and

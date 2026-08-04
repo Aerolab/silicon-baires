@@ -59,9 +59,18 @@ def main():
     print(f"  supports: {[s.name for s in supports]}")
 
     # --- TEST A ------------------------------------------------------------
+    # The KIT is exempt, and it should have been from the start. It is a parts
+    # bin: every asset sits at the origin, hidden from render and from the
+    # viewport, and is never placed anywhere. Whether a source asset's lowest
+    # vertex is above or below z=0 says nothing about the city. This only
+    # surfaced when the helicopter's rotor became its own asset with its hub
+    # modelled 28 cm below its own origin - every previous asset had happened
+    # to start above zero, so the test had been passing by luck rather than by
+    # being right.
+    parts = {ob.name for ob in bpy.data.collections["KIT"].objects}
     buried = []
     for ob in scene.objects:
-        if ob.type != "MESH":
+        if ob.type != "MESH" or ob.name in parts:
             continue
         z = world_min_z(ob)
         if z < BURIED:
