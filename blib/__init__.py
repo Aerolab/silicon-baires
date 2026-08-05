@@ -287,22 +287,33 @@ def emissive(name, color=(1, 1, 1), strength=5.0):
 # ---------------------------------------------------------------- render
 
 def render(path, engine="EEVEE", samples=None, resolution=(1280, 720),
-           transparent=False, view_transform="AgX", look="None", exposure=0.0,
+           transparent=False, view_transform=None, look=None, exposure=None,
            denoise=True, gpu=True, quiet=True):
     """Render a PNG. Returns the absolute path.
 
     engine: "EEVEE" (fast, for iterating) | "CYCLES" (final) | "WORKBENCH" (clay)
     view_transform: "AgX" (cinematic) | "Khronos PBR Neutral" (product/web,
                     faithful colors) | "Standard" (no tone mapping) | "Filmic"
+
+    view_transform / look / exposure default to None, which means LEAVE THE
+    SCENE'S ALONE. They used to default to "AgX" / "None" / 0.0 and assign
+    unconditionally, which silently discarded any grade a caller had set up
+    before the call: the city's whole look was a `view_settings.look = ...` on
+    the line above a render that reset it. A caller that wants a specific
+    transform still passes one; a caller that has already graded its scene now
+    keeps it.
     """
     sc = bpy.context.scene
     sc.render.resolution_x, sc.render.resolution_y = resolution
     sc.render.film_transparent = transparent
     sc.render.image_settings.file_format = "PNG"
     sc.render.image_settings.color_mode = "RGBA" if transparent else "RGB"
-    sc.view_settings.view_transform = view_transform
-    sc.view_settings.look = look
-    sc.view_settings.exposure = exposure
+    if view_transform is not None:
+        sc.view_settings.view_transform = view_transform
+    if look is not None:
+        sc.view_settings.look = look
+    if exposure is not None:
+        sc.view_settings.exposure = exposure
 
     if engine.upper() in {"EEVEE", "BLENDER_EEVEE"}:
         sc.render.engine = "BLENDER_EEVEE"

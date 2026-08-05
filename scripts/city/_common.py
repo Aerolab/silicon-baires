@@ -104,6 +104,61 @@ SHOT_TRAVEL = 320.0
 SHOT_ZOOM = 1.80                 # was 1.479, the measured start/end ratio
 EASE_IN, EASE_OUT = 0.10, 0.16   # fraction of the move spent accelerating
 
+# --- the grade -------------------------------------------------------------
+# THE FIFTH SHARED NUMBER, and it is here for the same reason as the other
+# four: two places disagreed about it and nothing said so. 07_look asked for
+# "AgX - Punchy" on the line above the render, and blib.render's signature
+# carried look="None" as a default, so the assignment was overwritten one call
+# later. Every frame this project has ever shipped - the approved still and all
+# 624 frames of the move - was rendered with no look at all. It measured as a
+# render that was 0.24 saturated against a reference that runs 0.22 to 0.33,
+# and as 5.5 % dark pixels against 10 % to 35 %.
+#
+# So the grade now lives in one table, is applied by open_city() on the way in
+# exactly like the palette, and blib.render leaves the scene's view settings
+# alone unless a caller says otherwise.
+#
+# Every number below was fitted against refs/video/frames, measured the same
+# way on both sides: mean luma, its standard deviation (contrast), the fraction
+# below 0.25 (shadow), the fraction above 0.75 (highlight), and R/B with the
+# red title masked out (warmth). Where we landed, against the reference's
+# spread over four frames:
+#
+#              mean      std      dark      bright    sat*     R/B*
+#   reference  .41-.50  .20-.26  10-35 %   12-20 %   .20-.32  1.08-1.29
+#   before     .526     .178      5.5 %    12.1 %    .185     0.959
+#   now        .464     .248     25.2 %    15.5 %    .320     1.118
+#                                                    * red title masked out
+LOOK = "AgX - Very High Contrast"
+# Not "AgX - Punchy", which is what the line that never ran asked for. Punchy
+# buys chroma by crushing the top end: rendered for real it puts saturation at
+# 0.30 but leaves 0.3 % of the frame above 0.75 where the reference has 12-20 %,
+# and a city with no white in it reads as an overcast day. Very High Contrast
+# gets the same chroma and keeps the highlights.
+EXPOSURE = -0.82
+# The reference is warm and we were not: 0.96 R/B against its 1.08-1.29, which
+# is the "everything looks slightly grey" complaint in one number. Three levers
+# move it and all three are used, because any one of them alone has to be
+# pushed far enough to tint the whites: less blue in the ambient, a warmer sun,
+# and the white balance. Blender's white balance names the temperature of the
+# light it is correcting FOR, so a number ABOVE 6500 warms the image.
+WHITE_BALANCE = 7800.0
+# --- and the light the grade is graded from --------------------------------
+# The sun-to-sky ratio is what decides whether there are shadows at all. It was
+# 4.0 / 0.32, which is enough ambient to fill every shadow in the city back to
+# within a stop of its lit surface: the frame had 5.5 % dark pixels where the
+# reference never goes below 10 %. Raising the sun and dropping the sky trades
+# fill for shape.
+#
+# These override _stage.py, which builds them - and _stage DESTROYS THE CITY, so
+# it can never be re-run to change them. That is why they are applied here on
+# every open instead.
+SUN_ENERGY = 6.0                 # was 4.0
+SUN_ANGLE = 2.0                  # degrees; was 3.5. Sharper shadow edges
+SUN_COLOR = (1.0, 0.90, 0.78)    # was (1.0, 0.95, 0.87)
+SKY_STRENGTH = 0.18              # was 0.32
+SKY_SATURATION = 0.15            # was 0.35. How much blue the ambient keeps
+
 _h = (SHOT_TARGET1[0] - SHOT_OBELISCO[0], SHOT_TARGET1[1] - SHOT_OBELISCO[1])
 _hn = math.hypot(*_h)
 SHOT_HEADING = (_h[0] / _hn, _h[1] / _hn)
@@ -479,15 +534,48 @@ def require(collections=(), files=(), hint=""):
                          f"  {hint or 'see CLAUDE.md for the build order'}\n")
 
 
+def apply_grade(scene=None):
+    """Put the view settings and the key light where the GRADE block says.
+
+    Applied on the way in, like the palette, and for the identical reason: a
+    grade set by whichever step happens to render last is a grade that differs
+    between the still and the move. The sun and the sky are here rather than in
+    _stage.py because _stage destroys the city and cannot be re-run.
+    """
+    scene = scene or bpy.context.scene
+    vs = scene.view_settings
+    vs.view_transform = "AgX"
+    vs.look = LOOK
+    vs.exposure = EXPOSURE
+    vs.use_white_balance = True
+    vs.white_balance_temperature = WHITE_BALANCE
+
+    sun = bpy.data.objects.get("Sun")
+    if sun and sun.type == "LIGHT":
+        sun.data.energy = SUN_ENERGY
+        sun.data.angle = math.radians(SUN_ANGLE)
+        sun.data.color = SUN_COLOR
+
+    world = scene.world
+    if world and world.node_tree:
+        for n in world.node_tree.nodes:
+            if n.bl_idname == "ShaderNodeBackground":
+                n.inputs["Strength"].default_value = SKY_STRENGTH
+            elif n.bl_idname == "ShaderNodeHueSaturation":
+                n.inputs["Saturation"].default_value = SKY_SATURATION
+
+
 def open_city(needs_collections=(), needs_files=(), hint=""):
-    """Open city.blend, bring the palette up to date, check prerequisites.
+    """Open city.blend, bring the palette and the grade up to date, check
+    prerequisites.
 
     The palette is applied on the way in rather than by whichever step happens
     to create a material first, so a colour edited in _palette.py lands in the
-    very next step that runs.
+    very next step that runs. The grade rides along for the same reason.
     """
     bpy.ops.wm.open_mainfile(filepath=str(BLEND))
     apply_palette()
+    apply_grade()
     require(needs_collections, needs_files, hint)
     return bpy.context.scene
 

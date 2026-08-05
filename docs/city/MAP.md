@@ -52,7 +52,7 @@ emptied and rebuilt on every run, so anything else that writes into it is lost.
 | `08_title` | `BUILDINGS`, `NATURE`, lots | `TITLE` | — (it DELETES from other collections) |
 | `11_animate` | `TRAFFIC`, `TITLE`, lots, solids | `AIR` | — (animates `TRAFFIC`, `PEOPLE`) |
 | `12_camera` | `TITLE`, `TRAFFIC` | — | the camera animation |
-| `07_look` | `BUILDINGS`, `TITLE` | — | the compositor |
+| `07_look` | `BUILDINGS`, `TITLE` | — | the compositor (the grade is `_common`'s) |
 
 ## The south rim
 
@@ -135,6 +135,22 @@ the shot, and puts everything back.
 
 **The camera in the .blend belongs to `12_camera.py`.** Everything else that
 needs a different framing asks for it through `preview()` and gives it back.
+
+**6. Which grade wins.** `_common.GRADE`, applied by `open_city()`. This one
+failed more quietly than any of the others, because the two parties were a step
+and a library. `07_look` set `view_settings.look = "AgX - Punchy"` seven lines
+above its render call, and `blib.render`'s signature carried `look="None"` as a
+default and assigned it unconditionally — so the look was set, then reset, then
+rendered. The approved still and all 624 frames of the move went out with no
+look at all: 0.185 mean saturation against a reference that runs 0.20–0.32, and
+5.5 % dark pixels against 10–35 %. Nothing about that raises an exception, and
+the number it moved most is the one nobody re-measured after the palette work.
+
+`blib.render` now treats `view_transform`, `look` and `exposure` as
+"leave the scene's alone" when they are not passed. **A step must not set
+`view_settings`**; steps 11 and 12 used to read the exposure back out of the
+scene and hand it to every render call, which was a workaround for exactly this
+bug, and those lines are gone.
 
 ## The street tables are per axis and they are not interchangeable
 

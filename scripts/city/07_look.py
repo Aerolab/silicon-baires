@@ -169,16 +169,14 @@ def main():
     cam.data.dof.focus_distance = FOCUS_D
     cam.data.dof.aperture_fstop = F_STOP
 
-    # AgX desaturates by design; Punchy pulls the chroma back towards the
-    # reference without giving up the highlight rolloff
-    scene.view_settings.look = "AgX - Punchy"
-    # the reference sits at 0.498 mean luminance; without this the frame drifts
-    # bright as soon as the roads stop carrying the dark values
-    scene.view_settings.exposure = -0.78
+    # The grade is NOT set here any more. It lives in _common.GRADE and
+    # open_city() applies it, because these three lines used to be overwritten
+    # by the render call at the bottom of this same function - blib.render
+    # assigned look="None" from its own default - so the look this file asked
+    # for never reached a single frame. See the GRADE block in _common.py.
     build_compositor(scene)
 
     cycles = "final" in sys.argv   # not --cycles: Blender parses that itself
-    exposure = scene.view_settings.exposure
 
     # The still is a STILL, and it does not want the shot's motion blur.
     # Step 12 turns it on and leaves it on, because it belongs to the move; the
@@ -191,10 +189,10 @@ def main():
     if cycles:
         blib.use_gpu()
         blib.render(str(R / "city_final.png"), "CYCLES", samples=256,
-                    resolution=(2560, 1440), exposure=exposure)
+                    resolution=(2560, 1440))
     else:
         blib.render(str(R / "city_07_look.png"), "EEVEE", samples=96,
-                    resolution=(1600, 900), exposure=exposure)
+                    resolution=(1600, 900))
     scene.render.use_motion_blur = blur
     save_city()
 

@@ -39,10 +39,29 @@ Measured the same way across all four frames, Rec.709 luma on sRGB:
 
 | | frame 1 | frame 2 | frame 3 | frame 4 | ours |
 |---|---|---|---|---|---|
-| Mean luminance | 0.414 | 0.406 | 0.498 | 0.476 | **0.439** |
-| Pixels below 0.25 | 35.2 % | 35.1 % | 16.0 % | 11.1 % | **13.1 %** |
-| Mean saturation | 0.336 | 0.316 | 0.335 | 0.220 | **0.284** |
+| Mean luminance | 0.414 | 0.406 | 0.498 | 0.476 | **0.470** |
+| Std dev of luminance (contrast) | 0.261 | 0.245 | 0.229 | 0.197 | **0.246** |
+| Pixels below 0.25 | 34.6 % | 34.2 % | 15.3 % | 10.4 % | **23.9 %** |
+| Pixels above 0.75 | 17.5 % | 13.7 % | 19.5 % | 12.5 % | **15.4 %** |
+| Mean saturation, red title masked | 0.272 | — | 0.321 | 0.204 | **0.320** |
+| R/B, red title masked | 1.084 | — | 1.288 | 1.121 | **1.118** |
 | Green coverage | 22.4 % | 23.6 % | 21.9 % | 26.2 % | **27.7 %** |
+
+**Mask the red title before measuring chroma or warmth.** The reference's own
+numbers appear to drift warm across the clip — R/B climbs from 1.10 to 1.25
+over ten seconds, which reads as morning turning into late afternoon. It is
+not a light change. Masking pixels where `r > 1.6g` and `r > 1.6b` flattens
+that curve to 1.09 for the whole clip: what is actually happening is that the
+red title grows from 3 % to 8 % of the frame. There is no time-of-day move in
+the reference and there is none in ours. Our own move does the same thing for
+the same reason — 1.20 at frame 1 to 1.34 at frame 528 — so the impression is
+already reproduced, by the title, for free.
+
+**Four of these rows were added when the grade turned out never to have been
+applied.** The row that used to read 13.1 % dark was measured off a render from
+before that regression; the frame as it actually shipped was at 5.5 %, 0.185
+saturated and 0.959 R/B — flat, grey and cool against every reference frame.
+See `_common.GRADE`.
 
 The dark-pixel fraction runs from 11 % to 35 % across four frames of the same
 sequence. An earlier pass took 15.7 % off one frame and wrote it down as *the*
@@ -165,11 +184,26 @@ Read off the frames:
 
 - One sun, **high, slightly behind and to the right** of camera. Shadows are short and
   fall toward the lower-left.
-- **Shadows are soft** (large sun angle, ~3–5°) and **not black**: they read as a
-  darker, slightly cooler version of the surface, never as a hole.
-- Strong, even ambient fill from a bright sky. Nothing in frame is underexposed; the
-  darkest asphalt still reads as grey, not black.
-- Time of day: late morning. Warm-neutral, no golden hour, no long shadows.
+- **Shadows are soft** (sun angle 2°) and **not black**: they read as a darker,
+  slightly cooler version of the surface, never as a hole. The angle was 3.5°
+  and the shadows had no edge left at all.
+- Ambient fill from the sky, but **the sun has to win**. This is the line that was
+  wrong for the longest: "strong, even ambient fill" was read as a licence to run
+  the sky at 0.32 against a sun at 4.0, which fills every shadow in the city back
+  to within a stop of its lit surface. The frame then carries 5.5 % dark pixels
+  where the reference never drops below 10 %, and the city goes flat. It is
+  6.0 / 0.18 now. Nothing in frame is underexposed; the darkest asphalt still
+  reads as very dark grey, not black.
+- **The reference is warm and it is easy to miss.** R/B runs 1.08–1.29 with the red
+  title masked out; ours was 0.96, which is what "the colours look a bit grey"
+  actually is. Three levers move it together — sky saturation, sun colour and the
+  view-transform white balance — because pushing any one of them alone far enough
+  tints the whites.
+- Time of day: late morning. Warm, no golden hour, no long shadows. The clip
+  *looks* like it drifts towards sunset and does not; see section 1b.
+- All of it lives in `_common.GRADE`, applied by `open_city()`. Do not set
+  `view_settings` inside a step: `blib.render` used to overwrite it and the whole
+  look was lost that way once already.
 
 ## 4. Palette
 

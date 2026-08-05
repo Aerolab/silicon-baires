@@ -200,11 +200,10 @@ def main():
     scene.render.motion_blur_shutter = 0.5
 
     scene.frame_set(FRAMES)
-    exposure = scene.view_settings.exposure
     for f in (1, MOVE // 3, 2 * MOVE // 3, MOVE, FRAMES):
         scene.frame_set(f)
         blib.render(str(R / f"city_12_cam_{f:03d}.png"), "EEVEE", samples=48,
-                    resolution=(1280, 720), exposure=exposure)
+                    resolution=(1280, 720))
     scene.frame_set(FRAMES)
     save_city()
 
@@ -219,13 +218,11 @@ def main():
     # that is the cost, and it is a decision rather than a default.
     if "export" in sys.argv:
         blib.render_video(str(R / "city_move_1080.mp4"), fps=FPS, engine="EEVEE",
-                          samples=96, resolution=(1920, 1080),
-                          exposure=exposure)
+                          samples=96, resolution=(1920, 1080))
         print("  export: renders/city_move_1080.mp4")
     elif "video" in sys.argv:
         blib.render_video(str(R / "city_move.mp4"), fps=FPS, engine="EEVEE",
-                          samples=48, resolution=(1280, 720),
-                          exposure=exposure)
+                          samples=48, resolution=(1280, 720))
         print("  video: renders/city_move.mp4")
 
 

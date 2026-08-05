@@ -74,7 +74,7 @@ adding a step. The graph is declared in the code as well — every step opens wi
 stops the run with the command that fixes it, instead of surfacing thirty lines
 later as a `KeyError` or not surfacing at all.
 
-Four numbers are shared and each one is shared because two steps disagreed
+Five numbers are shared and each one is shared because two steps disagreed
 about it once, silently:
 
 - **How long the shot is** — `_common.FPS / FRAMES / MOVE`. Change it there,
@@ -87,6 +87,14 @@ about it once, silently:
   the framing the still is rendered at.
 - **Every colour** — `scripts/city/_palette.py`, one table, applied on the way
   in by `open_city()`. Editing a hex anywhere else does nothing and says nothing.
+- **The grade** — `_common.GRADE`: the view transform, the look, the exposure,
+  the white balance, and the sun-to-sky ratio the whole frame's contrast comes
+  from. Also applied by `open_city()`. It is a shared number because it was a
+  private one: 07_look set `view_settings.look` on the line above a
+  `blib.render` whose own default reset it, so the still and all 624 frames of
+  the move shipped with no look at all — flat, grey and cool against every
+  reference frame. `blib.render` now leaves the scene's view settings alone
+  unless a caller passes its own. **Do not set `view_settings` inside a step.**
 
 **The city has a south rim**, one row of blocks bolted on outside the grid at
 `j = -1`, because the opening frame of the move ran 83 m off the end of the map.

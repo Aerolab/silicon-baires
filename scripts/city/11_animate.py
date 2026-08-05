@@ -371,20 +371,18 @@ def main():
     print(f"  walking: {people} people ({still} left standing)   helicopter: "
           f"{'yes' if heli else 'no Heli in the kit'}")
 
-    exposure = scene.view_settings.exposure
     for f in (1, FRAMES // 2, FRAMES):
         # HERO_WIDTH, not a literal 170.0: this is a control render of the
         # traffic and it has to be the framing the shot actually lands on.
         with preview(HERO_WIDTH, target=(0, 0, 0), frame=f):
             blib.render(str(R / f"city_11_move_{f:03d}.png"), "EEVEE",
-                        samples=48, resolution=(1280, 720), exposure=exposure)
+                        samples=48, resolution=(1280, 720))
     scene.frame_set(1)
     save_city()
 
     if "video" in sys.argv:
         blib.render_video(str(R / "city_move.mp4"), fps=FPS, engine="EEVEE",
-                          samples=48, resolution=(1280, 720),
-                          exposure=exposure)
+                          samples=48, resolution=(1280, 720))
         print("  video: renders/city_move.mp4")
 
 

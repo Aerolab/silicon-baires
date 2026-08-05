@@ -42,6 +42,13 @@ CITY = 806.0
 # reference sits at 30.6.
 
 # --- sun -------------------------------------------------------------------
+# THE FOUR INTENSITY NUMBERS BELOW ARE DEAD. SUN_ENERGY, SUN_ANGLE, the sun
+# colour, SKY_STRENGTH and SKY_SATURATION are overridden by _common.apply_grade
+# on every open_city(), because they are look and this file cannot be re-run to
+# change them: it destroys the city. Edit _common.GRADE. What is still live
+# here is the GEOMETRY - the azimuth and the elevation, which decide where the
+# shadows fall and are what the whole grid is composed against.
+#
 # Shadows must fall towards screen lower-left, which puts the sun at world
 # azimuth 180 deg for a camera at 45 deg. High and late-morning.
 SUN_AZIMUTH = 180.0
