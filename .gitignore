@@ -28,3 +28,15 @@ refs/
 
 # Harness scratch, not project content.
 tasks/
+
+# The web build. Everything under web/public/ except index-level assets is
+# generated: city.* by ./bl scripts/city/20_export_web.py, draco/ by npm.
+# The .glb is the .blend exported, so committing it would be committing the
+# same city twice, and the two copies would drift.
+web/node_modules/
+web/dist/
+web/public/city.glb
+web/public/city_motion.json
+web/public/city_shot.json
+web/public/city_sky.exr
+web/public/draco/

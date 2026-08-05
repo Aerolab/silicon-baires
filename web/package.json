@@ -1,0 +1,19 @@
+{
+  "name": "city-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/copy-draco.mjs",
+    "dev": "vite",
+    "prebuild": "node scripts/copy-draco.mjs",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lucide": "^1.28.0",
+    "three": "^0.182.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.0"
+  }
+}

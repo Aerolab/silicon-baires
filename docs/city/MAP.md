@@ -29,6 +29,7 @@ _stage.py                  # ONCE, and it DESTROYS the city. Not a step.
             11_animate.py  # traffic and walkers
               12_camera.py # the move. Owns the camera in the .blend
                 07_look.py # the final frame
+                  20_export_web.py  # the same city, published to web/
 ```
 
 Indentation is dependency, not preference. Siblings at the same level are
@@ -53,6 +54,7 @@ emptied and rebuilt on every run, so anything else that writes into it is lost.
 | `11_animate` | `TRAFFIC`, `TITLE`, lots, solids | `AIR` | — (animates `TRAFFIC`, `PEOPLE`) |
 | `12_camera` | `TITLE`, `TRAFFIC` | — | the camera animation |
 | `07_look` | `BUILDINGS`, `TITLE` | — | the compositor (the grade is `_common`'s) |
+| `20_export_web` | everything, plus `07_look`'s numbers | — (writes outside the .blend) | `web/public/`: the glb, the motion, the shot, the sky |
 
 ## The south rim
 
@@ -203,6 +205,40 @@ and it opens with `blib.reset()`.
 | `_palette.py` | every art-directed colour in the city, once |
 | `_solids.py` | the footprint table and the spatial query behind it |
 | `_archive/` | spikes that settled a decision and are kept as evidence. They carry the layout from before step 03 went to per-row block sizes, so their numbers are not current |
+
+## The web build
+
+`20_export_web.py` is the only step that writes outside the `.blend`, and it is
+the last one: it reads the finished city and publishes `web/public/`. See
+`web/README.md`.
+
+It is a step and not a script off to one side because it has the same failure
+mode as every other step here — **none of what can go wrong raises an
+exception.** Three things already have, and each is now checked in the export
+rather than noticed in a browser:
+
+- **The names are the joint.** The motion file addresses objects by name and
+  the browser looks them up in the glb. A name the glTF exporter rewrites is an
+  object that silently stops moving.
+- **The transform is world, not local.** Read locally, a car's heading is not
+  animated at all (step 11 keyframes location only), so half the traffic drove
+  sideways at a perfectly plausible speed, and `Heli.rotor` — which has a
+  parent — was placed by its offset from a helicopter it no longer knew about.
+- **Two keys are not always enough.** The rotor turns exactly 26 times over the
+  shot, so its two ends agree and every "did it move?" test says no.
+  `check_motion` compares the browser's interpolation against Blender at three
+  frames nobody sampled, and fails the run if they disagree.
+
+
+The look is measured, not eyeballed: `window.measure()` in the browser reports
+the same five numbers `_common.GRADE` was fitted with, against the same
+reference frame.
+
+It also publishes `bounds` — the rectangle the built city occupies, measured
+off the 533 footprints in `city_solids.json` rather than off a bounding box,
+because step 03 lays ground well past the last block. Free navigation in the
+browser is fenced to it, so the orbit cannot end up over bare site or under the
+sheet.
 
 ## The standing checks
 

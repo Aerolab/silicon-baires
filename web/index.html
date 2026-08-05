@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Buenos Aires — city</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { background: #0d0d0f; overflow: hidden;
+             font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+             color: #e8e4dc; }
+      canvas { display: block; }
+
+      #hud { position: fixed; left: 16px; bottom: 16px; z-index: 10;
+             display: flex; gap: 14px; align-items: center;
+             background: rgba(12,12,14,.72); backdrop-filter: blur(8px);
+             border: 1px solid rgba(255,255,255,.10); border-radius: 10px;
+             padding: 9px 13px; user-select: none; }
+      #hud button { color: inherit; cursor: pointer; display: grid;
+                    place-items: center; width: 30px; height: 30px;
+                    background: rgba(255,255,255,.08); border: 0;
+                    border-radius: 8px; padding: 0;
+                    transition: background .15s; }
+      #hud button:hover { background: rgba(255,255,255,.18); }
+      #hud button svg { width: 16px; height: 16px; display: block; }
+      #scrub { width: 260px; accent-color: #d8352a; }
+      #frame { min-width: 88px; opacity: .75; font-variant-numeric: tabular-nums; }
+      /* Hidden unless ?stats=1: it is a diagnostic, not part of the piece. */
+      #stats { position: fixed; right: 16px; bottom: 16px; z-index: 10;
+               text-align: right; opacity: .45; line-height: 1.7;
+               display: none; }
+      #stats.on { display: block; }
+      #load { position: fixed; inset: 0; display: grid; place-items: center;
+              background: #0d0d0f; z-index: 20; transition: opacity .4s; }
+      #load.gone { opacity: 0; pointer-events: none; }
+      #load span { opacity: .5; letter-spacing: .14em; text-transform: uppercase; }
+    </style>
+  </head>
+  <body>
+    <div id="load"><span>cargando la ciudad…</span></div>
+    <div id="hud">
+      <button id="play" title="Pausar (espacio)" aria-label="Pausar"></button>
+      <input id="scrub" type="range" min="1" max="624" value="1" step="1" />
+      <span id="frame">1 / 624</span>
+      <button id="free" title="Cámara libre (F)" aria-label="Cámara libre"></button>
+    </div>
+    <div id="stats"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
