@@ -120,7 +120,7 @@ existing instance orphaned, so it **must** be followed by the whole chain from
 `03_ground.py`, and `02b_porteno_kit.py` has to run again too because its assets
 live in the same collection.
 
-Seven standing checks, because none of these failures raise an exception:
+Eight standing checks, because none of these failures raise an exception:
 
 ```bash
 ./bl scripts/city/99_check_overlap.py           # nothing is standing inside a building
@@ -129,6 +129,7 @@ Seven standing checks, because none of these failures raise an exception:
 ./bl scripts/city/94_check_road.py              # and nothing green ON the road
 ./bl scripts/city/96_check_title_move.py        # the title from other angles
 ./bl scripts/city/93_check_signs.py             # how many brands the shot delivers
+./bl scripts/city/92_check_zfight.py            # nothing fights for the same plane
 python3 scripts/city/97_check_title.py renders/city_08_title_only.png
 ```
 
@@ -136,6 +137,16 @@ python3 scripts/city/97_check_title.py renders/city_08_title_only.png
 planned for a camera that crosses the city on one diagonal, so "77 signs built"
 and "how many a viewer sees" are different numbers by a factor of four, and only
 the second one matters.
+
+`92_check_zfight.py` finds two faces on one plane, overlapping, pointing the
+same way — a question with no answer. **Cycles answers it arbitrarily but
+consistently, so it has never shown up in a render**; a rasteriser answers it
+per pixel and the surface tears into patches that swap as the camera moves.
+It works in world space across objects, ignores anything no viewpoint can
+reach, and ranks by area, because the worst fault in the city was two
+triangles. Two things cause it, and see **the winding** below for the first.
+The second is a detail resting exactly on its backing: sink it by
+`_common.SINK`, and `10_signs.mark()` is the worked example.
 
 `99_check_overlap.py` is the one to run after touching anything that places
 objects. A tree inside an office wall is invisible from the hero camera — it
@@ -153,6 +164,35 @@ four trees stood in the middle of the 9 de Julio beside the Obelisco and both
 tables were correct — step 03 dropped the median across the plaza block for
 being two 9 m stubs, and step 05 planted one anyway from its own arithmetic.
 The rule now lives once, in `_common.median_runs`, and both steps read it.
+
+## The winding was inside out, everywhere, until it wasn't
+
+`Mesh.box()` and `Mesh.sphere()` in `_common.py` built their faces wound the
+wrong way, so their normals pointed INTO the solid. Measured by signed volume,
+**100 of the 118 closed meshes in the .blend were inside out**: every tree,
+every car, the helicopter, the jacarandas, every sign plate.
+
+**Nothing could see it.** Cycles shades both sides of a face, so every render
+this project ever shipped was correct. A rasteriser is not so forgiving: with
+backface culling on, the face it draws is the far one, and the far one is
+usually lying on top of something. That is what made the roof signs flicker in
+the browser — the plate's UNDERSIDE was being drawn, and it sits exactly on the
+roof deck.
+
+Two things follow, and both are the point of writing this down:
+
+- **Check the winding before blaming anything else.** `bmesh.calc_volume(
+  signed=True)` on a closed mesh is positive when the faces point outward.
+- **A render is not the only judge.** To see what a rasteriser sees without
+  leaving Blender, set `use_backface_culling = True` on every material and
+  render: before the fix the roof logo was translucent and the towers had open
+  floors; after it, everything is solid. That is the cheapest reproduction of
+  the browser there is.
+
+Changing a primitive in `_common` means **rebuilding the whole chain** from
+`02_kit.py`, because the geometry is already baked into the .blend. That is
+what fixing this cost, and it is the reason to check `92_check_zfight.py`
+before adding anything that lies flat on a surface.
 
 Read `docs/city/MAP.md` before touching the build,
 `docs/city/STYLE-BIBLE.md` before touching the look, and `docs/city/PLAN.md`

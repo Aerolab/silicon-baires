@@ -229,6 +229,13 @@ rather than noticed in a browser:
   `check_motion` compares the browser's interpolation against Blender at three
   frames nobody sampled, and fails the run if they disagree.
 
+And one that is not in the export at all, because it was in the geometry: until
+`_common.box()` and `.sphere()` were fixed, **100 of the 118 closed meshes in
+this .blend had their faces wound inside out**. Cycles shades both sides and
+never mentioned it; the browser draws the far face and the roof signs tore
+against the decks they lie on. If anything looks wrong in the browser and right
+in a render, suspect this first — `bmesh.calc_volume(signed=True)` is positive
+when a closed mesh points outward, and CLAUDE.md has the whole story.
 
 The look is measured, not eyeballed: `window.measure()` in the browser reports
 the same five numbers `_common.GRADE` was fitted with, against the same
@@ -252,8 +259,15 @@ from the hero camera.
 ./bl scripts/city/94_check_road.py       # nothing green ON the road
 ./bl scripts/city/96_check_title_move.py # the title from other angles
 ./bl scripts/city/93_check_signs.py      # how many brands the shot delivers
+./bl scripts/city/92_check_zfight.py     # nothing fights for the same plane
 python3 scripts/city/97_check_title.py renders/city_08_title_only.png
 ```
+
+`92_check_zfight.py` also turned up something no check owns yet: **about twenty
+pairs of vehicles are parked inside each other**, 17 to 23 m2 of overlap each
+(`CarTeal.i.150` and `CarTeal.i.151`, say). That is not a z-fighting fault, it
+is step 05 placing two cars in one space, and `99_check_overlap.py` does not
+see it because it tests things against buildings and not against each other.
 
 `93_check_signs.py` answers the question the build could not answer at all
 before it existed: **how many distinct company brands actually go past the

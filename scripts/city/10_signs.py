@@ -60,7 +60,7 @@ sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
 from _common import (Mesh, collection, mat, pbrmat, rng, counts, R, SIGNS,
-                     SOLIDS, open_city, save_city, purge, preview)
+                     SOLIDS, SINK, open_city, save_city, purge, preview)
 from _solids import Solids
 
 FONT = "/Users/bilune/Library/Fonts/PPMonumentNormal-Black.otf"
@@ -160,10 +160,18 @@ def cap_of(body):
 
 def mark(m, kind, size, ink, x):
     """The abstract glyph on a panel or a disc. Flat, one colour, no detail:
-    at this distance a logo is a silhouette and nothing else."""
+    at this distance a logo is a silhouette and nothing else.
+
+    IT STARTS BELOW ZERO, and its callers all place z=0 on the face of the
+    panel. Resting exactly on that face put the glyph's underside on the same
+    plane as the panel's front, pointing the same way and covering the same
+    pixels: 15 of these signs flickered in the browser, and none of them ever
+    looked wrong in a render, because a path tracer resolves the tie the same
+    way every frame. See _common.SINK and 92_check_zfight.py.
+    """
     s = size
     if kind == "disc":
-        m.cyl((0, 0, 0), s * 0.34, 0.06, ink, segs=24, xform=x)
+        m.cyl((0, 0, -SINK), s * 0.34, 0.06 + SINK, ink, segs=24, xform=x)
     elif kind == "ring":
         for k in range(24):
             a0 = 2 * math.pi * k / 24
@@ -173,24 +181,28 @@ def mark(m, kind, size, ink, x):
                      (r1 * math.cos(a1), r1 * math.sin(a1)),
                      (r0 * math.cos(a1), r0 * math.sin(a1)),
                      (r0 * math.cos(a0), r0 * math.sin(a0))],
-                    0.0, 0.06, ink, x)
+                    -SINK, 0.06, ink, x)
     elif kind == "square":
-        m.slab(0, 0, s * 0.5, s * 0.5, 0.0, 0.06, ink, x)
-        m.slab(s * 0.14, s * 0.14, s * 0.22, s * 0.22, 0.06, 0.09,
+        m.slab(0, 0, s * 0.5, s * 0.5, -SINK, 0.06, ink, x)
+        # INSET, not flush with the corner. At s*0.14 with a side of s*0.22 the
+        # small square reached exactly s*0.25 — the same edge as the big one —
+        # so their side faces were coplanar and overlapping, which is the same
+        # fault as resting on the face and looks the same in the browser.
+        m.slab(s * 0.135, s * 0.135, s * 0.21, s * 0.21, 0.06 - SINK, 0.09,
                mat("Sign Frame"), x)
     elif kind == "triangle":
         m.prism([(-s * 0.34, -s * 0.26), (s * 0.34, -s * 0.26),
-                 (0.0, s * 0.34)], 0.0, 0.06, ink, x)
+                 (0.0, s * 0.34)], -SINK, 0.06, ink, x)
     elif kind == "chevron":
         for sy in (-1, 1):
             m.prism([(-s * 0.34, sy * s * 0.06), (0.0, sy * s * 0.30),
                      (s * 0.34, sy * s * 0.06), (s * 0.20, sy * s * 0.02),
                      (0.0, sy * s * 0.19), (-s * 0.20, sy * s * 0.02)],
-                    0.0, 0.06, ink, x)
+                    -SINK, 0.06, ink, x)
     else:                                   # bars
         for k in range(3):
             m.slab(0, (k - 1) * s * 0.16, s * (0.5 - k * 0.10), s * 0.09,
-                   0.0, 0.06, ink, x)
+                   -SINK, 0.06, ink, x)
 
 
 def upright(x, y, z, h):

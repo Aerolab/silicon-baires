@@ -159,6 +159,25 @@ SUN_COLOR = (1.0, 0.90, 0.78)    # was (1.0, 0.95, 0.87)
 SKY_STRENGTH = 0.18              # was 0.32
 SKY_SATURATION = 0.15            # was 0.35. How much blue the ambient keeps
 
+# --- how far a detail sinks into the thing it is stuck on -------------------
+# THE SIXTH SHARED NUMBER, and like the others it is here because two places
+# disagreed about it silently. A mark placed exactly on the face of its panel
+# gives two faces on one plane, pointing the same way, covering the same
+# pixels. Cycles answers that arbitrarily but CONSISTENTLY, so every render
+# this project has shipped looks fine; a rasteriser answers it per pixel from
+# an interpolated depth, so in the browser the signs and the roof marks tear
+# into patches that swap as the camera moves. It is a geometry fault that only
+# one of the two renderers is honest about.
+#
+# So a detail is sunk into its backing instead of resting on it. 4 mm: deeper
+# than any depth buffer this scene will ever have and far below a pixel at
+# every framing the shot uses - the hero frame is 170 m across 1920 px, so one
+# pixel is 89 mm.
+#
+# `92_check_zfight.py` is what finds these. Run it after adding any detail that
+# lies flat on a surface.
+SINK = 0.004
+
 _h = (SHOT_TARGET1[0] - SHOT_OBELISCO[0], SHOT_TARGET1[1] - SHOT_OBELISCO[1])
 _hn = math.hypot(*_h)
 SHOT_HEADING = (_h[0] / _hn, _h[1] / _hn)
@@ -345,8 +364,18 @@ class Mesh:
         z0, z1 = cz - sz / 2, cz + sz / 2
         v = [(x0, y0, z0), (x1, y0, z0), (x1, y1, z0), (x0, y1, z0),
              (x0, y0, z1), (x1, y0, z1), (x1, y1, z1), (x0, y1, z1)]
-        f = [(0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1),
-             (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0)]
+        # WOUND OUTWARD. Every one of these six was inside out, so every box in
+        # the city had its normals pointing into itself — 100 of the 118 closed
+        # meshes in the .blend, by signed volume. Cycles never said a word: it
+        # shades both sides of a face, so the render is correct and always has
+        # been. A rasteriser is not so forgiving. With backface culling on, the
+        # face you see is the one you should not: a roof sign showed its
+        # UNDERSIDE, which sits exactly on the roof deck, and the two tore at
+        # each other pixel by pixel. That is the flicker.
+        #
+        # Check it with bmesh.calc_volume(signed=True): outward is positive.
+        f = [(0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4),
+             (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)]
         self._add(v, f, material, xform)
 
     def slab(self, cx, cy, w, h, z0, z1, material, xform=None):
@@ -420,15 +449,18 @@ class Mesh:
                           cz + radius * sz * math.cos(phi)))
         top = len(v); v.append((cx, cy, cz + radius * sz))
         bot = len(v); v.append((cx, cy, cz - radius * sz))
+        # Wound outward, like box() and for the same reason: this one made
+        # every tree, every jacaranda, the helicopter and the roof dishes
+        # inside out. See the note in box().
         for r in range(rings - 2):
             for s in range(segs):
                 a = r * segs + s
                 b = r * segs + (s + 1) % segs
-                f.append((a, b, b + segs, a + segs))
+                f.append((a, a + segs, b + segs, b))
         for s in range(segs):
-            f.append((top, (s + 1) % segs, s))
-            f.append((bot, (rings - 2) * segs + s,
-                      (rings - 2) * segs + (s + 1) % segs))
+            f.append((top, s, (s + 1) % segs))
+            f.append((bot, (rings - 2) * segs + (s + 1) % segs,
+                      (rings - 2) * segs + s))
         self._add(v, f, material, xform)
 
     def flat(self, poly, z, material, xform=None):
