@@ -25,7 +25,11 @@
       #hud button:hover { background: rgba(255,255,255,.18); }
       #hud button svg { width: 16px; height: 16px; display: block; }
       #scrub { width: 260px; accent-color: #d8352a; }
-      #frame { min-width: 88px; opacity: .75; font-variant-numeric: tabular-nums; }
+      /* Diagnostic, like #stats: the slider already says where the shot is,
+         and a frame counter on a piece reads as a tool. ?stats=1 brings it. */
+      #frame { min-width: 88px; opacity: .75; font-variant-numeric: tabular-nums;
+               display: none; }
+      #frame.on { display: inline; }
       /* Hidden unless ?stats=1: it is a diagnostic, not part of the piece. */
       #stats { position: fixed; right: 16px; bottom: 16px; z-index: 10;
                text-align: right; opacity: .45; line-height: 1.7;

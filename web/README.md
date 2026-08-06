@@ -101,7 +101,15 @@ From the console: `window.city`, `scene`, `camera`, `controls`, `post`,
 Space plays and pauses, `F` swaps between the shot and a free orbit, the slider
 scrubs. The two buttons are Lucide icons and each one shows the action it
 performs rather than the state it is in — playing shows a pause, the shot shows
-an orbit.
+an orbit. The frame counter is diagnostic and hidden; `?stats=1` brings it back
+along with the rest.
+
+**When the move lands, the camera is handed over.** The shot ends on the
+approved hero framing after four seconds held on the title, which is the right
+place to start exploring from, so free orbit turns itself on there rather than
+looping the move. The city keeps running underneath — step 11's traffic is 26
+seconds long and it loops — because orbiting a frozen city is orbiting a
+photograph.
 
 ### The fence around free orbit
 

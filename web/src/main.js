@@ -192,7 +192,10 @@ ui.scrub.max = String(shot.frames);
 // The counters are off by default. ?stats=1 brings them back, and window.stats
 // reads them once without turning anything on.
 const showStats = flags.has("stats");
-if (showStats) ui.stats.classList.add("on");
+if (showStats) {
+  ui.stats.classList.add("on");
+  ui.frame.classList.add("on");
+}
 window.stats = () => ({ fps: Math.round(fps), ...city.stats });
 
 let frame = 1;
@@ -223,23 +226,24 @@ ui.scrub.oninput = () => {
   playing = false;
   paint();
 };
-ui.free.onclick = () => {
-  free = !free;
+function setFree(on) {
+  free = on;
   controls.enabled = free;
   paint();
-  if (free) {
-    // Hand OrbitControls the camera exactly where the move left it, so
-    // switching does not jump. The frustum is then FIXED at FREE_WIDTH and the
-    // wheel works through camera.zoom, which is the only thing minZoom and
-    // maxZoom can fence — they cannot fence a frustum that keeps changing.
-    const [w, tx, ty] = shotAt(shot, frame);
-    placeHero(camera, shot, FREE_WIDTH, tx, ty, innerWidth / innerHeight);
-    camera.zoom = FREE_WIDTH / w;      // after placeHero, which resets it to 1
-    camera.updateProjectionMatrix();
-    controls.target.set(tx, ty, 0);
-    controls.update();
-  }
-};
+  if (!free) return;
+  // Hand OrbitControls the camera exactly where the move left it, so switching
+  // does not jump. The frustum is then FIXED at FREE_WIDTH and the wheel works
+  // through camera.zoom, which is the only thing minZoom and maxZoom can fence
+  // — they cannot fence a frustum that keeps changing.
+  const [w, tx, ty] = shotAt(shot, frame);
+  placeHero(camera, shot, FREE_WIDTH, tx, ty, innerWidth / innerHeight);
+  camera.zoom = FREE_WIDTH / w;        // after placeHero, which resets it to 1
+  camera.updateProjectionMatrix();
+  controls.target.set(tx, ty, 0);
+  controls.update();
+}
+
+ui.free.onclick = () => setFree(!free);
 addEventListener("keydown", (e) => {
   if (e.code === "Space") { e.preventDefault(); ui.play.click(); }
   if (e.code === "KeyF") ui.free.click();
@@ -327,8 +331,9 @@ function drawFrame(now) {
     post.render(scene, camera, now / 1000);
   }
 
-  ui.frame.textContent = `${String(Math.round(frame)).padStart(3, "0")} / ${shot.frames}`;
   if (showStats) {
+    ui.frame.textContent =
+      `${String(Math.round(frame)).padStart(3, "0")} / ${shot.frames}`;
     ui.stats.textContent =
       `${fps.toFixed(0)} fps (${(1000 / fps).toFixed(1)} ms) · ${city.stats.drawCalls} draw calls · ` +
       `${city.stats.nodes.toLocaleString("es-AR")} instancias · ` +
@@ -347,7 +352,16 @@ function tick(now) {
   }
   if (playing) {
     frame += dt * shot.fps;
-    if (frame > shot.frames) frame = 1;
+    if (frame > shot.frames) {
+      // THE SHOT LANDS AND THE CAMERA IS HANDED OVER. The move ends on the
+      // approved hero framing after four seconds held on the title, so that is
+      // the frame to start exploring from — setFree reads it before the clock
+      // wraps, which is why this order matters.
+      if (!free) setFree(true);
+      // The city keeps running underneath. Step 11's traffic is 26 seconds
+      // long and it loops; freezing it would leave you orbiting a photograph.
+      frame = 1;
+    }
     ui.scrub.value = String(Math.round(frame));
   }
   drawFrame(now);
