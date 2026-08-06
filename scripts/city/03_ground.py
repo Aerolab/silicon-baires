@@ -161,6 +161,11 @@ BLOCK_SIZES = [64.0, 52.0, 76.0, 64.0, 58.0, 70.0, 64.0, 54.0, 72.0]
 RIM_DEPTH = 76.0
 RIM_STREET = 12.0             # the road along its outer side. See build_rim
 RIM_SEED = 8123
+# The stretch of 9 de Julio median the rim carries, filled in by build_rim and
+# published in city_lots.json. It is not in median_runs() on purpose - see the
+# note in build_rim - so this is how step 05 learns the rim has a median to
+# plant. A list because build_rim writes into it in place.
+RIM_MEDIAN = []
 
 # The cells that merge into the block the title stands on. Two, not four: with
 # the baseline on the street grid the word's footprint measures a*H across and
@@ -411,9 +416,16 @@ def build_rim(m, g, lots):
     # whole point: those runs come out of _common.median_runs(BY, ...), which
     # step 05 reads to plant the median trees. Adding a run there would hand 05
     # a longer list and shift the stream that plants every tree in the city.
-    # So the rim gets its section and no trees on it - at this distance, out of
-    # focus and behind the last row of roofs, that is not a difference anyone
-    # can see.
+    #
+    # It used to get its section and NOTHING ELSE - no trees and no shelters -
+    # on the argument that at this distance, out of focus and behind the last
+    # row of roofs, nobody could see the difference. That argument was written
+    # for the film. The browser turns and stops, and there the rim reads as one
+    # block of bare green down the widest street in the city while every other
+    # block is planted and has a station on it. So the run is published instead
+    # (`rim_median` below), and step 05 plants it out of the rim's own stream at
+    # the end - which is the same device, and leaves the other 55 trees where
+    # they were.
     north = -TOTAL_Y / 2
     outer = north - RIM_DEPTH - RIM_STREET
     m.quad(NINE, (north + outer) / 2, BUSWAY * 2, north - outer, 0.04,
@@ -427,6 +439,14 @@ def build_rim(m, g, lots):
                 0.0, MEDIAN_LIFT, mat("Sidewalk"))
         g.quad(NINE + mc, (a + b) / 2, mw - 1.0, b - a,
                MEDIAN_LIFT + 0.02, mat("Grass"))
+    RIM_MEDIAN[:] = [north - RIM_DEPTH, north]
+
+    # the shelters, out of the same two functions the rest of the avenue uses.
+    # 76 m of rim has room for the pair that any block this size gets, and the
+    # corridor stopping dead one block short of the edge is exactly what reads
+    # as unfinished from a camera you can turn.
+    rim_stations = sum(station(m, g, sc)
+                       for sc in station_centres(cy, RIM_DEPTH))
 
     # and the paint. One rim-length span added to what build_markings and
     # avenue_markings already do per block: the dashed centre line of every
@@ -447,7 +467,7 @@ def build_rim(m, g, lots):
                 g.quad(NINE + c + lane, d, 0.12, 3.2, MARK_Z, mk)
 
     print(f"  south rim: {len(BX)} blocks at y={cy:.0f}, "
-          f"reaching {outer:.0f}")
+          f"reaching {outer:.0f}, {rim_stations} Metrobus stations")
     return cy
 
 
@@ -456,6 +476,67 @@ def ellipse(cx, cy, rx, ry, segs=44):
     """A closed oval as a polygon, counter-clockwise."""
     return [(cx + rx * math.cos(2 * math.pi * i / segs),
              cy + ry * math.sin(2 * math.pi * i / segs)) for i in range(segs)]
+
+
+def station_centres(cy, size):
+    """Where the Metrobus shelters go on a stretch of avenue `size` m long.
+
+    Up to two per block, never over an intersection. The real corridor is 3 km
+    with 17 stations, which is 175-185 m apart, or one every three blocks at
+    our size, and this is deliberately not that. It is a shorter shelter
+    repeated along the median - what the avenue looks like rather than what the
+    timetable says. Recorded as a departure, not as the sourced number.
+
+    Split out of build_avenue because the south rim asks the same question
+    about its own 76 m of avenue, and answering it twice is how that stretch
+    ended up as the only bare one in the city.
+    """
+    room = size - STATION_MARGIN * 2
+    if room >= STATION_LEN * 2 + STATION_GAP:
+        return [cy - (STATION_LEN + STATION_GAP) / 2,
+                cy + (STATION_LEN + STATION_GAP) / 2]
+    return [cy] if room >= STATION_LEN else []
+
+
+def station(m, g, sc):
+    """One shelter, centred at y = sc. Returns 1, or 0 if the plaza is there."""
+    p0, p1 = PLAZA - PLAZA_HALF - 2.0, PLAZA + PLAZA_HALF + 2.0
+    if p0 - STATION_LEN < sc < p1 + STATION_LEN:
+        return 0                            # the plaza is standing there
+    sl = STATION_LEN
+    plat = mat("Paving Pale")
+    m.prism([(NINE - PLATFORM, sc - sl / 2), (NINE + PLATFORM, sc - sl / 2),
+             (NINE + PLATFORM, sc + sl / 2), (NINE - PLATFORM, sc + sl / 2)],
+            0.04, PLATFORM_LIFT, plat)
+    # the canopy: a flat roof on four posts, which is the whole form at
+    # this size. The real ones are glazed boxes and none of that reads.
+    for t in (-1, 1):
+        for s2 in (-1, 1):
+            m.box((NINE + s2 * (PLATFORM - 0.5),
+                   sc + t * (sl / 2 - 1.5), PLATFORM_LIFT + 1.5),
+                  (0.28, 0.28, 3.0), mat("Concrete Cool"))
+    # +1.2 of oversail, not +3.0. At 3 m the roof is 13 m wide over a
+    # 7 m platform, so from this camera it is a slab lying across the
+    # avenue with no visible platform under it at all - which reads as
+    # a lid, not as a station. At 1.2 the deck shows on both sides.
+    m.box((NINE, sc, PLATFORM_LIFT + 3.1),
+          (PLATFORM * 2 + 1.2, sl, 0.35), mat("Station Roof"))
+    # one white line down the roof, and it is load-bearing: the roof is
+    # dark now, and from overhead a dark rectangle on dark asphalt is a
+    # hole in the avenue. The line is what makes the shelter read.
+    m.box((NINE, sc, PLATFORM_LIFT + 3.30),
+          (1.1, sl - 1.4, 0.06), mat("Station Line"))
+    # the crossing that reaches it. A station nobody can walk to reads
+    # as an object dropped in the road, and this is two rows of quads.
+    for side in (-1, 1):
+        for k in range(5):
+            g.quad(NINE + side * (PLATFORM + 1.2 + k * 1.3), sc,
+                   0.7, 3.4, 0.05, mat("Marking"))
+    # one totem, at the near end. Two of them on a 22 m shelter, twice
+    # per block, is a picket fence down the middle of the avenue.
+    m.box((NINE, sc - sl / 2 - 0.9, PLATFORM_LIFT + 2.2),
+          (1.6, 0.35, 4.4), mat("Station Roof"))
+    return 1
 
 
 def build_avenue(m, g):
@@ -500,58 +581,9 @@ def build_avenue(m, g):
             g.quad(NINE + mc, (ra + rb) / 2, mw - 1.0, rb - ra,
                    MEDIAN_LIFT + 0.02, grass)
 
-    p0, p1 = PLAZA - PLAZA_HALF - 2.0, PLAZA + PLAZA_HALF + 2.0
     for (cy, size) in BY:
-        # Shelters the length of the boulevard: up to two per block, never
-        # over an intersection. The real corridor is 3 km with 17 stations,
-        # which is 175-185 m apart, or one every three blocks at our size, and
-        # this is deliberately not that. It is a shorter shelter repeated along
-        # the median - what the avenue looks like rather than what the
-        # timetable says. Recorded as a departure, not as the sourced number.
-        room = size - STATION_MARGIN * 2
-        if room >= STATION_LEN * 2 + STATION_GAP:
-            centres = [cy - (STATION_LEN + STATION_GAP) / 2,
-                       cy + (STATION_LEN + STATION_GAP) / 2]
-        elif room >= STATION_LEN:
-            centres = [cy]
-        else:
-            centres = []
-        for sc in centres:
-            if p0 - STATION_LEN < sc < p1 + STATION_LEN:
-                continue                    # the plaza is standing there
-            sl = STATION_LEN
-            m.prism([(NINE - PLATFORM, sc - sl / 2), (NINE + PLATFORM, sc - sl / 2),
-                     (NINE + PLATFORM, sc + sl / 2), (NINE - PLATFORM, sc + sl / 2)],
-                    0.04, PLATFORM_LIFT, plat)
-            # the canopy: a flat roof on four posts, which is the whole form at
-            # this size. The real ones are glazed boxes and none of that reads.
-            for t in (-1, 1):
-                for s2 in (-1, 1):
-                    m.box((NINE + s2 * (PLATFORM - 0.5),
-                           sc + t * (sl / 2 - 1.5), PLATFORM_LIFT + 1.5),
-                          (0.28, 0.28, 3.0), mat("Concrete Cool"))
-            # +1.2 of oversail, not +3.0. At 3 m the roof is 13 m wide over a
-            # 7 m platform, so from this camera it is a slab lying across the
-            # avenue with no visible platform under it at all - which reads as
-            # a lid, not as a station. At 1.2 the deck shows on both sides.
-            m.box((NINE, sc, PLATFORM_LIFT + 3.1),
-                  (PLATFORM * 2 + 1.2, sl, 0.35), mat("Station Roof"))
-            # one white line down the roof, and it is load-bearing: the roof is
-            # dark now, and from overhead a dark rectangle on dark asphalt is a
-            # hole in the avenue. The line is what makes the shelter read.
-            m.box((NINE, sc, PLATFORM_LIFT + 3.30),
-                  (1.1, sl - 1.4, 0.06), mat("Station Line"))
-            # the crossing that reaches it. A station nobody can walk to reads
-            # as an object dropped in the road, and this is two rows of quads.
-            for side in (-1, 1):
-                for k in range(5):
-                    g.quad(NINE + side * (PLATFORM + 1.2 + k * 1.3), sc,
-                           0.7, 3.4, 0.05, mat("Marking"))
-            # one totem, at the near end. Two of them on a 22 m shelter, twice
-            # per block, is a picket fence down the middle of the avenue.
-            m.box((NINE, sc - sl / 2 - 0.9, PLATFORM_LIFT + 2.2),
-                  (1.6, 0.35, 4.4), mat("Station Roof"))
-            stations += 1
+        for sc in station_centres(cy, size):
+            stations += station(m, g, sc)
 
     # Plaza de la Republica. The medians and the platform give way to one paved
     # island wide enough to stand a monument on, which is what the real plaza
@@ -773,7 +805,10 @@ def main():
         "avenue9j": {"x": NINE, "width": AVE9J, "index": NINE_X,
                      "median": list(MEDIAN), "busway": BUSWAY,
                      "platform": PLATFORM, "median_lift": MEDIAN_LIFT,
-                     "plaza": [NINE, PLAZA, PLAZA_WIDE, PLAZA_HALF]},
+                     "plaza": [NINE, PLAZA, PLAZA_WIDE, PLAZA_HALF],
+                     # the rim's own stretch of median, outside blocks_y and
+                     # outside median_runs(). Step 05 plants it last.
+                     "rim_median": list(RIM_MEDIAN)},
     }))
     print(f"\n  lots: {len(lots)}   city {CITY:.0f} m"
           f"   crossings painted: {len(crossings)}")

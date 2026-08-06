@@ -234,6 +234,47 @@ def avenue_trees(kit, coll, data, r):
     return n
 
 
+def rim_avenue_trees(kit, coll, data, r):
+    """The same two rows, on the 76 m of median the south rim carries.
+
+    Separate from avenue_trees for the reason every rim pass is separate: the
+    runs it walks come out of `median_runs`, and a tenth run there would take
+    draws off `r` before the other 55 trees are planted and move every one of
+    them. So this reads the run step 03 publishes as `rim_median` and is called
+    at the end, off the rim's own stream.
+
+    It went unplanted for months on the argument that nobody would see the far
+    corner of one frame. In the browser the camera stops and turns, and one
+    bare block of median at the end of a planted avenue is the most conspicuous
+    thing on the street.
+    """
+    av = data.get("avenue9j")
+    run = (av or {}).get("rim_median")
+    if not run:
+        return 0
+    a, b = run[0] + 1.5, run[1] - 1.5      # off the chamfer, as above
+    lift = av["median_lift"]
+    mid = (av["median"][0] + av["median"][1]) / 2
+    span = (b - a) - 3.0
+    count = max(1, int(span / 7.0))        # the same 7 m as the rest of it
+    n = 0
+    for side in (-1, 1):
+        for k in range(count + 1):
+            t = a + 1.5 + k * span / count
+            name = r.choice(MEDIAN_TREES)
+            sc = r.uniform(0.85, 1.15)
+            x, y = av["x"] + side * mid, t + r.uniform(-1.1, 1.1)
+            if not a <= y <= b:
+                SKIPPED["tree"] = SKIPPED.get("tree", 0) + 1
+                continue
+            if SOLIDS.hit(x, y, lift, RAD[name] * sc * 0.7) is not None:
+                SKIPPED["tree"] = SKIPPED.get("tree", 0) + 1
+                continue
+            instance(kit[name], coll, (x, y, lift), r.uniform(0, 6.28), sc)
+            n += 1
+    return n
+
+
 def clump(kit, coll, cx, cy, rw, rd, lift, count, r):
     for _ in range(count):
         name = r.choice(TREES)
@@ -743,6 +784,8 @@ def main():
     planting(kit, nat, rim, rr)
     ca += parked(kit, tra, rim, rr)
     pe += crowds(kit, ppl, rim, data, walk, rr)
+    # last of the last, so adding it left the rest of the rim where it was too
+    med += rim_avenue_trees(kit, nat, data, rr)
 
     print(f"\n  trees {len(nat.objects)} ({med} down the 9 de Julio medians)"
           f"  furniture {li}  cars {ca}  people {pe}"

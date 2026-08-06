@@ -65,6 +65,7 @@ turned out to be a rule that was wrong everywhere it applied:
 | the roof signs flicker in the browser | 100 of 118 closed meshes wound inside out |
 | two cars in the same spot | 7 pairs, one at a separation of exactly zero |
 | one zebra crossing that led nowhere | all 216, from subtracting `WALK` twice |
+| the masts are floating over the roof | all 13, from standing on the parapet line |
 | the traffic looks odd on that street | one whole axis of the city driving on the left |
 
 So the first move on any defect is **not** to fix it. It is to write the thing
@@ -251,6 +252,20 @@ The second is a detail resting exactly on its backing: sink it by
 objects. A tree inside an office wall is invisible from the hero camera — it
 hides behind the very wall it is inside — and 917 of them survived the whole
 build until there was something that could count.
+
+**A roof `top` is the top of the parapet, not the deck.** `wing()` finishes
+every wing with a plate at 0.02 and a 0.85 m parapet ring around the edge, and
+returns the top of the ring, because that is what a sign hangs off and what the
+published solid has to reach. Anything that *stands* on the roof stands
+`04_buildings.DECK` below it. That subtraction was written out by hand in four
+places and forgotten in a fifth, so all 13 masts in the city floated 0.83 m over
+their own roof — the ring is at the edge and thin air everywhere the pole
+actually is. It is one number now and every caller reads it.
+
+`98_check_floating.py` missed all 13 for as long as its TEST B meant "is this
+an instance of a KIT asset", and a sign is not one. It tests the sign formats
+that rest on a deck as well now. **Membership in a check is part of the check**:
+this one had been passing for months on a question it was never asked.
 
 `95_check_traffic.py` exists for the same reason one axis of this city drove on
 the left for weeks: every street looked completely plausible on its own, and the
