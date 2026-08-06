@@ -321,6 +321,37 @@ def collect_motion(scene):
     dense = [o for o in animated if turns_far(o)]
 
     frames = {1: ends[0], FRAMES: ends[1]}
+
+    # ANYTHING THAT DOES NOT MOVE AT A CONSTANT SPEED KEEPS ITS OWN KEYS, and
+    # the crossing pedestrians are the first things in this city that do not.
+    # They wait at the kerb, walk across when the traffic gives them a gap, and
+    # stop on the far pavement - four keyframes, and the two ends of that are
+    # "on one pavement" and "on the other". Exported as two keys the browser
+    # would walk them slowly and evenly from one to the other across the whole
+    # shot, straight through the traffic they were timed to avoid: the exact
+    # defect this was written to fix, reappearing only in the browser.
+    #
+    # Their own break frames, not a denser global grid. The grid is shared by
+    # every object in `frames`, so resolving a walk that starts at frame 143
+    # would cost every densely-sampled object a key every few frames too.
+    # grouped by frame, not by object: one frame_set evaluates the whole
+    # depsgraph, and there are 7600 objects in this scene
+    breaks = {}
+    for o in animated:
+        marks = set()
+        for fc in blib.fcurves(o):
+            if not fc.data_path.endswith("location"):
+                continue
+            marks.update(int(round(k.co.x)) for k in fc.keyframe_points)
+        for f in marks - {1, FRAMES}:
+            breaks.setdefault(f, []).append(o)
+    for f in sorted(breaks):
+        frames.setdefault(f, {}).update(sample_world(scene, breaks[f], f))
+    if breaks:
+        print(f"  {sum(len(v) for v in breaks.values())} extra keys for "
+              f"{len({o.name for v in breaks.values() for o in v})} objects "
+              f"that stop and start (the pedestrians waiting to cross)")
+
     if dense:
         # SUBDIVIDE UNTIL THE MIDPOINT AGREES, not until the ends are close
         # together. The distance between two quaternions cannot tell "did not
@@ -335,8 +366,13 @@ def collect_motion(scene):
             step = max(1, step // 2)
             marks = sorted(set(range(1, FRAMES + 1, step)) | {FRAMES})
             for f in marks:
-                if f not in frames:
-                    frames[f] = sample_world(scene, dense, f)
+                # `f in frames` is no longer the same question as "the dense
+                # objects are sampled at f": the pedestrians' break frames put
+                # entries in `frames` holding one walker and nothing else, and
+                # the slerp below would then KeyError on the rotor
+                if any(o.name not in frames.get(f, {}) for o in dense):
+                    frames.setdefault(f, {}).update(
+                        sample_world(scene, dense, f))
             worst = 0.0
             for a, b in zip(marks, marks[1:]):
                 mid = (a + b) // 2

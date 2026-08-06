@@ -49,7 +49,7 @@ emptied and rebuilt on every run, so anything else that writes into it is lost.
 | `06_landmarks` | `KIT`, `SITE`, lots | `LANDMARKS`, `LANDMARK_PROPS` | solids `landmarks` |
 | `06b_porteno` | `KIT`, `SITE`, lots | `PORTENO` | solids `porteno` |
 | `10_signs` | `BUILDINGS`, signs manifest | `SIGNS` | solids `signs` |
-| `05_life` | `KIT`, `SITE`, `BUILDINGS`, lots, **solids** | `NATURE`, `FURNITURE`, `TRAFFIC`, `PEOPLE`, `ROOFPEOPLE` | — |
+| `05_life` | `KIT`, `SITE`, `BUILDINGS`, lots, **solids**, **the site mesh itself** | `NATURE`, `FURNITURE`, `TRAFFIC`, `PEOPLE`, `ROOFPEOPLE` | — |
 | `08_title` | `BUILDINGS`, `NATURE`, lots | `TITLE` | — (it DELETES from other collections) |
 | `11_animate` | `TRAFFIC`, `TITLE`, lots, solids | `AIR` | — (animates `TRAFFIC`, `PEOPLE`) |
 | `12_camera` | `TITLE`, `TRAFFIC` | — | the camera animation |
@@ -154,6 +154,73 @@ the number it moved most is the one nobody re-measured after the palette work.
 scene and hand it to every render call, which was a workaround for exactly this
 bug, and those lines are gone.
 
+**7. Where a pedestrian may cross.** `city_lots.json → crossings`, written by 03
+where it actually paints a zebra and read by 05 to stand people on one. Two
+crossings in five are skipped out of a private `rng(5150)`, so the paint is the
+only record: recomputing it in 05 would have been a second copy of that seed and
+of the whole nest of offsets around it. Change how the zebras are laid out and
+re-run **03, then 05, 08, 11, 12** — 05 places the crossers, 11 times them.
+
+While publishing it, the layout itself turned out to be wrong: see below.
+
+## The zebras were painted inside the junction
+
+`WALK` is the pavement inside the block. `build_markings` treated it as a
+shoulder inside the carriageway and subtracted it twice, so every crossing sat
+`(w - 2*WALK)/2 + 1.2` = 4.7 m from the street centre on a street whose asphalt
+reaches 6 — inside the junction box — and was drawn 5 m shorter than the street
+it crossed. You could walk one end to end without reaching a pavement.
+
+It is paint, from 250 m up, at 45°. Nothing could see it, and it only surfaced
+because somebody was asked to walk one. The lane dividers on the avenues are
+laid out on the same `carriage = w - 2*WALK` convention and are 0.75 m off the
+lanes the traffic actually uses; that is under a paint width and has been left
+alone.
+
+## A hold is a placement, and it has to pass what a placement passes
+
+`11_animate` resolves a junction by moving one car up to 45 m back along its
+lane before frame 1. That gives it a different ten seconds of driving, so it is
+a new placement — but it was vetted with less than one: a single point against
+the buildings and the superblock, where `path_blocked` vets the whole path
+against those **and** the Obelisco's island, and where step 05's placement also
+knew about the other vehicles.
+
+Two failures came out of the gap, both invisible because frame 1 always looked
+right:
+
+- **A car held onto the car behind it.** One speed per lane makes rear-ending
+  impossible *for the positions step 05 placed*; a hold moves one of them, and
+  once two share a spot they travel together for all 624 frames. Seven pairs
+  shipped, one at a separation of exactly zero. Found by `92_check_zfight`,
+  which was looking for coplanar faces and found two whole cars.
+- **A bus held into the plaza** clipped two people on the Obelisco's island.
+  Found by `91_check_crowd`.
+
+A hold now checks `tailgated` against the live lane index, then applies itself
+and re-runs `path_blocked`, rolling back if it fails. It costs 62 more vehicles
+taken off the road out of 1513, and step 11 prints the overlap count so a
+regression cannot be silent again.
+
+## The crowd and the traffic were two layers, not one city
+
+685 of 2883 people stood on a carriageway and 545 were driven through during the
+shot, with every standing check passing. Two mechanisms fixed it and they are
+different on purpose:
+
+- **Placement asks the ground.** `_common.surfacer` — the ray 94 has always
+  dropped for the trees — is now asked by 05 before it stands anybody, and by 11
+  before it walks them.
+- **The check asks something dynamic.** That makes "is anyone on the asphalt"
+  circular, so `91_check_crowd` samples the shot and counts people a vehicle
+  passes through. No placement pass can answer that one.
+
+The crossers are the exception: they are meant to be on the road, and
+`11_animate.crossers` times each against the real vehicles in the lanes it
+crosses, reusing `Car.window` with a person's clearance. Exposure is computed
+**per lane** — as one carriageway it needs a 9-second gap that never exists, and
+138 of 173 stood still.
+
 ## The street tables are per axis and they are not interchangeable
 
 A street running along X sits at a Y coordinate, so it comes out of the Y table.
@@ -170,6 +237,7 @@ missing — which is why `open_city(needs_files=...)` checks first.
 | file | written by | read by |
 |---|---|---|
 | `city_lots.json` | 03 | 04, 05, 06, 06b, 08, 11, 95 |
+| ⤷ its `crossings` key | 03 (only where a zebra was actually painted) | 05 |
 | `city_solids.json` | 04, 06, 06b, 10 (per tag) | 05, 11, 99 |
 | `city_signs.json` | 04 | 10 |
 

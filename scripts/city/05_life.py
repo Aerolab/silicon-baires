@@ -13,8 +13,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from _common import (collection, instance, mat, rng, counts, median_runs, R,
-                     LOTS, SOLIDS as SOLIDS_JSON, open_city,
-                     save_city, purge, preview)
+                     LOTS, SOLIDS as SOLIDS_JSON, open_city, surfacer,
+                     UNDERFOOT, save_city, purge, preview)
 from _solids import Solids
 
 
@@ -74,6 +74,33 @@ def free(kind, x, y, z=0.0):
     if SOLIDS.hit(x, y, z, CLEAR[kind]) is None:
         return True
     SKIPPED[kind] = SKIPPED.get(kind, 0) + 1
+    return False
+
+
+# The ray onto the site, set in main(). Read the note in _common.surfacer for
+# why the crowd is placed against the geometry while the trees are still placed
+# against the street tables.
+UNDER = None
+
+
+def on_foot(x, y, extra=()):
+    """May somebody STAND here? Not "is this clear" - is this the pavement.
+
+    The footprint query above cannot answer this and never could: it knows
+    where the buildings are, and a carriageway is defined by the absence of
+    one. 685 of 2883 people - 23.8 % - were standing on asphalt, 545 of them
+    close enough to a lane that a vehicle drove through them during the shot,
+    and every standing check passed the whole time, because none of them had
+    ever been pointed at the crowd.
+
+    `extra` is for the two places where the ground is legitimately not a
+    pavement: the Metrobus platforms read as Busway or Station Roof, and
+    somebody waiting for a bus is standing exactly where they should be.
+    """
+    s = UNDER(x, y)
+    if s in UNDERFOOT or (s is not None and s in extra):
+        return True
+    SKIPPED["on the road"] = SKIPPED.get("on the road", 0) + 1
     return False
 
 
@@ -251,6 +278,34 @@ def planting(kit, coll, lots, r):
 
 
 def lights_and_signals(kit, coll, data, r):
+    """Street lights and traffic lights, and the traffic lights are PROPS.
+
+    THEY SHOW ALL THREE LENSES AT ONCE AND THEY DO NOT CHANGE. That is a
+    deliberate stop, not an oversight, and the measurements that decided it are
+    worth keeping because the obvious next idea - a green wave, each junction
+    green for whichever street is moving - cannot be built on this traffic.
+
+    Nothing in this city stops. Step 11 gives every vehicle one constant speed
+    for the whole shot, which is what makes a rear-end collision impossible by
+    construction rather than by checking, and it resolves junctions by holding
+    a car BACK BEFORE FRAME 1 rather than by braking. Measured on the finished
+    scene, 98 of the 100 junctions have traffic crossing on both axes during
+    the 26 seconds. So at 98 % of them, any colour a signal shows is a lie for
+    one of the two streets - and a city where cars visibly run reds is worse
+    than one where the signals are scenery.
+
+    The other half of it is scale. The frame is 170 m across at 1920 px, so a
+    16 cm lens is 1.8 px at the end of the move and 1.0 px at the start.
+    Animating something that small is spending a rebuild of the whole kit on
+    an effect no viewer can resolve.
+
+    What DOES read at this size is the crowd, and that is where the signal
+    behaviour went: the people at the zebras wait at the kerb and cross when
+    the traffic actually gives them room (`11_animate.crossers`). It is the
+    same rule a light would have encoded, applied to the thing big enough to
+    see it. Making the signals honest means braking the vehicles, which is a
+    rewrite of the traffic engine, not a change here.
+    """
     n = 0
     walk = data["walk"]
     for axis in (0, 1):
@@ -424,7 +479,7 @@ def crowds(kit, coll, lots, data, walk, r):
                     else (cx + side * edge, cy + t))
             name = r.choice(PEOPLE)
             rot = r.uniform(0, 6.28)
-            if not free("person", x, y, lot["lift"]):
+            if not free("person", x, y, lot["lift"]) or not on_foot(x, y):
                 continue
             ob = instance(kit[name], coll, (x, y, lot["lift"]), rot)
             # the pavement runs along one axis and this is the only place that
@@ -440,25 +495,130 @@ def crowds(kit, coll, lots, data, walk, r):
                 name = r.choice(PEOPLE)
                 px, py = cx + r.uniform(-w / 3, w / 3), cy + r.uniform(-d / 3, d / 3)
                 rot = r.uniform(0, 6.28)
-                if not free("person", px, py, lot["lift"]):
+                if not free("person", px, py, lot["lift"]) or \
+                        not on_foot(px, py):
                     continue
                 instance(kit[name], coll, (px, py, lot["lift"]), rot)
                 n += 1
 
-    for sx in data["streets_x"]:                       # knots at the crossings
-        for sy in data["streets_y"]:
+    # THE KNOTS AT THE CROSSINGS, which is where the people in the road came
+    # from. This scattered into a disc of radius 9 to 16 m about the crossing
+    # centre at a free angle - and a crossing is 12 to 22 m across, so the ring
+    # sits almost exactly ON the carriageway. Four of them were standing in the
+    # middle of the street the BUENOS AIRES sign faces, with the traffic
+    # driving through them.
+    #
+    # The fix is not a smaller radius or a cleverer angle. It is to sample the
+    # corner and ask the ground: the four pavements of a crossing are an
+    # awkward shape, cut back at 45 degrees by the ochava, and the only thing
+    # in this project that knows that shape is the site mesh itself. Reject
+    # and retry, so the count stays what it was and only the positions move.
+    for sx, wx in zip(data["streets_x"], data["widths_x"]):
+        for sy, wy in zip(data["streets_y"], data["widths_y"]):
             if r.random() < 0.3:
                 continue
+            # CAPPED, because one of these junctions is the 9 de Julio. Half
+            # of 70 m plus 7 is a 42 m disc, which is not a knot of people on
+            # a corner - it is the crowd spread over the whole width of the
+            # avenue, and it put somebody on the 5 m tip of a planted median
+            # with a lane passing 1.25 m away. 18 m is a corner.
+            reach = min(max(wx, wy) / 2 + 7.0, 18.0)
             for _ in range(r.randint(3, 9)):
-                a, dd = r.uniform(0, 6.28), r.uniform(9.0, 16.0)
-                px, py = sx + dd * math.cos(a), sy + dd * math.sin(a)
                 name = r.choice(PEOPLE)
                 rot = r.uniform(0, 6.28)
-                if in_super(px, py, -1.0) or not free("person", px, py):
-                    continue
-                instance(kit[name], coll, (px, py, 0.0), rot)
-                n += 1
+                # every draw happens whether or not the person is placed, so
+                # the stream downstream is untouched by a refusal - the same
+                # device street_trees uses, and for the same reason
+                tries = [(r.uniform(0, 6.28), r.uniform(4.0, reach))
+                         for _ in range(6)]
+                for a, dd in tries:
+                    px, py = sx + dd * math.cos(a), sy + dd * math.sin(a)
+                    if in_super(px, py, -1.0) or not free("person", px, py):
+                        continue
+                    if not on_foot(px, py):
+                        continue
+                    instance(kit[name], coll, (px, py, 0.0), rot)
+                    n += 1
+                    break
     return n
+
+
+# How far back from the kerb somebody waiting to cross stands, and how much of
+# the zebra's 2.2 m width they spread across. Both measured off the paint in
+# 03_ground.build_markings rather than chosen.
+KERB_WAIT = 1.1
+ZEBRA_HALF = 0.8
+
+
+def crossers(kit, coll, data, r):
+    """People crossing the street, on the zebra, facing the way they are going.
+
+    THE ONLY THING PLACED HERE THAT IS ALLOWED ON THE CARRIAGEWAY, and it is
+    allowed because it is going to move off it: step 11 times each of these
+    against the actual traffic in the lanes it has to cross, so the crossing
+    happens in a real gap and the person is on the asphalt only while no
+    vehicle is near. A pedestrian who has to wait simply waits at the kerb.
+
+    Where the zebras are comes out of the table 03 publishes, not out of a
+    second copy of its arithmetic: two crossings in five have no paint on them
+    at all, out of a private `rng(5150)`, and somebody stepping off the kerb
+    where there is no crossing is the same defect in a nicer costume.
+    """
+    n = 0
+    for c in data.get("crossings", ()):
+        if r.random() < 0.45:
+            continue
+        axis = c["walk"]                       # the axis they travel on
+        half = c["width"] / 2
+        for _ in range(r.randint(1, 3)):
+            side = r.choice((-1, 1))
+            off = r.uniform(-ZEBRA_HALF, ZEBRA_HALF)
+            fixed = (c["x"] if axis == 1 else c["y"]) + off
+            # WHERE THE KERB IS, ASKED RATHER THAN COMPUTED. half + a constant
+            # is right until the corner is chamfered, and every corner in this
+            # city is: the ochava cuts 2.8 m off it at 45 degrees, so the point
+            # that is 1.1 m past the kerb line is over the cut and standing on
+            # the next street. Walking out along the crossing until the ground
+            # stops being road costs one ray per half metre and cannot be
+            # wrong about a shape nobody has written down.
+            near = kerb(axis, fixed, c["street"], side * half)
+            far = kerb(axis, fixed, c["street"], -side * half)
+            if near is None or far is None:
+                SKIPPED["no kerb"] = SKIPPED.get("no kerb", 0) + 1
+                continue
+            x, y = ((fixed, near) if axis == 1 else (near, fixed))
+            name = r.choice(PEOPLE)
+            if in_super(x, y, -1.0) or not free("person", x, y):
+                continue
+            dx, dy = (0.0, -side) if axis == 1 else (-side, 0.0)
+            ob = instance(kit[name], coll, (x, y, 0.0), math.atan2(dy, dx))
+            ob["cross"] = [dx, dy]
+            # how far to walk, and which stretch of it is carriageway. Step 11
+            # needs the second one to know which lanes to time the crossing
+            # against, and rebuilding it there from the position would be a
+            # third copy of a number that already exists in two places.
+            ob["cdist"] = abs(far - near)
+            ob["cstreet"] = c["street"]
+            ob["chalf"] = half
+            n += 1
+    return n
+
+
+def kerb(axis, fixed, street, out, reach=6.0, step=0.5):
+    """Walking out from the kerb line of `street`, the first foothold.
+
+    `out` is signed and its magnitude is the half-width of the carriageway, so
+    the search starts at the edge of the asphalt and goes away from the street.
+    None when there is no pavement within `reach` - which happens, and means
+    this end of the crossing runs into the mouth of another street.
+    """
+    sign = 1.0 if out > 0 else -1.0
+    for k in range(1, int(reach / step) + 1):
+        s = street + out + sign * k * step
+        x, y = ((fixed, s) if axis == 1 else (s, fixed))
+        if UNDER(x, y) in UNDERFOOT:
+            return s
+    return None
 
 
 def plaza_people(kit, coll, data, r):
@@ -482,6 +642,10 @@ def plaza_people(kit, coll, data, r):
         name, rot = r.choice(PEOPLE), r.uniform(0, 6.28)
         if not free("person", x, y, 0.24):
             continue
+        # the island is Paving and reads as pavement; the rejection sample
+        # above still lands a few on the asphalt outside its kerb
+        if not on_foot(x, y):
+            continue
         instance(kit[name], coll, (x, y, 0.24), rot)
         n += 1
     # and the platforms. A Metrobus station with nobody on it is a shelter.
@@ -494,6 +658,14 @@ def plaza_people(kit, coll, data, r):
             y = cy + r.uniform(-13.0, 13.0)
             name, rot = r.choice(PEOPLE), r.uniform(0, 6.28)
             if not free("person", x, y, 0.40):
+                continue
+            # A PLATFORM IS THE ONE PLACE IN THE CITY WHERE STANDING ON THE
+            # BUSWAY IS CORRECT. It is a raised island in the middle of it, so
+            # the ray reads Station Roof or, between the canopies, Busway -
+            # and the blanket rule would clear the stations of every passenger
+            # and leave thirteen empty shelters.
+            if not on_foot(x, y, extra=("Station Roof", "Station Line",
+                                        "Busway")):
                 continue
             instance(kit[name], coll, (x, y, 0.40), rot)
             n += 1
@@ -529,8 +701,9 @@ def main():
     kit = {ob.name: ob for ob in bpy.data.collections["KIT"].objects}
     data = json.loads((LOTS).read_text())
     lots = data["lots"]
-    global SUPER, SOLIDS
+    global SUPER, SOLIDS, UNDER
     SUPER = data.get("superblock")
+    UNDER = surfacer()
     SOLIDS = Solids.load(SOLIDS_JSON)
     if not SOLIDS.boxes:
         raise SystemExit("no city_solids.json: run steps 04 and 06 first, or "
@@ -562,6 +735,8 @@ def main():
     ca = traffic(kit, tra, data, r) + parked(kit, tra, lots, r)
     pe = (crowds(kit, ppl, lots, data, walk, r)
           + plaza_people(kit, ppl, data, r) + rooftop_people(kit, rpl, r))
+    cr = crossers(kit, ppl, data, r)
+    pe += cr
 
     rr = rng(RIM_SEED)
     street_trees(kit, nat, rim, walk, rr)
@@ -570,7 +745,8 @@ def main():
     pe += crowds(kit, ppl, rim, data, walk, rr)
 
     print(f"\n  trees {len(nat.objects)} ({med} down the 9 de Julio medians)"
-          f"  furniture {li}  cars {ca}  people {pe}")
+          f"  furniture {li}  cars {ca}  people {pe}"
+          f" ({cr} of them crossing a street)")
     print("  refused for want of room: " +
           ("  ".join(f"{k} {v}" for k, v in sorted(SKIPPED.items())) or "none"))
     u, t = counts()

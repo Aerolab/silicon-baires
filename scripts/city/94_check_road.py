@@ -27,33 +27,21 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy
-from _common import open_city, R, LOTS, SOLIDS
+from _common import open_city, surfacer, ROAD, R, LOTS, SOLIDS
 from mathutils import Vector
 
-# Where a vehicle belongs and a tree does not. "Asphalt Lot" is not here: that
-# is the surface of a car park, which is inside a block, and the planting in
-# those is on purpose.
-ROAD = ("Asphalt", "Busway")
+# ROAD is where a vehicle belongs and a tree does not. It lives in _common now,
+# along with the ray itself, because the crowd has to ask the same question at
+# placement time - see the note there on why that does NOT make this check
+# circular for the trees, which are still placed off the street tables.
+#
 # The collections of things that are meant to stand on a block. FURNITURE is
 # not one of them: a street light stands at the kerb line and a traffic light
 # is a mast on the corner of the carriageway, so both legitimately measure as
 # road. TRAFFIC belongs there by definition, and 95_check_traffic owns it.
+# PEOPLE is not one either: they are allowed on a zebra now, and
+# 91_check_crowd owns them.
 GROWN = ("NATURE",)
-
-
-def surfacer(site):
-    """What is directly under (x, y), by name of material."""
-    mats = [m.name if m else "?" for m in site.data.materials]
-    inv = site.matrix_world.inverted()
-    down = (inv.to_3x3() @ Vector((0.0, 0.0, -1.0))).normalized()
-
-    def under(x, y):
-        ok, loc, nor, idx = site.ray_cast(inv @ Vector((x, y, 400.0)), down)
-        if not ok:
-            return None
-        return mats[site.data.polygons[idx].material_index]
-
-    return under
 
 
 def main():

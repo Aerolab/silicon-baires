@@ -121,6 +121,11 @@ PLAZA_WIDE = 15.5             # half-width: it swallows both medians, and stops
 # bevels per block - and it is the one that decides whether the grid reads as
 # Buenos Aires or as Manhattan. 4 m of chord, so 2.83 m off each side.
 OCHAVA = 4.0 / math.sqrt(2.0)
+# How far past the kerb line of the street it stands beside a zebra is set. It
+# has to clear the OCHAVA, because the corner it lands next to is cut at 45
+# degrees and a crossing that ends on the chamfer ends on nothing: at 1.2 m the
+# person waiting to cross was standing in the gutter of the next street along.
+ZEBRA_SET = 2.0
 AVENUES_X = {2, 6}            # which street indices are wide, per axis
 AVENUES_Y = {3, 7}
 BLOCK_SIZES = [64.0, 52.0, 76.0, 64.0, 58.0, 70.0, 64.0, 54.0, 72.0]
@@ -586,7 +591,7 @@ def avenue_markings(m):
 
 
 # --- markings --------------------------------------------------------------
-def build_markings(m):
+def build_markings(m, crossings):
     mk = mat("Marking")
     rr = rng(5150)
 
@@ -594,13 +599,14 @@ def build_markings(m):
         # the two streets that used to cross the superblock are gone; their
         # centre lines and zebras would otherwise still be painted across it
         if in_super(cx, cy, -WALK):
-            return
+            return False
         # and a zebra crossing the 9 de Julio is 47 m long, so it runs up over
         # both planted medians and across the Metrobus platform. Real ones stop
         # at each island; here they simply stop.
         if abs(cx - NINE) > MEDIAN[0] - 1.0 and abs(cx - NINE) < AVE9J / 2:
-            return
+            return False
         m.quad(cx, cy, ww, hh, MARK_Z, mk)
+        return True
 
     for axis in (0, 1):
         # A street running along X sits at a Y coordinate, so it comes out of
@@ -633,23 +639,71 @@ def build_markings(m):
                                   else (0.12, size - 8))
                         paint(cx, cy, ww, hh)
 
+    # THE ZEBRAS, and the list of them, which is published.
+    #
+    # Not everywhere: two crossings in five are skipped, out of `rr`. That is a
+    # look decision and it belongs here, but it makes the paint the only record
+    # of where a pedestrian may legally cross - and step 05 needs exactly that
+    # record to put somebody on one. Recomputing it there means a second copy
+    # of `rng(5150)` and of this whole nest of offsets, which is the mistake
+    # this file already documents twice.
+    #
+    # `axis` in the loop is the axis the zebra's stripes are laid out along;
+    # `walk` below is the axis the PEDESTRIAN travels on, which is the other
+    # one. They were the same name once and the crossers set off sideways.
     for sx, wx in zip(SX, WX):                          # zebras, not everywhere
         for sy, wy in zip(SY, WY):
             for axis in (0, 1):
                 if rr.random() < 0.40:
                     continue
-                w = wx if axis == 0 else wy
-                across = (wy if axis == 0 else wx) - WALK * 2
+                # THE ZEBRA WAS INSIDE THE JUNCTION, and both halves of that
+                # were the same misreading of WALK. It was set back
+                # (w - 2*WALK)/2 + 1.2 from the street centre, which is 4.7 m
+                # on a 12 m street whose asphalt reaches 6 - so the crossing
+                # was painted across the middle of the box rather than beside
+                # it. And it was drawn (across - 2*WALK) long, so it stopped
+                # 2.5 m short of each kerb.
+                #
+                # WALK IS THE PAVEMENT INSIDE THE BLOCK, NOT A SHOULDER INSIDE
+                # THE CARRIAGEWAY. The street is asphalt for its whole declared
+                # width; the 2.5 m of pavement is the next thing along, and it
+                # belongs to the block. Subtracting it here twice put a zebra
+                # in a place you could walk the whole length of without ever
+                # reaching a pavement - which is what it was for.
+                #
+                # Nothing could see it. It is paint, from 250 m up, at 45
+                # degrees: it reads as a crossing at any position at all. It
+                # surfaced only when somebody was asked to WALK one.
+                w = wx if axis == 0 else wy         # the street it stands beside
+                across = wy if axis == 0 else wx    # the one it crosses
                 for direction in (-1, 1):
                     base = (sx if axis == 0 else sy) + \
-                        direction * ((w - WALK * 2) / 2 + 1.2)
+                        direction * (w / 2 + ZEBRA_SET)
                     n = max(3, int(across / 1.6))
+                    painted = 0
                     for k in range(n):
                         o = (sy if axis == 0 else sx) - across / 2 + 0.8 + \
                             k * (across - 1.6) / max(n - 1, 1)
                         cx, cy = (base, o) if axis == 0 else (o, base)
                         ww, hh = (2.2, 0.5) if axis == 0 else (0.5, 2.2)
-                        paint(cx, cy, ww, hh)
+                        painted += paint(cx, cy, ww, hh)
+                    # A HALF-PAINTED CROSSING IS NOT A CROSSING. `paint`
+                    # refuses stripes over the superblock and over the 9 de
+                    # Julio's islands, so a zebra there comes out as a stub -
+                    # and the 9 de Julio's is a 70 m walk over two planted
+                    # medians and a Metrobus platform, which is not something
+                    # to send anybody across. All or nothing.
+                    if painted < n:
+                        continue
+                    crossings.append({
+                        "x": base if axis == 0 else sx,
+                        "y": sy if axis == 0 else base,
+                        "walk": 1 if axis == 0 else 0,
+                        # the asphalt to be crossed, which is now also exactly
+                        # what the paint covers - see the note above
+                        "width": across,
+                        "street": sy if axis == 0 else sx,
+                    })
 
 
 def build_parking(m, lots):
@@ -695,7 +749,8 @@ def main():
     build_rim(m, mm, lots)
     m.build("site", site)
 
-    build_markings(mm)
+    crossings = []
+    build_markings(mm, crossings)
     avenue_markings(mm)
     build_parking(mm, lots)
     mm.build("markings", site)
@@ -707,6 +762,11 @@ def main():
         "streets_x": SX, "streets_y": SY, "widths_x": WX, "widths_y": WY,
         "blocks_x": BX, "blocks_y": BY, "walk": WALK,
         "superblock": list(super_bounds()),
+        # where a pedestrian may cross, which is wherever a zebra was actually
+        # painted. Step 05 stands people on these and step 11 walks them over,
+        # timed against the traffic - so this is the one table that makes the
+        # crowd and the traffic the same city rather than two layers of it.
+        "crossings": crossings,
         # everything downstream needs the section, not just the centre line:
         # step 05 plants the medians and drives buses down the busway, and
         # step 06b stands the Obelisco on the plaza
@@ -715,7 +775,8 @@ def main():
                      "platform": PLATFORM, "median_lift": MEDIAN_LIFT,
                      "plaza": [NINE, PLAZA, PLAZA_WIDE, PLAZA_HALF]},
     }))
-    print(f"\n  lots: {len(lots)}   city {CITY:.0f} m")
+    print(f"\n  lots: {len(lots)}   city {CITY:.0f} m"
+          f"   crossings painted: {len(crossings)}")
     u, t = counts()
     print(f"  triangles: {u} unique / {t} total")
 

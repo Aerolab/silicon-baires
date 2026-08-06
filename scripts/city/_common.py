@@ -302,6 +302,52 @@ def median_runs(blocks, plaza_c, plaza_half, margin=3.0, clear=2.0,
     return out
 
 
+# --- what is under your feet -----------------------------------------------
+# The site is one mesh with a material slot per surface, so the cheapest true
+# answer to "what am I standing on" is a ray dropped from above it. That is
+# what 94_check_road has always done for the trees; it lives here now because
+# the crowd needs to ASK the same question at placement time rather than only
+# be audited on it afterwards.
+#
+# It is worth being explicit about what that costs. 94's whole argument is that
+# a check reading the same table the placement read can only confirm the
+# arithmetic - so for the trees, which are still placed off the street tables,
+# the ray stays independent and 94 still means something. For the PEOPLE it
+# does not: the placement now reads the geometry, so a check that reads the
+# geometry is circular. That is why 91_check_crowd asks a different question
+# entirely - not "is anyone on the asphalt" but "does a vehicle drive through
+# anyone", which is dynamic and which no placement pass can answer.
+ROAD = ("Asphalt", "Busway")
+# Where a person may stand. Named rather than derived as "not ROAD", because
+# "nothing under the ray at all" has to fail too: that is off the edge of the
+# site, which is the same error read from the other side.
+UNDERFOOT = ("Sidewalk", "Grass", "Paving", "Dirt", "Asphalt Lot")
+
+
+def surfacer(site=None):
+    """What is directly under (x, y), by name of material. None off the site.
+
+    Returns a closure because the inverse matrix and the material table are
+    worth computing once: this gets called about forty thousand times in a
+    run of step 05.
+    """
+    if site is None:
+        site = bpy.data.objects.get("site")
+    if site is None:
+        raise SystemExit("no site mesh: run 03_ground.py first")
+    mats = [m.name if m else "?" for m in site.data.materials]
+    inv = site.matrix_world.inverted()
+    down = (inv.to_3x3() @ Vector((0.0, 0.0, -1.0))).normalized()
+
+    def under(x, y):
+        ok, loc, nor, idx = site.ray_cast(inv @ Vector((x, y, 400.0)), down)
+        if not ok:
+            return None
+        return mats[site.data.polygons[idx].material_index]
+
+    return under
+
+
 def pbrmat(name, hex_col, roughness=0.8, metallic=0.0):
     """Create or update a material. For generated artwork, not for the palette.
 
