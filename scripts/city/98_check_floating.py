@@ -15,6 +15,15 @@ against the site, the buildings and the landmarks specifically, never against
 the asset itself, so nothing can shadow its own test. The AIR collection is
 exempt: the helicopter in it is supposed to be 78 m off the ground.
 
+The signs that STAND on a roof are tested too, and they were the hole in this
+test rather than an addition to it: for as long as membership was "is this an
+instance of a KIT asset", a sign was not one, and twelve of the thirteen masts
+in the city hovered 0.83 m over their own roof through every run of this file.
+A roof `top` is the top of the PARAPET; the deck is `04_buildings.DECK` below
+it, and the mast was the one format that never subtracted it. Only the formats
+that rest on the deck are asked - a parapet word or a mural hangs off a wall
+and has nothing under it by design, the same way a facade band does.
+
 Deliberately NOT tested: individual pieces inside the merged building mesh. A
 facade band has nothing directly under it by design, and testing it produced
 65,000 false positives on the first attempt.
@@ -26,12 +35,14 @@ import sys, pathlib
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
-import bpy
-from _common import open_city, R, LOTS, SOLIDS
+import bpy, json
+from _common import open_city, R, LOTS, SOLIDS, SIGNS
 from mathutils import Vector
 
 BURIED = -0.25            # metres below ground before we call it buried
 GAP = 0.4                 # metres of air under an instance before it floats
+# the sign formats that stand on the deck. The others hang off a wall.
+STANDING = ("mast", "roofmark")
 SUPPORTS = ("site", "buildings", "landmarks", "porteno")
 # the one collection whose whole point is that it is not resting on anything
 AIRBORNE = "AIR"
@@ -80,10 +91,21 @@ def main():
     buried.sort()
 
     # --- TEST B ------------------------------------------------------------
+    # The signs are named objects, not KIT instances, so they have to be named.
+    # Read from the manifest and not from the collection: `kind` is what says
+    # whether the thing rests on the deck or hangs off a wall, and only the
+    # step that planned it knows that.
+    standing = set()
+    if SIGNS.exists():
+        standing = {r["name"] for r in json.loads(SIGNS.read_text())
+                    if r["kind"] in STANDING and r.get("mount") != "facade"}
+
     base_cache = {}
     floating, tested = [], 0
     for ob in scene.objects:
-        if ob.type != "MESH" or ob.hide_render or ob.data.name not in kit:
+        if ob.type != "MESH" or ob.hide_render:
+            continue
+        if ob.data.name not in kit and ob.name not in standing:
             continue
         if any(c.name == AIRBORNE for c in ob.users_collection):
             continue

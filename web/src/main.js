@@ -8,6 +8,7 @@ import { loadCity } from "./city.js";
 import { makePost, ENV_INTENSITY } from "./post.js";
 import { makeCamera, placeHero, shotAt } from "./shot.js";
 import { measureFramebuffer, compare } from "./measure.js";
+import { makeSpots } from "./spots.js";
 import { createElement, Play, Pause, Orbit, Clapperboard } from "lucide";
 
 // no-store, and everything else keyed on cfg.stamp: the assets have stable
@@ -174,6 +175,9 @@ function clampToFence(v, radius) {
 }
 
 const post = makePost(renderer, { ...cfg, taps: flag("taps", 24) });
+// ?spots=1 — numbered roofs, for pointing at one. Off by default and not part
+// of the piece; see spots.js.
+const spots = flag("spots", 0) ? await makeSpots(camera) : null;
 Object.assign(window, { post, camera, controls });
 if (flags.has("ev")) post.uniforms.uExposure.value = num("ev", 0);
 if (flags.has("contrast")) post.uniforms.uContrast.value = num("contrast", 1);
@@ -330,6 +334,8 @@ function drawFrame(now) {
   } else {
     post.render(scene, camera, now / 1000);
   }
+
+  if (spots) spots.update();
 
   if (showStats) {
     ui.frame.textContent =

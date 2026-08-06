@@ -25,13 +25,19 @@ from _common import HERO_WIDTH, DISTANCE, R, open_city, save_city
 # 12_camera each carried their own copy of 170.0.
 FOCUS_D = DISTANCE         # camera sits this far out; focus on the middle
 F_STOP = 0.55              # unphysical on purpose: this is the miniature cheat
-# 9.0, down from 13.0. The still could carry 13 because the still is one frame
-# and the eye has all the time it needs; the video cannot, because the thing the
+# 0.0: OFF. It went 13.0 -> 9.0 -> 0.0, and each step was the same argument
+# winning by more. The still could carry 13 because a still is one frame and the
+# eye has all the time it needs. The video could not, because the thing the
 # video is for is the company signs going past, and a wordmark under a 13 px
-# blur is a coloured smudge. This is the knob to turn if the miniature effect
-# ever needs to come back or go away entirely: 13 is what the approved still
-# shipped with, 6.5 is barely there, 0 removes it.
-BLUR_MAX = 9.0             # pixels at 1600 wide; scaled to the real width below
+# blur is a coloured smudge. Now the signs carry real logos and the argument is
+# settled: a brand three blocks off the focus plane was unreadable at 9 too, and
+# an unreadable logo is the one failure this whole piece cannot afford.
+#
+# What it costs is the miniature cue, which was the reason it existed. The tilt
+# shift is what made the city read as a model rather than as an aerial photo.
+# 13 is what the approved still shipped with and 6.5 is barely there, so this is
+# the knob if it ever has to come back.
+BLUR_MAX = 0.0             # pixels at 1600 wide; scaled to the real width below
 # METRES OF DEPTH THAT STAY SHARP, AT HERO_WIDTH, and that qualifier is the
 # whole fix. It used to be a flat 105 m, which is right for the still and wrong
 # for every other frame of the move: the camera is orthographic, so the depth

@@ -20,6 +20,7 @@ from _common import (Mesh, collection, instance, mat, paint, rng, counts,
                      R, LOTS, SOLIDS, SIGNS, open_city, save_city, purge,
                      preview, ASPECT, FRAMES, screen_xy, shot_at, shot_cover)
 from _solids import Solids
+from _brands import pools as brand_pools, LOGOS, PIN, DROP, HERO
 
 
 # --- the signs are for the camera, and the camera goes one way -------------
@@ -229,6 +230,17 @@ AV_BILLBOARD = 0.35
 MAST_POLE = 0.55          # pole height as a fraction of the disc diameter, and
                           # it has to match MAST in 10_signs.py: this step
                           # decides where the disc is and that one builds it
+# WHAT A ROOF `top` IS, AND WHY NOTHING STANDS ON IT. Every wing is finished
+# with a roof plate at 0.02 over its last slab and a 0.85 m parapet ring around
+# the edge, and `wing()` returns the TOP OF THE PARAPET, because that is what a
+# sign hangs off and what the solid box has to reach. The deck a thing actually
+# rests on is DECK metres below it. That number was written out by hand in four
+# places and forgotten in a fifth: every mast in the city stood on the parapet
+# line and floated 0.83 m over its own roof - invisible from 250 m up, obvious
+# the moment anything measured it.
+PARAPET = 0.85            # height of the parapet ring above the last slab
+ROOF_PLATE = 0.02         # the deck plate sits this far over the same slab
+DECK = PARAPET - ROOF_PLATE   # so: roof deck = top - DECK. Stand things there.
 AV_REACH = 15.0           # how close a wall has to be to count as on the avenue
 BOARD_LIFT = 4.2          # legs: how far the panel floats over the roof deck.
                           # Art. 5.5 allows 10 m of structure over the roof, so
@@ -390,9 +402,9 @@ def wing(m, ox, oy, w, d, floors, style, fam, xform, r, deep=False,
     # parapet ring and roof plate. The deck is always a light concrete: in the
     # reference roofs read pale whatever colour the facade is.
     pick = deck or ("Roof Dark" if r.random() < 0.45 else "Roof Deck")
-    m.quad(ox, oy, w, d, z + 0.02, mat(pick), xform)
-    facade_ring(m, ox, oy, w, d, z, 0.85, 0.55, mat("Concrete Cool"), xform)
-    return z + 0.85
+    m.quad(ox, oy, w, d, z + ROOF_PLATE, mat(pick), xform)
+    facade_ring(m, ox, oy, w, d, z, PARAPET, 0.55, mat("Concrete Cool"), xform)
+    return z + PARAPET
 
 
 _plan_radius = {}
@@ -478,9 +490,28 @@ def roof_props(kit, coll, cx, cy, w, d, top, rot, r, big, siblings=(),
         placed.append(instance(kit[name], coll, (wx, wy, top), a, sc))
     if r.random() < 0.25:
         lx, ly = r.uniform(-w / 4, w / 4), r.uniform(-d / 4, d / 4)
-        wx = cx + lx * math.cos(rot) - ly * math.sin(rot)
-        wy = cy + lx * math.sin(rot) + ly * math.cos(rot)
-        placed.append(instance(kit["PingPong"], coll, (wx, wy, top), rot))
+        # THE SAME THREE TESTS THE LOOP ABOVE RUNS. This one sat outside the
+        # loop and ran none of them, so the table was the only thing on a roof
+        # that could hang over the parapet, straddle the neighbour, or stand in
+        # the middle of the company sign — and five of them did, one per roof,
+        # invisible until a wordmark went down and a green table turned up
+        # between the E and the M. The draws happen first either way, so the
+        # rest of the city is not reshuffled by refusing one.
+        rad = plan_radius(kit["PingPong"])
+        mx, my = w / 2 - rad - 1.2, d / 2 - rad - 1.2
+        ok = mx > 0 and my > 0
+        if ok:
+            lx = max(-mx, min(mx, lx))
+            ly = max(-my, min(my, ly))
+            ok = not straddles(lx, ly, rad, ox, oy, siblings)
+        if ok and keep is not None:
+            kx, ky, kw, kd = keep
+            ok = not (abs(lx + ox - kx) < kw / 2 + rad and
+                      abs(ly + oy - ky) < kd / 2 + rad)
+        if ok:
+            wx = cx + lx * math.cos(rot) - ly * math.sin(rot)
+            wy = cy + lx * math.sin(rot) + ly * math.cos(rot)
+            placed.append(instance(kit["PingPong"], coll, (wx, wy, top), rot))
     return placed
 
 
@@ -696,13 +727,18 @@ def shape_sign(kind, bx, by, w, d, top, r, sol, grow):
         # sitting across a neighbouring wing's parapet
         side = min(min(w, d) * 0.36 * grow, min(w, d) * 0.62)
         rec = dict(kind=kind, x=bx + r.uniform(-w * 0.07, w * 0.07),
-                   y=by + r.uniform(-d * 0.07, d * 0.07), z=top - 0.83,
+                   y=by + r.uniform(-d * 0.07, d * 0.07), z=top - DECK,
                    rot=r.choice([0.0, math.pi / 2]), w=side, h=side)
         return rec, (rec["x"] - bx, rec["y"] - by, side + 2.0, side + 2.0)
     else:
         disc = min(min(w, d) * 0.55 * grow, 16.0 * grow, min(w, d) * 0.80)
+        # top - DECK, like the roofmark and the board: the pole stands on the
+        # deck. At `top` it stood on the PARAPET LINE, which is a ring around
+        # the edge and thin air everywhere the pole actually is, so twelve of
+        # the thirteen masts hovered 0.83 m over their own roof and the
+        # thirteenth balanced on a neighbouring wing's parapet.
         rec = dict(kind=kind, x=bx + r.uniform(-w * 0.2, w * 0.2),
-                   y=by + r.uniform(-d * 0.2, d * 0.2), z=top,
+                   y=by + r.uniform(-d * 0.2, d * 0.2), z=top - DECK,
                    # +135, not -45. The disc is a cylinder stood on edge, so
                    # its face points along local -Y, and the camera is out at
                    # azimuth 45: at -45 the face pointed exactly away and every
@@ -780,7 +816,7 @@ def plan_medianera(side, bx, by, w, d, top, r, signs, sol, owner=None):
         wx, wy, rot, run = bx + w / 2, by, math.pi / 2, d
     else:
         wx, wy, rot, run = bx, by + d / 2, math.pi, w
-    wall = top - 0.85                        # under the parapet, not over it
+    wall = top - PARAPET                     # under the parapet, not over it
     base0 = MED_BASE[side]
     if wall - base0 < 9.0:
         return None                          # too short to read as a mural
@@ -859,7 +895,7 @@ def plan_billboard(bx, by, w, d, top, rot, r, signs, siblings, ox, oy,
     if straddles(lx, ly, rad, ox, oy, siblings):
         return None                          # standing on a neighbour's parapet
     face = r.choice(AV_FACES[:AV_DRAW_WIDTH])
-    rec = dict(kind="billboard", x=bx + lx, y=by + ly, z=top - 0.83, rot=rot,
+    rec = dict(kind="billboard", x=bx + lx, y=by + ly, z=top - DECK, rot=rot,
                w=board, h=high, lift=BOARD_LIFT,
                name=f"Sign.{len(signs):03d}", text=face[0], mark=face[1],
                face=face[2], ink=face[3], owner=own(owner, bx, by))
@@ -999,7 +1035,7 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
             # +0.9: the projecting shade frame on a deep facade stands 0.45 m
             # off the wall on every side
             sol.add(bx + ox, by + oy, ww + 0.9, dd + 0.9, 0.0, 0.0, top)
-        roof = top - 0.83
+        roof = top - DECK
         wings = footprint(kindf, w, d)
         # the sign is chosen before the roof units, so the units can be told
         # to keep out of its way. The other order is what put nine of them
@@ -1147,20 +1183,54 @@ def assign_brands(signs):
     The two registers stay apart. The office park advertises to recruiters and
     the avenue to drivers, and a bank of soft drinks in the middle of the campus
     is the one thing this would break if it drew from one list.
+
+    The real brands come first in both pools and the invented ones fill in
+    behind them, so the dealing order does the prioritising for free: the sign
+    the camera reads best takes the first real brand, and the invented names
+    land where nothing legible was going to appear anyway. `logo` is the SVG
+    the sign is built from — see _brands.py — and it is None for the brands
+    that only exist as a bitmap, which fall back to the geometric mark.
     """
-    pools = {True: list(AV_FACES), False: list(SIGN_FACES)}
+    camp, av_pool = brand_pools(SIGN_FACES, AV_FACES)
+    # a pinned brand is dealt to its own sign and taken out of the pool, so the
+    # rest of the deal is the same deal it always was, one name shorter
+    pinned = set(PIN.values())
+    camp = [f for f in camp if f[0] not in pinned]
+    av_pool = [f for f in av_pool if f[0] not in pinned]
+    by_name = {f[0]: f for f in brand_pools(SIGN_FACES, AV_FACES)[0]
+               + brand_pools(SIGN_FACES, AV_FACES)[1]}
+    pools = {True: av_pool, False: camp}
     used = {True: 0, False: 0}
     ranked = sorted(
-        signs,
+        [r for r in signs if not r.get("drop")],
         key=lambda rec: shot_cover(rec["x"], rec["y"], rec["z"],
                                    rec["w"], rec["h"])[1],
         reverse=True)
     for rec in ranked:
-        av = rec["kind"] in ("medianera", "billboard")
-        pool = pools[av]
-        face = pool[used[av] % len(pool)]
-        used[av] += 1
-        rec.update(text=face[0], mark=face[1], face=face[2], ink=face[3])
+        face = by_name.get(PIN.get(rec["name"]))
+        if face is None:
+            av = rec["kind"] in ("medianera", "billboard")
+            pool = pools[av]
+            face = pool[used[av] % len(pool)]
+            used[av] += 1
+        rec.update(text=face[0], mark=face[1], face=face[2], ink=face[3],
+                   logo=LOGOS.get(face[0]))
+        # WHERE IT ENDS UP HANGING, which is not always what `kind` says. A
+        # hero brand can move a roofmark's artwork onto a wall, and then the
+        # record still says "roofmark" while nothing rests on that deck any
+        # more: 98_check_floating asks whether a sign has something under it,
+        # and for these three the honest answer is that they hang off a
+        # facade, like a parapet does. Published rather than re-derived, so
+        # the check does not have to know what HERO means.
+        # ANY piece on a wall is enough. TEST B takes the lowest point of the
+        # whole mesh and casts down from the object's ORIGIN, which is one
+        # question about one point of contact — fine for a mast, meaningless
+        # for a sign whose artwork is split between a deck and a facade twenty
+        # metres away. It was comparing the z of the wall piece against the XY
+        # of the roof piece and calling the difference air.
+        h = HERO.get(face[0])
+        if h and (h.get("facade") or h.get("facade_only")):
+            rec["mount"] = "facade"
     return used
 
 
@@ -1201,7 +1271,7 @@ def build_towers(m, kit, coll, sol, signs, lots, r):
         # exactly the ones that carry a name
         keep = plan_sign(cx, cy, w, d, top, floors, r, signs, sol,
                          owner=(cx, cy))
-        roof_props(kit, coll, cx, cy, w, d, top - 0.83, 0.0, r, True,
+        roof_props(kit, coll, cx, cy, w, d, top - DECK, 0.0, r, True,
                    keep=keep)
 
 
@@ -1302,10 +1372,24 @@ def main():
     # ones failed or never existed.
     for i, rec in enumerate(signs):
         rec["name"] = f"Sign.{i:03d}"
-    assign_brands(signs)
 
+    # MARKED, not removed, and marked BEFORE the deal. Deleting the record
+    # would renumber every sign after it, and Sign.NNN is what PIN, the
+    # manifest and any hand note refer to, so a delete quietly moves somebody
+    # else's pin onto a different roof. Marking it after the deal was worse:
+    # the dropped position had already been handed a real brand, so binning it
+    # binned that brand out of the video. It gets skipped instead, and the
+    # brand goes to the next sign the camera sees.
+    for rec in signs:
+        if rec["name"] in DROP:
+            rec["drop"] = True
+    if DROP:
+        print(f"  {sum(1 for r in signs if r.get('drop'))} dropped by hand: "
+              f"{', '.join(sorted(DROP))}")
+    assign_brands(signs)
     on_camera = [s for s in signs
-                 if all(v >= lim for v, lim in
+                 if not s.get("drop")
+                 and all(v >= lim for v, lim in
                         zip(shot_cover(s["x"], s["y"], s["z"], s["w"], s["h"]),
                             (MIN_SECS, MIN_FRAC)))]
     brands = {s["text"] for s in on_camera}

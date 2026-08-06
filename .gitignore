@@ -39,5 +39,6 @@ web/.vite/
 web/public/city.glb
 web/public/city_motion.json
 web/public/city_shot.json
+web/public/city_spots.json
 web/public/city_sky.exr
 web/public/draco/

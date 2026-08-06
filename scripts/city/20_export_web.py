@@ -40,7 +40,7 @@ from _common import (FPS, FRAMES, MOVE, AZIMUTH, ELEVATION, DISTANCE,
                      HERO_WIDTH, ASPECT, SHOT_ZOOM, EASE_IN, EASE_OUT,
                      LOOK, EXPOSURE, WHITE_BALANCE, SUN_ENERGY, SUN_ANGLE,
                      SUN_COLOR, SKY_STRENGTH, SKY_SATURATION,
-                     shot_at, open_city, R, SOLIDS)
+                     shot_at, open_city, R, SOLIDS, SIGNS)
 
 WEB = ROOT / "web" / "public"
 
@@ -227,6 +227,53 @@ def built_bounds():
     return {"x": [round(min(xs), 2), round(max(xs), 2)],
             "y": [round(min(ys), 2), round(max(ys), 2)],
             "top": round(top, 2), "boxes": len(boxes)}
+
+
+def roof_spots():
+    """Every roof worth putting a sign on, numbered, for pointing at.
+
+    This exists so a person can look at the city in the browser and say "the
+    logo goes on 47" instead of describing a building. Nothing in the render
+    reads it: `?spots=1` in the page draws the numbers and that is all it is
+    for.
+
+    THE NUMBERS HAVE TO SURVIVE A REBUILD, or the note somebody wrote down last
+    night points at a different roof this morning. So they are not the order
+    the solids happen to be in — they are assigned by sorting on rounded
+    position, which only changes if the building itself moves.
+
+    The z is the DECK, raycast against the mesh, not the footprint's z1: those
+    differ by the height of the parapet, and a label floating a metre over the
+    roof is a label pointing at the wrong thing. Same reason 10_signs.deck_z
+    exists.
+    """
+    boxes = [b for b in json.loads(SOLIDS.read_text())["boxes"]
+             if b[7] in ("buildings", "porteno")
+             and b[2] * b[3] >= 120.0 and b[6] >= 8.0]
+    boxes.sort(key=lambda b: (round(b[0], 1), round(b[1], 1)))
+    taken = {}
+    for rec in json.loads(SIGNS.read_text()):
+        if rec.get("drop"):
+            continue
+        taken[(round(rec["owner"][0], 1), round(rec["owner"][1], 1))] = \
+            rec["text"]
+
+    ob = bpy.data.objects.get("buildings")
+    inv = ob.matrix_world.inverted() if ob else None
+    down = ((inv.to_3x3() @ Vector((0.0, 0.0, -1.0))).normalized()
+            if ob else None)
+    out = []
+    for i, b in enumerate(boxes, 1):
+        cx, cy, w, d, rot, _z0, z1 = b[:7]
+        z = z1
+        if ob is not None:
+            ok, loc, _n, _idx = ob.ray_cast(inv @ Vector((cx, cy, 400.0)), down)
+            if ok:
+                z = (ob.matrix_world @ loc).z
+        out.append([i, round(cx, 2), round(cy, 2), round(z, 2),
+                    round(w, 2), round(d, 2), round(rot, 4),
+                    taken.get((round(cx, 1), round(cy, 1)))])
+    return out
 
 
 def glb_node_names(path):
@@ -524,6 +571,12 @@ def main():
         "post": look_numbers(),
     }
     (WEB / "city_shot.json").write_text(json.dumps(payload, indent=1))
+    spots = roof_spots()
+    (WEB / "city_spots.json").write_text(
+        json.dumps({"spots": spots}, separators=(",", ":")))
+    free = sum(1 for s_ in spots if s_[7] is None)
+    print(f"  city_spots.json       {len(spots)} roofs numbered for pointing "
+          f"at, {free} of them with no sign yet   (?spots=1)")
     b = payload["bounds"]
     print(f"  city_shot.json        {len(shot)} camera frames, "
           f"grade + sun + post")

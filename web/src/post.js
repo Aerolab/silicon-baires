@@ -326,6 +326,10 @@ export function makePost(renderer, cfg) {
       target.setSize(w, h);
       material.uniforms.uTexel.value.set(1 / w, 1 / h);
       // BLUR_MAX is in pixels at 1600 wide, exactly as the compositor has it.
+      // BLUR_SCALE multiplies it and nothing else: ?blur=0 gives a sharp city
+      // with the grade, the grain and the vignette untouched, which is what
+      // reading the roof signs needs. ?nopost=1 drops all four together and so
+      // answers a different question.
       material.uniforms.uBlurPx.value = post.BLUR_MAX * (w / 1600);
     },
 
