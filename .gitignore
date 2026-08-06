@@ -35,6 +35,7 @@ tasks/
 # same city twice, and the two copies would drift.
 web/node_modules/
 web/dist/
+web/.vite/
 web/public/city.glb
 web/public/city_motion.json
 web/public/city_shot.json
