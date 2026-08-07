@@ -29,7 +29,7 @@ browser looks them up in the glb, so a name the exporter rewrites is an object
 that silently stops moving. Checked here, against the glb that was just
 written, rather than noticed later as a city where the buses are parked.
 """
-import sys, pathlib, math, json, struct, os
+import sys, pathlib, math, json, struct
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -40,7 +40,7 @@ from _common import (FPS, FRAMES, MOVE, AZIMUTH, ELEVATION, DISTANCE,
                      HERO_WIDTH, ASPECT, SHOT_ZOOM, EASE_IN, EASE_OUT,
                      LOOK, EXPOSURE, WHITE_BALANCE, SUN_ENERGY, SUN_ANGLE,
                      SUN_COLOR, SKY_STRENGTH, SKY_SATURATION,
-                     shot_at, open_city, R, SOLIDS, SIGNS,
+                     shot_at, open_city, SOLIDS, SIGNS,
                      BUILDINGS, brand_addresses)
 from _brands import HERO
 

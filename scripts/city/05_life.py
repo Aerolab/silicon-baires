@@ -12,7 +12,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
-from _common import (collection, instance, mat, rng, counts, median_runs, R,
+from _common import (instance, rng, counts, median_runs, R,
                      LOTS, SOLIDS as SOLIDS_JSON, open_city, surfacer,
                      UNDERFOOT, save_city, purge, preview)
 from _solids import Solids

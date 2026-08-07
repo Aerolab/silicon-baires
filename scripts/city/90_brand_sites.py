@@ -85,8 +85,8 @@ def main():
             top = box[6]
             for axis, side in FACES:
                 run = d if axis == 0 else w
-                # el logo vive entre la planta baja y la cornisa, y se mide
-                # a media altura de esa banda
+                # the logo lives between the ground floor and the cornice, and
+                # is measured at the middle of that band
                 tall = top - GROUND
                 z = GROUND + tall / 2
                 seen = wall_seen(sol, box, axis, z)

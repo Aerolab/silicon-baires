@@ -7,7 +7,7 @@ table.
 
     ./bl scripts/city/07_look.py [final]
 """
-import sys, pathlib, math
+import sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -84,7 +84,7 @@ def build_compositor(scene):
     # An orthographic camera has no optics for the Defocus node to work from,
     # so the miniature blur is driven straight off the Z pass: blur radius
     # rises with distance from the focus plane, clamped.
-    def math(op, value=None, loc=(0, 0)):
+    def mathnode(op, value=None, loc=(0, 0)):
         n = ng.nodes.new("ShaderNodeMath")
         n.operation = op
         n.location = loc
@@ -92,9 +92,9 @@ def build_compositor(scene):
             n.inputs[1].default_value = value
         return n
 
-    sub = math("SUBTRACT", FOCUS_D, (-720, -140))
-    ab = math("ABSOLUTE", None, (-560, -140))
-    sc = math("DIVIDE", FOCUS_SPREAD, (-400, -140))
+    sub = mathnode("SUBTRACT", FOCUS_D, (-720, -140))
+    ab = mathnode("ABSOLUTE", None, (-560, -140))
+    sc = mathnode("DIVIDE", FOCUS_SPREAD, (-400, -140))
     # and the driver that ties it to the frame width. See FOCUS_SPREAD.
     #
     # A driver rather than keyframes: 12_camera lays 41 keys on ortho_scale and
@@ -110,8 +110,8 @@ def build_compositor(scene):
     var.targets[0].id = bpy.data.objects["HeroCam"].data
     var.targets[0].data_path = "ortho_scale"
     fc.driver.expression = f"w * {FOCUS_SPREAD / HERO_WIDTH}"
-    pw = math("POWER", 1.7, (-320, -140))     # gentler falloff near the focus
-    cl = math("MINIMUM", 1.0, (-250, -140))
+    pw = mathnode("POWER", 1.7, (-320, -140))     # gentler falloff near the focus
+    cl = mathnode("MINIMUM", 1.0, (-250, -140))
     ng.links.new(rl.outputs["Depth"], sub.inputs[0])
     ng.links.new(sub.outputs[0], ab.inputs[0])
     ng.links.new(ab.outputs[0], sc.inputs[0])
@@ -123,7 +123,7 @@ def build_compositor(scene):
     # 5.x moved the blur's filter type and radius onto input sockets
     ng.links.new(rl.outputs["Image"], blur.inputs["Image"])
     scale = scene.render.resolution_x / 1600.0   # blur is in pixels
-    px = math("MULTIPLY", BLUR_MAX * scale, (-110, -140))
+    px = mathnode("MULTIPLY", BLUR_MAX * scale, (-110, -140))
     ng.links.new(cl.outputs[0], px.inputs[0])
     ng.links.new(px.outputs[0], blur.inputs["Size"])
     head = blur.outputs["Image"]

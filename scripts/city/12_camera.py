@@ -55,17 +55,17 @@ linear, because that is what was measured.
     ./bl scripts/city/12_camera.py
     ./bl scripts/city/12_camera.py video     # and render the preview
 """
-import sys, pathlib, math
+import sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Vector
-from _common import (FPS, FRAMES, MOVE, HERO_WIDTH, AZIMUTH, ELEVATION,
+from _common import (FPS, FRAMES, MOVE, HERO_WIDTH, ELEVATION,
                      open_city, save_city, place_hero, R,
                      SHOT_TARGET0, SHOT_TARGET1, SHOT_OBELISCO, SHOT_TRAVEL,
-                     SHOT_WIDTH0, EASE_IN, EASE_OUT, shot_progress, shot_pan)
+                     SHOT_WIDTH0, shot_progress, shot_pan)
 
 KEYS = 41   # the shot length, the framing and the orbit come from _common
 

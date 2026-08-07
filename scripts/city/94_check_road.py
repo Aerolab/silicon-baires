@@ -27,8 +27,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy
-from _common import open_city, surfacer, ROAD, R, LOTS, SOLIDS
-from mathutils import Vector
+from _common import open_city, surfacer, ROAD
 
 # ROAD is where a vehicle belongs and a tree does not. It lives in _common now,
 # along with the ray itself, because the crowd has to ask the same question at

@@ -64,7 +64,6 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy
 from mathutils import Vector
-from mathutils.bvhtree import BVHTree
 from _common import open_city, AZIMUTH, ELEVATION
 
 GAP = 0.0015        # metres: closer than this is the same plane, 1.5 mm

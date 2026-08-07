@@ -29,7 +29,7 @@ facade belongs to nobody and no per-instance test will ever see it.
 
     ./bl scripts/city/99_check_overlap.py
 """
-import sys, pathlib, math
+import sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
@@ -38,7 +38,7 @@ import bpy
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 from _solids import Solids
-from _common import open_city, R, LOTS, SOLIDS
+from _common import open_city, SOLIDS
 
 EPS = 0.05                       # lift before testing: contact is not overlap
 SUPPORTS = ("buildings", "landmarks", "porteno")
@@ -103,7 +103,6 @@ def main():
     # animated. Reading "the current frame" makes the result depend on where
     # somebody happened to leave the playhead.
     bpy.context.scene.frame_set(1)
-    scene = bpy.context.scene
 
     solids = Solids.load(SOLIDS)
     print(f"\n  {len(solids.boxes)} footprints published by steps 04 and 06")
@@ -127,7 +126,7 @@ def main():
                 inside.append((cname, ob.name, ob.location.x, ob.location.y,
                                box[7]))
 
-    print(f"\n  TEST A  loose objects inside a published footprint")
+    print("\n  TEST A  loose objects inside a published footprint")
     if inside:
         print(f"    FAIL: {len(inside)}")
         for cname, name, x, y, tag in inside[:20]:

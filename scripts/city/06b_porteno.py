@@ -46,7 +46,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
-from _common import (Mesh, collection, mat, paint, rng, counts, R, LOTS,
+from _common import (Mesh, mat, paint, counts, R, LOTS,
                      SOLIDS, open_city, save_city, purge, preview)
 from _solids import Solids
 
@@ -290,7 +290,7 @@ def floralis(m, cx, cy, lift):
         z0s, z1s = base - 2.5, z + FLOR_STAM
         for i in range(segsn):
             t0, t1 = i / segsn, (i + 1) / segsn
-            r_0, r_1 = FLOR_STAM_LEAN * t0 ** 1.8, FLOR_STAM_LEAN * t1 ** 1.8
+            r_0 = FLOR_STAM_LEAN * t0 ** 1.8
             za, zb = z0s + (z1s - z0s) * t0, z0s + (z1s - z0s) * t1
             m.cyl((cx + r_0 * math.cos(a), cy + r_0 * math.sin(a), za),
                   0.30, zb - za, steel, segs=6, top=0.26)
@@ -380,7 +380,6 @@ def main():
 
     coll = purge("PORTENO")
 
-    r = rng(1810)
     m = Mesh()
     # the paving goes into a separate mesh from the monuments. It is a floor,
     # and 99_check_overlap.py treats "porteno" as something solid to test

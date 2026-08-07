@@ -36,7 +36,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, json
-from _common import open_city, R, LOTS, SOLIDS, SIGNS
+from _common import open_city, SIGNS
 from mathutils import Vector
 
 BURIED = -0.25            # metres below ground before we call it buried

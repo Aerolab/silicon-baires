@@ -59,13 +59,12 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
-from _common import (Mesh, collection, mat, pbrmat, rng, counts, R, SIGNS,
+from _common import (Mesh, mat, pbrmat, counts, R, SIGNS,
                      SOLIDS, SINK, open_city, save_city, purge, preview,
-                     screen_xy)
+                     screen_xy, title_font)
 from _solids import Solids
 from _brands import HERO, SIZE
 
-FONT = "/Users/bilune/Library/Fonts/PPMonumentNormal-Black.otf"
 CAP = 4.2                 # letter height on a parapet, metres
 DEPTH = 0.9               # how far a letter is extruded
 PROUD = 1.05              # how far it stands off the wall. 0.45 was the real
@@ -109,7 +108,7 @@ def letters(m, rec, face, x):
     for ch in body:
         cu = bpy.data.curves.new(ch, type="FONT")
         cu.body = ch
-        cu.font = bpy.data.fonts.load(FONT)
+        cu.font = title_font()
         cu.size = size
         cu.extrude = DEPTH / 2
         cu.align_x = "LEFT"
@@ -156,7 +155,7 @@ def cap_of(body):
     if body not in _cap:
         cu = bpy.data.curves.new(body, type="FONT")
         cu.body = body
-        cu.font = bpy.data.fonts.load(FONT)
+        cu.font = title_font()
         cu.size = 1.0
         cu.extrude = 0.01
         ob = bpy.data.objects.new(body, cu)
@@ -540,8 +539,8 @@ def wall_out(cx, cy, z, ang, fallback, run=0.0, tall=5.0):
         if abs(d.dot(side)) > half_run:
             continue
         out = d.dot(n)
-        # cerca de la cara de ESTE edificio: la malla es una sola y el
-        # vecino de enfrente tambien tiene vertices en esta franja
+        # close to THIS building's face: the mesh is a single one and the
+        # neighbour opposite also has vertices in this band
         if fallback - 3.5 < out < fallback + 1.0 and (best is None or out > best):
             best = out
     return fallback if best is None else best
@@ -591,10 +590,10 @@ def hero_facade(m, rec, hero, site, key="word"):
     # whole lockup read as floating. The facade's own shade frame stands 0.45
     # proud, so that is the surface, and `rest` puts the logo's back face on
     # it instead of centring the extrusion across it.
-    # SOLO EN VERTICAL, y en el centro de la cara. Muestrear tambien a lo
-    # ancho parecia mas completo y es peor: en los extremos de una fachada de
-    # 25 m hay patios y retranqueos, el minimo cae en uno de ellos y el logo
-    # entero se mete dentro del edificio. Ocho carteles enterrados.
+    # VERTICALLY ONLY, and at the centre of the face. Sampling across the width
+    # as well looked more thorough and is worse: at the ends of a 25 m facade
+    # there are courtyards and setbacks, the minimum lands in one of them and
+    # the whole logo pushes inside the building. Eight buried signs.
     # A FIXED 5 m WINDOW, not the height of the logo. With the range tied to the
     # size of the sign, a tall one samples 9 m of facade, finds the ground
     # floor's setback or a courtyard, and pushes inside it: eight buried signs.
@@ -851,7 +850,7 @@ def build(rec, coll, site):
         # down the wall, so the tops clear the roof edge by DROP and the whole
         # word reads against the facade rather than against the sky
         if hero and hero.get("facade_only"):
-            # el parapeto se muda: nada queda en este edificio
+            # the parapet moves away: nothing is left on this building
             for k in hero.get("facade_arts",
                               [hero.get("facade_art", "word")]):
                 hero_facade(m, rec, hero, site, key=k)
@@ -890,7 +889,7 @@ def build(rec, coll, site):
             billboard(m, rec, face, ink, frame, x, art)
     elif kind == "medianera":
         if hero and hero.get("facade_only"):
-            # el mural se va entero: la marca vive en la pared de otro edificio
+            # the whole mural leaves: the brand lives on another building's wall
             for k in hero.get("facade_arts",
                               [hero.get("facade_art", "word")]):
                 hero_facade(m, rec, hero, site, key=k)

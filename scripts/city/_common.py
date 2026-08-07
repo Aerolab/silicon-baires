@@ -12,10 +12,14 @@ needed the same fact and disagreed about it:
   THE SCAFFOLD  open_city / purge / preview / save_city, which is the shape
                 every step has, written once instead of sixteen times.
 """
-import bpy, math, random, pathlib
+import bpy, math, os, random, pathlib
 from contextlib import contextmanager
-from mathutils import Vector, Matrix, Euler
-from _palette import PALETTE, srgb, define, paint, apply_palette
+from mathutils import Vector, Euler
+from _palette import PALETTE, define, apply_palette
+# Re-exported, not used here: five steps do `from _common import paint` rather
+# than reaching past it into _palette, so _common is the single door onto the
+# shared names. A linter cannot see that and will offer to delete it.
+from _palette import paint, srgb  # noqa: F401
 
 # --- where everything is ---------------------------------------------------
 # The three JSON files travel with the .blend and are read by later steps. They
@@ -197,6 +201,37 @@ SHOT_HEADING = (_h[0] / _hn, _h[1] / _hn)
 SHOT_TARGET0 = (SHOT_TARGET1[0] - SHOT_HEADING[0] * SHOT_TRAVEL,
                 SHOT_TARGET1[1] - SHOT_HEADING[1] * SHOT_TRAVEL)
 SHOT_WIDTH0 = HERO_WIDTH * SHOT_ZOOM
+
+
+# --- the title typeface ----------------------------------------------------
+# PP Monument Normal Black, and it is NOT in this repository: it is a commercial
+# font and not ours to redistribute. Override with CITY_TITLE_FONT.
+#
+# It is one name now because it was three, each spelled out as an absolute path
+# into one machine's home directory — in 08_title, in 10_signs and in an
+# archived spike. On any other machine all three failed the same way, inside
+# `bpy.data.fonts.load`, with a RuntimeError that names the file and not the
+# reason. Two of the three are the steps that build every letter in the city.
+FONT_TITLE = os.environ.get(
+    "CITY_TITLE_FONT",
+    str(pathlib.Path.home() / "Library/Fonts/PPMonumentNormal-Black.otf"))
+
+
+def title_font():
+    """Load the title typeface, or say what is missing and how to replace it."""
+    p = pathlib.Path(FONT_TITLE).expanduser()
+    if not p.exists():
+        raise SystemExit(
+            f"\n  the title typeface is not here:\n    {p}\n\n"
+            "  It is PP Monument Normal Black, a commercial font this repo\n"
+            "  does not ship. Point CITY_TITLE_FONT at your own copy:\n\n"
+            "    CITY_TITLE_FONT=/path/to/font.otf ./bl "
+            "scripts/city/08_title.py\n\n"
+            "  Any heavy grotesque stands in. The title and the signs are\n"
+            "  built as geometry, so the letterforms are all that changes.\n")
+    # check_existing, because this is called once per LETTER. Without it every
+    # glyph in the city loads its own copy of the font datablock.
+    return bpy.data.fonts.load(str(p), check_existing=True)
 
 
 def mat(name):
@@ -762,9 +797,9 @@ def blib_fcurves(ob):
     return blib.fcurves(ob)
 
 
-# --- ¿la cámara ve esta pared? ---------------------------------------------
-# Un logo de marca sobre una fachada tiene tres maneras de no existir, y las
-# tres cuestan un render cada una si se eligen a ojo:
+# --- can the camera see this wall? -----------------------------------------
+# A brand logo on a facade has three ways of not existing, and all three cost a
+# render each if they are chosen by eye:
 #
 #   1. the wall looks into the other arm of its own L,
 #   2. the wall looks into the neighbour, a metre away,

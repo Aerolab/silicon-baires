@@ -39,7 +39,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Vector
-from _common import (instance, collection, rng, FPS, FRAMES, R, LOTS,
+from _common import (instance, rng, FPS, FRAMES, R, LOTS,
                      SOLIDS, HERO_WIDTH, open_city, save_city, purge, preview,
                      surfacer, UNDERFOOT)
 from _solids import Solids

@@ -107,7 +107,7 @@ def _():
     L(dist.outputs["Points"], inst.inputs["Points"])
     L(ico.outputs["Mesh"], inst.inputs["Instance"])
     L(inst.outputs["Instances"], gout.inputs["Geometry"])
-    mod = blib.gn_apply(host, ng, Density=200.0)
+    blib.gn_apply(host, ng, Density=200.0)
     dg = bpy.context.evaluated_depsgraph_get()
     n_inst = sum(1 for i in dg.object_instances if i.is_instance)
     assert n_inst > 10, f"the scatter produced {n_inst} instances, something did not evaluate"

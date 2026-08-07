@@ -28,9 +28,8 @@ import sys, pathlib, math, random
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
-import bpy, blib
-from _common import (Mesh, collection, mat, pbrmat, paint, instance,
-                     counts, R, open_city, save_city)
+import bpy
+from _common import (Mesh, mat, pbrmat, paint, counts, open_city, save_city)
 
 
 # Measured off photographs of the trees in flower, not off the name of the

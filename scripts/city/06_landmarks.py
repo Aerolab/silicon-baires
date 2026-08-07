@@ -14,8 +14,8 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
-from _common import (Mesh, collection, instance, mat, pbrmat, rng, counts,
-                     srgb, R, LOTS, SOLIDS, open_city, save_city, purge,
+from _common import (Mesh, instance, mat, rng, counts,
+                     R, LOTS, SOLIDS, open_city, save_city, purge,
                      preview, paint)
 from _solids import Solids
 

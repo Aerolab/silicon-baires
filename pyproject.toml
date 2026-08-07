@@ -1,0 +1,42 @@
+# Lint configuration. There is no package here to build: these scripts run
+# inside Blender's own Python, and `./bl` is the entry point.
+#
+#     python3 -m ruff check scripts blib
+#
+# WHAT THIS LINTER IS FOR, and it is worth stating because the default answer
+# was 261 findings and 255 of them were house style. It is for defects — a name
+# that does not exist, an import that goes nowhere, a variable assigned and
+# never read. Formatting is not its business here.
+#
+# The one thing it cannot see is a RE-EXPORT. `_common` imports `paint` from
+# `_palette` without using it, because five steps import it from `_common`
+# rather than reaching past it; the autofix deleted it and broke all five. Those
+# lines carry an explicit `# noqa: F401` and a comment saying why.
+
+[tool.ruff]
+line-length = 79          # what the code is actually written to. Not enforced:
+                          # see E501 below
+extend-exclude = [
+    "scripts/city/_archive",   # spikes kept as evidence. Frozen, not maintained
+    "web",
+    "renders",
+]
+
+[tool.ruff.lint]
+# F      real defects: undefined names, unused imports, unused variables
+# E9     syntax and IO errors
+select = ["F", "E9"]
+
+# Deliberately NOT selected, each for a reason:
+#
+#   E402  import not at top of file — every script does `sys.path.insert()`
+#         before `import blib`, which is the only way a Blender script finds
+#         this repo. 80 findings, all of them required.
+#   E401  `import sys, pathlib, math` — the house style, used consistently in
+#         every one of the 40-odd scripts.
+#   E701  compound statements, and E702 the semicolon form. Also house style,
+#   E702  and used where two statements are one thought.
+#   E741  `l` as a name. Ambiguous in a proportional font, unambiguous here.
+#   E501  line too long. The code targets 79 and 99 % of it is under 82; the
+#         handful that run over are tables and long f-strings where breaking
+#         them costs more than it returns.

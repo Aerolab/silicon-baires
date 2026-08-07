@@ -31,7 +31,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
-from _common import (Mesh, collection, mat, rng, counts, srgb, R,
+from _common import (Mesh, mat, rng, counts, R,
                      median_runs, LOTS, open_city, save_city, purge, preview)
 
 

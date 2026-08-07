@@ -25,13 +25,13 @@ Re-run this and read the frames before designing the move.
 
     ./bl scripts/city/96_check_title_move.py
 """
-import sys, pathlib, math
+import sys, pathlib
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
-from _common import open_city, R, LOTS, SOLIDS
+from _common import open_city, R
 from mathutils import Vector
 
 SHOTS = [("wide", 45, 38, 420), ("hero", 45, 38, 210),

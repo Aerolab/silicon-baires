@@ -1,7 +1,7 @@
 import bpy, json, time, math
 out={}
 sc=bpy.context.scene
-# 1) FFMPEG primero de todo
+# 1) FFMPEG before anything else
 try:
     sc.render.image_settings.file_format="FFMPEG"; out["ffmpeg_first"]=True
 except Exception as e: out["ffmpeg_first"]=str(e)[:100]

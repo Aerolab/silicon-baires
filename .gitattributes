@@ -1,0 +1,20 @@
+# Text files normalise to LF in the repo whatever the checkout platform does.
+* text=auto eol=lf
+
+# Binary, so git never tries to diff or merge them and never rewrites a byte.
+*.blend  binary
+*.png    binary
+*.jpg    binary
+*.exr    binary
+*.glb    binary
+*.otf    binary
+*.ttf    binary
+*.mp4    binary
+*.mov    binary
+*.mp3    binary
+
+# Generated: kept out of the diff view and out of language statistics, so the
+# repo reads as what it is rather than as a JavaScript project.
+web/package-lock.json  linguist-generated=true
+.agents/skills/**      linguist-vendored=true
+.claude/skills/**      linguist-vendored=true

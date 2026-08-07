@@ -16,7 +16,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
-from _common import (Mesh, collection, instance, mat, paint, rng, counts,
+from _common import (Mesh, instance, mat, paint, rng, counts,
                      R, LOTS, SOLIDS, SIGNS, BUILDINGS, open_city, save_city,
                      purge,
                      preview, ASPECT, FRAMES, screen_xy, shot_at, shot_cover)

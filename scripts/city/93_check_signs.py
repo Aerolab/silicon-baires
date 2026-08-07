@@ -24,7 +24,7 @@ import sys, pathlib, json, math, collections
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
-from _common import (SIGNS, SOLIDS, BUILDINGS, FPS, FRAMES, ASPECT,
+from _common import (SIGNS, BUILDINGS, FPS, FRAMES, ASPECT,
                      screen_xy, shot_at, shot_cover, brand_addresses)
 from _brands import HERO, SHARED
 
@@ -57,7 +57,6 @@ def where(s):
 
 def main():
     signs = json.loads(SIGNS.read_text())
-    boxes = json.loads(SOLIDS.read_text())["boxes"]
     if not any(s.get("built") for s in signs):
         print("  ! the manifest carries no `built`: run 10_signs.py and this\n"
               "    check starts measuring the mesh instead of the plan\n")

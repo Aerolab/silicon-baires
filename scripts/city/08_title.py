@@ -42,12 +42,11 @@ sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
-from _common import (collection, paint, srgb, R, LOTS, open_city,
-                     save_city, purge, preview, HERO_WIDTH)
+from _common import (paint, R, LOTS, open_city,
+                     save_city, purge, preview, HERO_WIDTH, title_font)
 
 
 LINES = ("BUENOS", "AIRES")
-FONT = "/Users/bilune/Library/Fonts/PPMonumentNormal-Black.otf"
 # What the letter buildings are made of. Dark glass against pale concrete
 # turned every letter into a zebra and fought the red; the reference's title
 # buildings are ordinary offices in the city's own commonest pair.
@@ -107,7 +106,7 @@ def materials():
 def font_curve(body, size, spacing, offset, extrude):
     cu = bpy.data.curves.new(body, type="FONT")
     cu.body = body
-    cu.font = bpy.data.fonts.load(FONT)
+    cu.font = title_font()
     cu.size = size
     cu.space_character = spacing
     cu.offset = offset

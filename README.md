@@ -100,6 +100,14 @@ were wrong as well as the ones that stuck.
   `.claude/skills/` documents the 5.x API changes that break code written from
   memory, all verified against the installed binary.
 - **Node 18+** for `web/`, and **ffmpeg** on `PATH` for `npm run record`.
+- **A heavy grotesque** for the title and the signs. The city was built with PP
+  Monument Normal Black, which is commercial and not shipped here. Point
+  `CITY_TITLE_FONT` at your own copy — the letters are built as geometry, so
+  substituting the typeface changes the letterforms and nothing else:
+
+  ```bash
+  CITY_TITLE_FONT=/path/to/font.otf ./bl scripts/city/08_title.py
+  ```
 - Cycles on GPU is configured automatically by `blib.use_gpu()`. Developed on an
   Apple M4 Pro via Metal; measured at 960×540, EEVEE 64 spp is 0.65 s and Cycles
   GPU 512 spp is 3.2 s.

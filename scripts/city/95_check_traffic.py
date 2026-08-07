@@ -26,7 +26,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy
-from _common import open_city, R, LOTS, SOLIDS
+from _common import open_city, LOTS
 
 COLECTIVO = "Colectivo"
 
@@ -99,7 +99,7 @@ def main():
         if dp > 0.0:
             on_block.append((round(dp, 2), ob.name))
     on_block.sort(reverse=True)
-    print(f"\n  TEST B  on the carriageway, not the pavement")
+    print("\n  TEST B  on the carriageway, not the pavement")
     if on_block:
         print(f"    FAIL: {len(on_block)} vehicles standing inside a block")
         for dp, n in on_block[:10]:
@@ -131,7 +131,7 @@ def main():
                 driving.append((round(dp, 2), ob.name, f))
     scene.frame_set(1)
     driving.sort(reverse=True)
-    print(f"\n  TEST D  on the road for the whole shot, not just at frame 1")
+    print("\n  TEST D  on the road for the whole shot, not just at frame 1")
     if driving:
         seen = {n for _, n, _ in driving}
         print(f"    FAIL: {len(seen)} vehicles drive into a block during the "
@@ -142,7 +142,7 @@ def main():
         print(f"    pass: nothing leaves the carriageway over {end} frames")
 
     # -- TEST C: the busway is for buses -----------------------------------
-    print(f"\n  TEST C  the Metrobus corridor")
+    print("\n  TEST C  the Metrobus corridor")
     if av is None:
         print("    skipped: no avenue in this layout")
         return
