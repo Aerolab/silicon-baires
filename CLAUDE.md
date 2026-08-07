@@ -387,8 +387,11 @@ were wrong as well as the one that stuck — the title was got wrong three times
 and every wrong version measured well.
 
 Four files travel with the `.blend` and are read by later steps, so do not
-delete them: `renders/city_solids.json`, the rectangle every solid thing
-occupies; `renders/city_signs.json`, the manifest of company signs (name,
+delete them — **and they are committed alongside it**, which for three of them
+they were not: a fresh clone got a 19 MB city and no way to run a single check
+against it, because the .gitignore shipped the deliverable and not the four
+things that describe it. `renders/city_solids.json`, the rectangle every solid
+thing occupies; `renders/city_signs.json`, the manifest of company signs (name,
 position, orientation, face size, `owner` — the building it belongs to,
 recorded by the step that places it because an L is several overlapping wings
 and recovering the address afterwards is a guess — and `built`, what step 10

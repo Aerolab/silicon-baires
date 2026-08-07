@@ -8,12 +8,24 @@ __pycache__/
 renders/*
 !renders/.gitkeep
 
-# ...except the city, which IS the deliverable rather than a by-product. It is
-# small (3 MB) because everything repeated is an instance. city_lots.json is the
-# lot table step 03 hands to steps 04-06.
+# ...except the city, which IS the deliverable rather than a by-product. 19 MB,
+# and that is everything repeated being an instance rather than a copy.
 !renders/city.blend
-!renders/city_lots.json
 !renders/city_final.png
+
+# AND THE FOUR FILES THAT TRAVEL WITH IT. They are not renders: they are what
+# the .blend cannot say about itself — the lot table, the rectangle every solid
+# thing occupies, the sign manifest, and which wings make up each building. Ten
+# scripts read each one.
+#
+# Only city_lots.json used to be here, so a fresh clone had a 19 MB city and
+# could not run a single check against it: 93 died on a FileNotFoundError
+# naming a file nothing tells you how to produce. 119 KB against the .blend's
+# 19 MB is not the trade it looked like.
+!renders/city_lots.json
+!renders/city_solids.json
+!renders/city_signs.json
+!renders/city_buildings.json
 
 # Reference frames from third-party footage. Study material, not ours to
 # redistribute. Kept locally so the look can be compared side by side.

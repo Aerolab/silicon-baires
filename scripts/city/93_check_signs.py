@@ -56,6 +56,12 @@ def where(s):
 
 
 def main():
+    # said here rather than left to `read_text`, which raises a FileNotFoundError
+    # naming a path and no way to produce it. Same shape as the BUILDINGS guard
+    # below, and the same shape `open_city(needs_files=...)` gives every step
+    # that opens the .blend — this check never opens it.
+    if not SIGNS.exists():
+        raise SystemExit(f"\n  {SIGNS.name} is missing: run 04_buildings.py\n")
     signs = json.loads(SIGNS.read_text())
     if not any(s.get("built") for s in signs):
         print("  ! the manifest carries no `built`: run 10_signs.py and this\n"
