@@ -82,6 +82,52 @@ gamma pulls the channels apart. It looks like a grade. It is a bug.
 
 Try a grade before committing to it: `?ev=0.4&env=1.3&contrast=1.2`.
 
+## The video
+
+```bash
+npm run record                        # capture/city.mp4 + capture/city.mov
+npm run record -- --w 3840 --h 2160   # 4K
+npm run record -- --ss 1 --to 24      # a one-second test, in seconds
+```
+
+624 frames, 26 s, 24 fps, in about two and a half minutes on an M4 Pro. It
+starts its own Vite on port 5199 and its own headless Chrome with a throwaway
+profile, so it touches neither a dev server you have open nor your browser.
+
+**A screen recording is a different picture and that is why this exists.** The
+page draws at whatever rate the machine manages and a recorder samples at
+whatever rate IT manages, so a missed browser frame becomes a repeated video
+frame and a missed recorder frame becomes a dropped one. The pan judders and
+the traffic stutters in the file even though nothing on screen ever did. This
+has no clock at all: the recorder asks for frame *n*, waits however long it
+takes, and asks for *n+1*. 624 frames go in and 624 frames come out.
+
+Three things it does that a recorder cannot:
+
+- **The frame is not the window.** `viewW/viewH` replaced `innerWidth/
+  innerHeight` throughout `main.js`, so 1920×1080 comes out of whatever window
+  a headless browser opened.
+- **It supersamples.** `--ss 2` draws at 3840×2160 and ffmpeg scales down with
+  lanczos. That downscale is the only antialiasing there is — the page runs
+  `antialias: false` because the post chain's half-float target cannot carry
+  MSAA — and it is a bigger quality difference than the output resolution:
+  1080p at `--ss 2` reads better than raw 4K at `--ss 1`.
+- **Time comes from the frame number.** `(n / fps) * 1000`, so the grain is the
+  same on a re-run and a slow frame does not become a long one.
+
+No frames are written to disk: `vite-plugin-capture.js` pipes the PNGs into one
+ffmpeg with two outputs, and the page's fetch does not resolve until ffmpeg has
+taken the bytes, which is the backpressure. `city.mp4` is H.264 CRF 14 for
+sending; `city.mov` is ProRes 422 HQ for an edit, where a title over 4:2:0
+long-GOP would soften.
+
+**It waits for the sky.** The EXR loads on a callback and it is the fill light,
+so a capture that starts before it resolves opens on a darker, contrastier city
+— frames that measure fine because nothing measures them.
+
+The video ships the page's look, not the render's: `TONEMAP = "none"`. For the
+film grade, set `TONEMAP = "agx"` in `post.js` and record again.
+
 ## Diagnostics
 
 ```

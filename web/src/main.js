@@ -31,10 +31,32 @@ const flags = new URLSearchParams(location.search);
 const flag = (k, d) => (flags.has(k) ? Number(flags.get(k)) || 1 : d);
 const num = (k, d) => (flags.has(k) ? Number(flags.get(k)) : d);
 
+// --- offline capture -------------------------------------------------------
+// ?capture=1 turns the page into a frame server for scripts/record.mjs: the
+// clock stops being wall time, the frame size stops being the window, and the
+// loop below never starts. See capture.js — nothing else in this file behaves
+// differently, which is the point: the video is this page, not a port of it.
+const capturing = flags.has("capture");
+// THE FRAME IS NOT THE WINDOW. Every place that used innerWidth/innerHeight
+// reads these instead, so a capture can ask for 1920x1080 out of whatever
+// window a headless browser happens to open.
+let viewW = capturing ? num("w", 1920) : innerWidth;
+let viewH = capturing ? num("h", 1080) : innerHeight;
+// Supersampling: the canvas is rendered ss times larger and ffmpeg scales it
+// back down. This page has antialias:false — the scene goes through a
+// half-float render target and MSAA does not survive that — so downsampling
+// is the only antialiasing there is, and at 1x every parapet edge crawls.
+const ss = capturing ? num("ss", 2) : Math.min(devicePixelRatio, 2);
+
 // --- the renderer ----------------------------------------------------------
-const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
+const renderer = new THREE.WebGLRenderer({
+  antialias: false, alpha: false,
+  // Only under capture: toBlob() reads the drawing buffer one task after the
+  // draw, and without this it is already cleared — every PNG comes out blank.
+  preserveDrawingBuffer: capturing,
+});
+renderer.setPixelRatio(ss);
+renderer.setSize(viewW, viewH);
 // NoToneMapping on purpose: the scene renders into a linear buffer and post.js
 // applies AgX at the very end, which is the order Blender uses. See post.js.
 renderer.toneMapping = THREE.NoToneMapping;
@@ -61,6 +83,12 @@ scene.add(sunLight, sunLight.target);
 // The sky, baked out of the .blend's Nishita world with its strength and its
 // desaturation already in it. It is the background AND the fill light: this is
 // as close as a rasteriser gets to what Cycles does with the same world.
+//
+// The load is a promise as well as a callback, because a capture must not
+// start before it resolves: the sky is the fill light, and the frames drawn
+// without it are a darker, contrastier city that no measurement would catch —
+// they simply are the first few seconds of the video.
+const skyReady = new Promise((resolve) => {
 new EXRLoader().load(`./${sky.file}${v}`, (tex) => {
   tex.mapping = THREE.EquirectangularReflectionMapping;
   const pmrem = new THREE.PMREMGenerator(renderer);
@@ -74,6 +102,8 @@ new EXRLoader().load(`./${sky.file}${v}`, (tex) => {
   scene.environmentIntensity = num("env", ENV_INTENSITY);
   pmrem.dispose();
   tex.dispose();
+  resolve();
+});
 });
 
 // --- the city --------------------------------------------------------------
@@ -248,7 +278,7 @@ function setFree(on) {
   // through camera.zoom, which is the only thing minZoom and maxZoom can fence
   // — they cannot fence a frustum that keeps changing.
   const [w, tx, ty] = shotAt(shot, frame);
-  placeHero(camera, shot, FREE_WIDTH, tx, ty, innerWidth / innerHeight);
+  placeHero(camera, shot, FREE_WIDTH, tx, ty, viewW / viewH);
   camera.zoom = FREE_WIDTH / w;        // after placeHero, which resets it to 1
   camera.updateProjectionMatrix();
   controls.target.set(tx, ty, 0);
@@ -262,7 +292,9 @@ addEventListener("keydown", (e) => {
 });
 
 addEventListener("resize", () => {
-  renderer.setSize(innerWidth, innerHeight);
+  if (capturing) return;             // the frame is the capture's, not the window's
+  viewW = innerWidth; viewH = innerHeight;
+  renderer.setSize(viewW, viewH);
   post.setSize(renderer.domElement.width, renderer.domElement.height);
 });
 
@@ -280,7 +312,7 @@ function drawFrame(now) {
   city.setFrame(frame);
 
   const [width, tx, ty] = shotAt(shot, frame);
-  const aspect = innerWidth / innerHeight;
+  const aspect = viewW / viewH;
   let framing;
   if (free) {
     controls.update();
@@ -289,7 +321,7 @@ function drawFrame(now) {
     // constant that is safe at 24 degrees is a needlessly tight one at 80.
     const el = elevationOf(camera, controls.target);
     controls.minZoom = (camera.right - camera.left) /
-      widestFrame(el, innerWidth / innerHeight);
+      widestFrame(el, viewW / viewH);
     if (camera.zoom < controls.minZoom) {
       camera.zoom = controls.minZoom;
       camera.updateProjectionMatrix();
@@ -314,7 +346,7 @@ function drawFrame(now) {
     // camera is low enough that depth is the larger of the two.
     const reach = Math.max(
       framing.width,
-      framing.width / (innerWidth / innerHeight) /
+      framing.width / (viewW / viewH) /
         Math.sin(THREE.MathUtils.degToRad(Math.max(el, 4)))) / 2;
     if (clampToFence(controls.target, reach)) {
       camera.position.copy(controls.target).add(_eye);
@@ -335,7 +367,7 @@ function drawFrame(now) {
 
   post.setFraming(framing.width, shot.hero_width, camera.near, camera.far,
                   free ? elevationOf(camera, controls.target) : shot.elevation,
-                  free ? innerWidth / innerHeight : undefined);
+                  free ? viewW / viewH : undefined);
   if (flag("nopost", 0)) {
     renderer.setRenderTarget(null);
     renderer.render(scene, camera);
@@ -395,4 +427,27 @@ window.measure = (at = shot.frames) => {
 
 paint();
 loadEl.classList.add("gone");
-requestAnimationFrame(tick);
+
+if (capturing) {
+  // No requestAnimationFrame at all under capture. The loop above advances the
+  // clock by how long the last frame TOOK, which is exactly what makes a screen
+  // recording of a heavy frame stutter; the recorder asks for frame n, waits
+  // for it however long it takes, and asks for n+1.
+  const { runCapture } = await import("./capture.js");
+  await skyReady;
+  await runCapture({
+    canvas: renderer.domElement,
+    frames: shot.frames, fps: shot.fps, width: viewW, height: viewH, ss,
+    from: num("from", 1), to: num("to", shot.frames),
+    // The one thing the recorder is allowed to drive. Time is derived from the
+    // frame number rather than read off the clock, so the grain is the same on
+    // a re-run and a slow frame does not become a long one.
+    draw: (n) => {
+      frame = n;
+      playing = false;
+      drawFrame((n / shot.fps) * 1000);
+    },
+  });
+} else {
+  requestAnimationFrame(tick);
+}

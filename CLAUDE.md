@@ -492,6 +492,13 @@ The move in particular is sampled per frame by the export rather than
 re-implemented in JavaScript, which is the same reason `_common` owns
 `SHOT_*` in the first place.
 
+**The video comes out of the page, not out of a screen recorder.**
+`cd web && npm run record` draws all 624 frames offline — no clock, no
+sampling, 1920×1080 supersampled 2× — and pipes them into ffmpeg: `mp4` for
+sending, `mov` (ProRes 422 HQ) for an edit. A screen recording samples a page
+that is itself dropping frames, so the pan judders in the file even though it
+never did on screen. `web/README.md` has the flags.
+
 **The look is measured, not eyeballed.** `window.measure()` in the console
 reports the five numbers `_common.GRADE` was fitted with — mean luma, contrast,
 dark, bright, saturation — read off the framebuffer and compared to
