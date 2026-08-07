@@ -26,9 +26,9 @@ export async function loadCity(v = "", onProgress = null) {
   const loader = new GLTFLoader().setDRACOLoader(draco);
 
   const [gltf, motion] = await Promise.all([
-    // El glb son 5.8 de los 8.5 MB, así que su progreso ES el progreso. Con
-    // gzip por el medio `total` llega en 0 a veces: entonces se informa lo
-    // descargado y la barra se mueve igual, contra un tamaño estimado.
+    // The glb is 5.8 of the 8.5 MB, so its progress IS the progress. With gzip
+    // in the way `total` sometimes arrives as 0: then what has been downloaded
+    // is reported anyway and the bar still moves, against an estimated size.
     loader.loadAsync(`./city.glb${v}`, (e) => {
       if (!onProgress) return;
       const total = e.total || 6.2e6;

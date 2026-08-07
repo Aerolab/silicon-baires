@@ -1,37 +1,39 @@
-"""Dónde entra una marca nueva, y en qué pared. Contesta antes de tocar nada.
+"""Where a new brand fits, and on which wall. Ask before editing anything.
 
-    ./bl scripts/city/90_brand_sites.py            los edificios libres
-    ./bl scripts/city/90_brand_sites.py 6.0        solo los que dan un logo >= 6 m
+    ./bl scripts/city/90_brand_sites.py            the free buildings
+    ./bl scripts/city/90_brand_sites.py 6.0        only those giving a logo >= 6 m
 
-Sumar seis clientes costó una tarde y una docena de renders, y ni uno de esos
-renders fue por una decisión de gusto: fueron todos por preguntas que tienen
-respuesta numérica y que se estaban contestando a ojo. Esas preguntas son
-cuatro, y este script las contesta juntas:
+Adding six clients cost an afternoon and a dozen renders, and not one of those
+renders was a matter of taste: every one of them was a question with a numeric
+answer being answered by eye. There are four such questions, and this script
+answers them together:
 
-  ¿QUÉ EDIFICIO ESTÁ LIBRE?   No qué techo: qué EDIFICIO. Una L son varias alas
-                              y el overlay del navegador marcaba libre cada ala
-                              que no fuera la del cartel, así que decía 149
-                              libres cuando libres había 68. Y "libre" incluye
-                              lo que HERO mudó: hay marcas cuyo registro apunta
-                              a un techo y cuyo logotipo cuelga de la pared del
-                              vecino, y esos edificios figuraban vacíos.
+  WHICH BUILDING IS FREE?     Not which roof: which BUILDING. An L is several
+                              wings, and the browser overlay marked every wing
+                              free except the one with the sign, so it said 149
+                              were free when 68 were. And "free" includes what
+                              HERO moved: some brands have a record pointing at
+                              one roof while their wordmark hangs off the
+                              neighbour's wall, and those buildings read as
+                              empty.
 
-  ¿QUÉ PARED?                 De las dos caras que esta cámara ve, la buena es
-                              la que la cámara realmente ve y da a la calle. La
-                              "más larga" - que es lo que parece razonable - es
-                              casi siempre la de adentro del complejo.
+  WHICH WALL?                 Of the two faces this camera sees, the good one is
+                              the one the camera actually sees and that faces
+                              the street. The "longest" — which is what sounds
+                              reasonable — is almost always the one inside the
+                              complex.
 
-  ¿DE QUÉ TAMAÑO ENTRA?       Lo que ata a un logotipo es el ancho de la pared
-                              y a un isotipo el alto, y la planta baja está
-                              retranqueada, así que el logo vive entre los 5 m
-                              y la cornisa.
+  WHAT SIZE FITS?             A wordmark is bound by the width of the wall and a
+                              symbol by its height, and the ground floor is set
+                              back, so the logo lives between about 5 m and the
+                              cornice.
 
-  ¿LO VE LA CÁMARA?           Metros de pared no son segundos en cuadro. La
-                              medida que importa es la de 93_check_signs: 5 %
-                              del ancho de cuadro durante 1 s.
+  DOES THE CAMERA SEE IT?     Metres of wall are not seconds on screen. The
+                              measure that matters is 93_check_signs': 5 % of
+                              the frame width for 1 s.
 
-Lo que sale de acá se copia a `_brands.EXTRA` y `_brands.HERO`. El recorrido
-completo está en CLAUDE.md, "Cómo se suma una marca".
+What comes out of here is copied into `_brands.EXTRA` and `_brands.HERO`. The
+full walkthrough is in CLAUDE.md, "How a brand gets added".
 """
 import sys, pathlib, json
 
@@ -43,16 +45,17 @@ from _common import (SIGNS, SOLIDS, LOTS, BUILDINGS, shot_cover, FACES,
 from _solids import Solids
 from _brands import HERO
 
-# Lo mismo que mide 93: por debajo de esto la marca está y no se entrega.
+# The same thing 93 measures: below this the brand is there and not delivered.
 MIN_FRAC = 0.05
 MIN_SECS = 1.0
-# La planta baja está retranqueada y el logo se mete adentro si baja de acá.
-# Medido: a 4,9 m hay pared, a 3,1 no. 99_check_overlap es quien lo encuentra.
+# The ground floor is set back and the logo pushes inside it below this height.
+# Measured: at 4.9 m there is wall, at 3.1 there is not. 99_check_overlap is
+# what finds it.
 GROUND = 5.0
-# Cuánta pared tiene que ver la cámara para que valga la pena. Por debajo de
-# esto el logo sale cortado por el techo del vecino o por el propio brazo.
+# How much of the wall the camera has to see for it to be worth it. Below this
+# the logo comes out cut by the neighbour's roof or by its own arm.
 MIN_SEEN = 0.75
-# Un logo de empresa va sobre la vereda, no sobre un patio interno.
+# A company logo goes over the pavement, not over an internal courtyard.
 MAX_STREET = 8.0
 
 
@@ -90,8 +93,8 @@ def main():
                 street = wall_to_street(site, box, axis)
                 if seen < MIN_SEEN or street > MAX_STREET:
                     continue
-                # un logotipo horizontal: lo ata el ancho. Un isotipo cuadrado:
-                # el alto. Se informan los dos, que es la decisión que sigue.
+                # a horizontal wordmark is bound by the width; a square symbol
+                # by the height. Both are reported: that is the next decision.
                 word = min(run * 0.80, tall * 6.0)
                 iso = min(run * 0.80, tall * 0.95)
                 secs, frac = shot_cover(wx, wy, z, word, word / 5.0)
@@ -102,31 +105,31 @@ def main():
 
     rows.sort(reverse=True, key=lambda r: r[0])
     best = {}
-    for r in rows:                       # una fila por edificio: la mejor cara
+    for r in rows:                       # one row per building: the best face
         best.setdefault(r[2], r)
 
-    print(f"\n  {len(sites)} edificios, {len(taken)} con marca, "
-          f"{len(sites) - len(taken)} libres")
-    print(f"  de los libres, {len(best)} tienen una pared que la cámara ve, "
-          f"da a la calle y entrega >= {MIN_SECS:.0f} s\n")
-    print(f"  {'frac':>6} {'seg':>5} {'edificio':>17} {'pared':>6} "
-          f"{'corrida':>8} {'alto':>6} {'logotipo':>9} {'isotipo':>8} "
-          f"{'ve':>5} {'calle':>6}")
+    print(f"\n  {len(sites)} buildings, {len(taken)} with a brand, "
+          f"{len(sites) - len(taken)} free")
+    print(f"  of the free ones, {len(best)} have a wall the camera sees, that "
+          f"faces the street and delivers >= {MIN_SECS:.0f} s\n")
+    print(f"  {'frac':>6} {'secs':>5} {'building':>17} {'wall':>6} "
+          f"{'run':>8} {'top':>6} {'wordmark':>9} {'symbol':>8} "
+          f"{'seen':>5} {'street':>6}")
     for frac, secs, at, wx, wy, side, run, top, word, iso, seen, street in \
             sorted(best.values(), reverse=True, key=lambda r: r[0]):
-        flag = "" if frac >= MIN_FRAC else "   << bajo el piso de 93"
+        flag = "" if frac >= MIN_FRAC else "   << below 93's floor"
         print(f"  {frac:6.3f} {secs:5.1f} "
               f"({wx:7.1f},{wy:8.1f}) {side:>6} "
               f"{run:8.1f} {top:6.1f} {word:9.1f} {iso:8.1f} "
               f"{seen:5.0%} {street:6.1f}{flag}")
 
     if not best:
-        print("  ninguno. El corredor está lleno: la única forma de sumar una "
-              "marca es\n  pisar un cartel que hoy lleva un nombre inventado - "
-              "ver la lista con\n  93_check_signs y clavarlo con PIN.")
-    print("\n  La coordenada va a _brands.EXTRA como `at`, y la pared a la "
-          "entrada de\n  HERO como `facade_side`. Ver CLAUDE.md, "
-          "\"Cómo se suma una marca\".\n")
+        print("  none. The corridor is full: the only way to add a brand is to "
+              "take over\n  a sign that currently carries an invented name — "
+              "list them with\n  93_check_signs and pin it with PIN.")
+    print("\n  The coordinate goes into _brands.EXTRA as `at`, and the wall "
+          "into that\n  brand's HERO entry as `facade_side`. See CLAUDE.md, "
+          "\"How a brand gets added\".\n")
 
 
 main()

@@ -40,14 +40,15 @@ MIN_GAP = 0.10
 
 
 def where(s):
-    """Dónde está y qué mide ESTE cartel, tal como quedó construido.
+    """Where THIS sign is and what it measures, as actually built.
 
-    `built` lo escribe 10_signs midiendo la malla; el registro de 04 es el
-    plan. Para casi todos son lo mismo. Para una marca con `facade_only` no:
-    el plan es un ancla que no se levanta y dice "roofmark de 7,1 m" mientras
-    en la pared hay un logotipo de 27,6, así que este chequeo informaba mal
-    justo las marcas que mejor se entregan. Si falta `built` - un manifiesto
-    de antes de que 10 lo escribiera - cae al plan, que es la respuesta vieja.
+    `built` is written by 10_signs measuring the mesh; 04's record is the plan.
+    For nearly all of them the two agree. For a `facade_only` brand they do not:
+    the plan is an anchor that is never raised and says "roofmark, 7.1 m" while
+    on the wall there is a 27.6 m wordmark, so this check reported exactly the
+    best-delivered brands wrongly. If `built` is missing — a manifest from
+    before 10 started writing it — it falls back to the plan, which is the old
+    answer.
     """
     b = s.get("built")
     return (b[0], b[1], b[2], b[3], b[4]) if b else \
@@ -58,8 +59,8 @@ def main():
     signs = json.loads(SIGNS.read_text())
     boxes = json.loads(SOLIDS.read_text())["boxes"]
     if not any(s.get("built") for s in signs):
-        print("  ! el manifiesto no trae `built`: corré 10_signs.py y este\n"
-              "    chequeo pasa a medir la malla en vez del plan\n")
+        print("  ! the manifest carries no `built`: run 10_signs.py and this\n"
+              "    check starts measuring the mesh instead of the plan\n")
 
     rows = []
     for s in signs:
@@ -86,27 +87,27 @@ def main():
         print(f"  repeated on camera: {', '.join(sorted(dupes))}")
 
     # --- one sign per building ---------------------------------------------
-    # POR `owner`, QUE ES LA CELDA, y no por la caja de footprint en la que cae
-    # el cartel. Esta prueba se hacía contra las cajas con el argumento de que
-    # la geometría es el hecho y preguntarle al cartel es preguntarle al código
-    # que lo puso si lo puso bien. El argumento es bueno y la ejecución estaba
-    # mal: UNA CAJA ES UN ALA, NO UN EDIFICIO. Una L son varios rectángulos, y
-    # dos marcas en dos alas de la misma dirección caen en cajas distintas y
-    # pasaban las dos. Tiendanube y Rebill compartieron edificio así.
+    # BY `owner`, WHICH IS THE CELL, and not by the footprint box the sign falls
+    # in. This test used to run against the boxes, on the argument that the
+    # geometry is the fact and asking the sign is asking the code that placed it
+    # whether it placed it right. The argument is good and the execution was
+    # wrong: A BOX IS A WING, NOT A BUILDING. An L is several rectangles, and
+    # two brands on two wings of the same address land in different boxes and
+    # both passed. Tiendanube and Rebill shared a building that way.
     #
-    # Y CUENTA LO QUE HERO MUDÓ, que es la otra mitad y la que faltaba: el
-    # logotipo de una marca puede colgar de la pared de otro edificio, así que
-    # una dirección con dos marcas encima podía pasar con las dos contentas.
-    # `brand_addresses` en _common es la respuesta, una sola vez, y 90 usa la
-    # misma para no ofrecer un edificio ocupado.
+    # AND IT COUNTS WHAT HERO MOVED, which is the other half and the one that
+    # was missing: a brand's wordmark can hang off another building's wall, so
+    # an address carrying two brands could pass with both of them happy.
+    # `brand_addresses` in _common is the answer, written once, and 90 uses the
+    # same one to avoid offering a building that is taken.
     if not BUILDINGS.exists():
-        raise SystemExit("falta city_buildings.json: corré 04_buildings.py")
+        raise SystemExit("city_buildings.json is missing: run 04_buildings.py")
     sites = json.loads(BUILDINGS.read_text())["sites"]
     shared = {k: sorted(v)
               for k, v in brand_addresses(sites, signs, HERO).items()
               if len(v) > 1 and k not in SHARED}
     for k in SHARED:
-        print(f"  · dos marcas por decisión en {k}: {SHARED[k]}")
+        print(f"  · two brands here by decision, {k}: {SHARED[k]}")
     if shared:
         print(f"\n  ✗ {len(shared)} buildings carry more than one sign:")
         for k, v in sorted(shared.items())[:8]:

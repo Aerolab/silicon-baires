@@ -477,9 +477,9 @@ def hero_word(m, rec, hero, site, key="word"):
     # the logo is measured against that.
     turn = 0.0 if bw >= bd else math.pi / 2
     along, across = (bw, bd) if bw >= bd else (bd, bw)
-    # `roof_shift` corre la pieza dentro del techo, en fracciones del edificio
-    # y en ejes del MUNDO, que es como se mira un plano: "hacia la puerta" es
-    # una dirección de la ciudad, no del sistema local de un footprint rotado.
+    # `roof_shift` moves the piece around the roof, in fractions of the building
+    # and along WORLD axes, which is how a plan is read: "towards the entrance"
+    # is a direction in the city, not in the local frame of a rotated footprint.
     sx, sy = hero.get(f"{key}_roof_shift", hero.get("roof_shift", (0.0, 0.0)))
     px, py = bx + sx * bw, by + sy * bd
     # THE DECK IS MEASURED WHERE THE PIECE LANDS, not at the centre of the
@@ -494,9 +494,9 @@ def hero_word(m, rec, hero, site, key="word"):
                                       top - rec["z"])))
     flat = flat @ Matrix.Rotation(brot + turn, 4, "Z")
     flat = flat @ readable(rec, rot=brot + turn)
-    # un cuarto de vuelta a mano, cuando la orientacion que entra mejor en el
-    # techo no es la que la marca quiere. En grados y antihoraria vista desde
-    # arriba, que es como se pide mirando el plano.
+    # a quarter turn by hand, for when the orientation that fits the roof best
+    # is not the one the brand wants. In degrees and anticlockwise seen from
+    # above, which is how it gets asked for while looking at the plan.
     spin = hero.get(f"{key}_roof_rot", hero.get("roof_rot", 0.0))
     if spin:
         flat = flat @ Matrix.Rotation(math.radians(spin), 4, "Z")
@@ -576,8 +576,8 @@ def hero_facade(m, rec, hero, site, key="word"):
         faces.append((p[0] - o[0], ang, half, run))
     side = par("facade_side", "left")
     if side == "wide":
-        # la cara mas larga de las dos que esta camara ve, sin importar de que
-        # lado caiga: un logotipo quiere metros de pared, no un lado concreto
+        # the longer of the two faces this camera sees, whichever side it falls
+        # on: a wordmark wants metres of wall, not one particular side
         _, ang, half, run = max(faces, key=lambda f: f[3])
     else:
         faces.sort(key=lambda f: f[0])
@@ -595,23 +595,23 @@ def hero_facade(m, rec, hero, site, key="word"):
     # ancho parecia mas completo y es peor: en los extremos de una fachada de
     # 25 m hay patios y retranqueos, el minimo cae en uno de ellos y el logo
     # entero se mete dentro del edificio. Ocho carteles enterrados.
-    # UNA VENTANA FIJA de 5 m, no la altura del logo. Con el rango atado al
-    # tamano del cartel, uno alto muestrea 9 m de fachada, encuentra el
-    # retranqueo de la planta baja o un patio, y se mete adentro: ocho
-    # carteles enterrados. Cinco metros alrededor de su propia altura es lo
-    # que hay que preguntar.
-    # EL BORDE DEL FOOTPRINT, y nada mas listo que eso. Se intentaron seis
-    # maneras de encontrar la pared real — un rayo, siete rayos, una grilla,
-    # el minimo, el maximo, los vertices de la malla — y todas fallan igual:
-    # estas fachadas son bandeadas y NO SON UN PLANO, asi que cualquier medida
-    # que pegue el logo a una parte lo mete dentro de otra. Hasta 1454 pares
-    # de triangulos adentro del edificio, en 99_check_overlap.
+    # A FIXED 5 m WINDOW, not the height of the logo. With the range tied to the
+    # size of the sign, a tall one samples 9 m of facade, finds the ground
+    # floor's setback or a courtyard, and pushes inside it: eight buried signs.
+    # Five metres around its own height is the right thing to ask.
     #
-    # El footprint publicado envuelve TODO el edificio, cornisas incluidas.
-    # Apoyado en su borde, el cartel no puede entrar en nada; lo que queda de
-    # aire es el padding de la caja, medio metro, y es el precio de no
-    # enterrarlo. Bajar `facade_proud` no lo acerca mas: acerca el logo al
-    # borde de la caja, que ya esta donde esta.
+    # THE EDGE OF THE FOOTPRINT, and nothing cleverer than that. Six ways of
+    # finding the real wall were tried — one ray, seven rays, a grid, the
+    # minimum, the maximum, the mesh vertices — and they all fail the same way:
+    # these facades are banded and ARE NOT A PLANE, so any measurement that
+    # sticks the logo to one part pushes it inside another. Up to 1454 triangle
+    # pairs inside the building, in 99_check_overlap.
+    #
+    # The published footprint wraps the WHOLE building, cornices included.
+    # Resting on its edge, the sign cannot end up inside anything; the air left
+    # over is the box's padding, half a metre, and it is the price of not
+    # burying it. Lowering `facade_proud` does not bring it closer: it brings
+    # the logo closer to the edge of the box, which is already where it is.
     wall = Matrix.Rotation(brot + ang + math.pi / 2, 4, "Z") @ \
         upright(0.0, -(half + par("facade_proud", 0.02)),
                 zc - rec["z"], 0.0)
@@ -876,11 +876,11 @@ def build(rec, coll, site):
                     x @ Matrix.Translation(Vector((0, -PROUD, -CAP - DROP))))
     elif kind == "billboard":
         if hero and hero.get("facade_only"):
-            # el cartel no se levanta: la marca vive en una pared. Es lo mismo
-            # que ya hacian parapeto, medianera y roofmark, y faltaba aca - un
-            # billboard es una estructura suelta parada en un techo, asi que
-            # dejarlo construido con el logo mudado deja un panel en blanco
-            # sobre pilotes, que es peor que no tener nada.
+            # the sign is never raised: the brand lives on a wall. Parapet,
+            # party wall and roofmark already did this and it was missing here —
+            # a billboard is a free-standing structure on a roof, so leaving it
+            # built with the logo moved away leaves a blank panel on stilts,
+            # which is worse than nothing at all.
             for k in hero.get("facade_arts",
                               [hero.get("facade_art", "word")]):
                 hero_facade(m, rec, hero, site, key=k)
@@ -991,18 +991,18 @@ def main():
         # published so the overlap check knows these are meant to be there,
         # and so anything placed later keeps out of them
         zs = [(ob.matrix_world @ v.co).z for v in ob.data.vertices]
-        # LO QUE SE CONSTRUYÓ DE VERDAD, anotado de vuelta en el manifiesto.
+        # WHAT WAS ACTUALLY BUILT, written back into the manifest.
         #
-        # El registro de 04 es un PLAN, y para una marca con `facade_only` es
-        # un ancla que no se levanta: dice "roofmark de 7,1 m" mientras en la
-        # pared hay un logotipo de 27,6. 93_check_signs medía el plan, así que
-        # informaba mal justo las marcas que mejor se entregan - y también las
-        # daba por chicas cuando no lo eran. Lo escribe este paso porque es el
-        # único que tiene la malla.
+        # 04's record is a PLAN, and for a `facade_only` brand it is an anchor
+        # that is never raised: it says "roofmark, 7.1 m" while on the wall
+        # there is a 27.6 m wordmark. 93_check_signs measured the plan, so it
+        # reported exactly the best-delivered brands wrongly — and called them
+        # too small when they were not. This step writes it because it is the
+        # only one that has the mesh.
         if len(ob.data.vertices):
-            # ob.location + v.co, y NO matrix_world: la matriz se recalcula en
-            # la próxima evaluación del depsgraph, así que leerla acá devuelve
-            # la identidad y los 97 carteles miden desde el origen.
+            # ob.location + v.co, and NOT matrix_world: the matrix is
+            # recomputed on the next depsgraph evaluation, so reading it here
+            # returns the identity and all 97 signs measure from the origin.
             loc = ob.location
             pts = [(v.co[0] + loc[0], v.co[1] + loc[1], v.co[2] + loc[2])
                    for v in ob.data.vertices]
@@ -1028,7 +1028,7 @@ def main():
             sol.add(rec["x"], rec["y"], rec["w"] + 1.0, rec["w"] + 1.0,
                     0.0, min(zs), max(zs))
     sol.merge_into(SOLIDS, "signs")
-    # el manifiesto sale de acá con una clave más de la que entró: ver `built`
+    # the manifest leaves here with one key more than it arrived with: see `built`
     (SIGNS).write_text(json.dumps(plan, indent=1))
 
     # the SVG importer leaves one material per fill behind on every import, and

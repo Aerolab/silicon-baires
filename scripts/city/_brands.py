@@ -1,61 +1,63 @@
-"""Las marcas reales, una tabla, y el orden es la prioridad.
+"""The real brands, one table, and the order is the priority.
 
-`assign_brands()` en 04 reparte los nombres por visibilidad: rankea los carteles
-por `shot_cover` y le da al más visible la primera entrada sin usar. Así que el
-ORDEN DE ESTAS LISTAS ES EL ORDEN EN QUE LA CÁMARA LOS ENCUENTRA. Las marcas con
-SVG van primero porque son las que se construyen en 3D, extruidas de la curva
-real; las que solo existen en bitmap van después, con un símbolo genérico; y las
-inventadas van al final, que es donde la cámara ya no llega.
+`assign_brands()` in 04 hands out the names by visibility: it ranks the signs
+by `shot_cover` and gives the most visible one the first unused entry. So the
+ORDER OF THESE LISTS IS THE ORDER THE CAMERA FINDS THEM IN. The brands with an
+SVG come first because they are the ones built in 3D, extruded from the real
+curve; the ones that only exist as a bitmap come after, with a generic symbol;
+and the invented ones go last, which is where the camera no longer reaches.
 
-No hace falta que la tabla tenga un largo determinado. `DRAW_WIDTH` en 04 está
-pinneado por otro motivo (el sorteo durante la colocación consume RNG y mueve
-edificios), y la marca que ese sorteo elige es un placeholder que esta tabla
-pisa entera al final del run.
+The table does not have to be any particular length. `DRAW_WIDTH` in 04 is
+pinned for a different reason (the draw during placement consumes RNG and moves
+buildings), and the brand that draw picks is a placeholder this table overwrites
+wholesale at the end of the run.
 
-`svg` es el archivo bajo `assets/logos/`. Si es None la marca cae al símbolo
-geométrico de `mark`, que es el sistema con el que se construyó la ciudad.
-Ver `assets/logos/SOURCES.md` para de dónde salió cada archivo y qué le falta.
+`svg` is the file under `assets/logos/`. If it is None the brand falls back to
+the geometric symbol in `mark`, which is the system the city was built with.
+See `assets/logos/SOURCES.md` for where each file came from and what it lacks.
 
-`face` es el color del cartel y `ink` el del logo. `ink` solo se usa cuando el
-SVG es monocromo o no declara color: cuando el archivo trae su propia paleta
-(Globant son dos colores, Pomelo son seis) manda el archivo, porque el color es
-parte de la marca y no una decisión de esta ciudad.
+`face` is the colour of the sign and `ink` the colour of the logo. `ink` is only
+used when the SVG is monochrome or declares no colour: when the file carries its
+own palette (Globant is two colours, Pomelo is six) the file wins, because the
+colour is part of the brand and not a decision this city gets to make.
 
 
-## Sumar una marca, en cinco pasos
+## Adding a brand, in five steps
 
     ./bl scripts/city/90_brand_sites.py
 
-devuelve los edificios libres con la pared que hay que usar, cuánto de esa
-pared ve la cámara, a qué distancia está la vereda y qué tamaño entra. Después:
+reports the free buildings with the wall to use, how much of that wall the
+camera sees, how far the kerb is and what size fits. Then:
 
-  1. El SVG a `assets/logos/`, con `width`/`height` explícitos sacados del
-     `viewBox` - el importador de Blender no entiende `width="100%"` y devuelve
-     una curva vacía sin avisar. Anotar la fuente en `SOURCES.md`.
-  2. La marca a `CAMPUS` (B2B) o `AVENUE` (consumo), con su color.
-  3. El edificio a `EXTRA`, con la coordenada que dio 90. Es un ANCLA: no se
-     construye, existe para que el manifiesto tenga un registro al que clavarle
-     la marca.
-  4. La pared a `HERO`, con `facade_only` y el `facade_side` que dio 90. Un
-     logotipo lo ata el ancho de la pared, un isotipo el alto, y la planta baja
-     está retranqueada: el logo vive entre los 5 m y la cornisa.
-  5. `./bl scripts/city/04_buildings.py && ./bl scripts/city/10_signs.py`, y
-     MIRAR EL RENDER. Después la cadena completa desde 06, y 93 para el número.
+  1. The SVG into `assets/logos/`, with explicit `width`/`height` taken from the
+     `viewBox` — Blender's importer does not understand `width="100%"` and
+     returns an empty curve without saying so. Record the source in
+     `SOURCES.md`.
+  2. The brand into `CAMPUS` (B2B) or `AVENUE` (consumer), with its colour.
+  3. The building into `EXTRA`, with the coordinate 90 reported. It is an
+     ANCHOR: nothing is built from it, it exists so the manifest has a record to
+     pin the brand to.
+  4. The wall into `HERO`, with `facade_only` and the `facade_side` 90 reported.
+     A wordmark is bound by the width of the wall, a symbol by its height, and
+     the ground floor is set back: the logo lives between about 5 m and the
+     parapet.
+  5. `./bl scripts/city/04_buildings.py && ./bl scripts/city/10_signs.py`, and
+     LOOK AT THE RENDER. Then the whole chain from 06, and 93 for the number.
 
-Lo que NO hay que volver a deducir - cada uno costó un render:
+What NOT to re-derive — each one of these cost a render:
 
-  · Un logo va en el FRENTE, no en el techo. Un roofmark a 250 m es un
-    rectángulo pálido; una pared son 28 m de letras.
-  · "La cara más larga" es casi siempre la de adentro del complejo.
-  · Una pared puede dar a la calle y estar tapada igual, por el otro brazo de
-    la propia L o por el vecino a un metro. Es una pregunta de línea de visión.
-  · Una marca por dirección, y la dirección es la CELDA, no el ala. Las
-    excepciones se declaran en `SHARED` con el motivo.
+  · A logo goes on the FRONT, not on the roof. A roofmark at 250 m is a pale
+    rectangle; a wall is 28 m of letters.
+  · "The longest face" is almost always the one inside the complex.
+  · A wall can face the street and still be hidden, by the other arm of its own
+    L or by the neighbour a metre away. That is a sightline question.
+  · One brand per address, and the address is the CELL, not the wing. The
+    exceptions are declared in `SHARED` with their reason.
 """
 
 # (text, mark, face, ink, svg)
 
-# El parque de oficinas: parapetos, roofmarks y mástiles.
+# The office park: parapets, roofmarks and masts.
 CAMPUS = [
     ("GLOBANT",   "chevron",  "#f7f3e8", "#272425", "globant.svg"),
     ("AEROLAB",   "disc",     "#1c1c1c", "#ff510d", "aerolab.svg"),
@@ -69,26 +71,27 @@ CAMPUS = [
     ("TAKENOS",   "disc",     "#f7f3e8", "#6d37d5", "takenos_word.svg"),
     ("MERCADO PAGO", "disc",  "#f7f3e8", "#00bcff", "mp_iso.svg"),
     ("HUMAND",    "ring",     "#f7f3e8", "#182d7a", "humand.svg"),
-    # las tres B2B de la tanda nueva. Van clavadas por EXTRA, así que su lugar
-    # en esta lista no decide nada: está para que la marca exista con su color.
+    # the three B2B brands from the newest batch. They are pinned through
+    # EXTRA, so their place in this list decides nothing: it is here so the
+    # brand exists with its colour.
     #
-    # Las seis van pegadas a una FACHADA, sin panel detrás, así que el color
-    # lo decide la pared y no esta tabla. Complif es el caso donde se ve: se
-    # probaron las dos variantes del archivo y se miraron, y la pared de esa
-    # esquina es de ladrillo oscuro, así que gana el blanco de la web. La
-    # variante oscura quedó en assets por si la marca se muda a una pared
-    # clara. Ver SOURCES.md, que ya anotaba lo mismo para otras cuatro.
+    # All six of the batch are stuck to a FACADE, with no panel behind them, so
+    # the wall decides the colour rather than this table. Complif is the case
+    # where it shows: both variants of the file were tried and looked at, and
+    # the wall on that corner is dark brick, so the white one from the website
+    # wins. The dark variant stayed in assets in case the brand moves to a light
+    # wall. See SOURCES.md, which already recorded the same for four others.
     ("COMPLIF",   "ring",     "#1c1c1c", "#ffffff", "complif.svg"),
     ("REBILL",    "chevron",  "#f7f3e8", "#111111", "rebill.svg"),
     ("PAISANOS",  "square",   "#101820", "#ffffff", "paisanos.svg"),
-    # sin vector: símbolo genérico, hasta que aparezca el SVG
+    # no vector: generic symbol, until the SVG turns up
     ("RIPIO",     "disc",     "#f7f3e8", "#7b2ff7", None),
     ("ETERMAX",   "bars",     "#f7f3e8", "#28292b", "etermax_word.svg"),
     ("OLX",       "ring",     "#f7f3e8", "#6e2fb8", None),
 ]
 
-# La avenida: medianeras y billboards. Le habla al que maneja, no al que busca
-# trabajo, así que acá van las de consumo masivo.
+# The avenue: party walls and billboards. It talks to whoever is driving, not to
+# whoever is looking for a job, so the mass-market brands go here.
 AVENUE = [
     ("MERCADO LIBRE", "disc",    "#ffe600", "#303576", "mercadolibre.svg"),
     ("UALA",         "chevron",  "#f7f7fb", "#406afc", "uala.svg"),
@@ -97,21 +100,21 @@ AVENUE = [
     ("LEMON",        "square",   "#d6f24a", "#003f20", "lemon.svg"),
     ("TIENDANUBE",   "ring",     "#f7f3e8", "#111111", "tiendanube.svg"),
     ("DIGITAL HOUSE", "square",  "#101820", "#ffffff", "digitalhouse.svg"),
-    # las tres de consumo de la tanda nueva, tambien clavadas por EXTRA
+    # the three consumer brands from the newest batch, also pinned through EXTRA
     ("GALICIA",      "disc",     "#f7f3e8", "#ff7f00", "galicia_iso.svg"),
     ("CODERHOUSE",   "bars",     "#f7f3e8", "#1d1d1d", "coderhouse.svg"),
     ("BELO",         "disc",     "#f7f3e8", "#5300da", "belo.svg"),
-    # sin vector
+    # no vector
     ("MODO",         "disc",     "#f7f3e8", "#00a15a", None),
 ]
 
 
 def pools(campus_filler, avenue_filler):
-    """Las reales primero, las inventadas de relleno después.
+    """The real ones first, the invented filler after.
 
-    El relleno son las tablas que ya tenía 04. No se tiran: hay 94 carteles y
-    21 marcas reales, así que los 73 restantes (ninguno de los cuales llega a
-    la cámara con tamaño legible) siguen llevando las inventadas.
+    The filler is the tables 04 already had. They are not thrown away: there are
+    94 signs and 21 real brands, so the remaining 73 — none of which reaches the
+    camera at a legible size — still carry the invented ones.
     """
     return ([b[:4] for b in CAMPUS] + list(campus_filler),
             [b[:4] for b in AVENUE] + list(avenue_filler))
@@ -120,119 +123,124 @@ def pools(campus_filler, avenue_filler):
 LOGOS = {b[0]: b[4] for b in CAMPUS + AVENUE if b[4]}
 
 
-# Marcas que reciben el trato de hero, y por ahora es una.
+# Brands that get the hero treatment.
 #
-# Un logotipo entero colgado de un parapeto es lo que menos se lee de todo lo
-# que se probó: la caja del lockup incluye el isotipo, el aire y las
-# ascendentes, así que a la altura que entra bajo el alero las letras salen del
-# tamaño de una ventana. Partirlo en dos resuelve las dos mitades por separado,
-# y es además como se monta de verdad: el símbolo grande en la pared, que es una
-# forma y se lee a cualquier distancia, y el nombre acostado en la azotea, donde
-# no compite con nada y puede medir cuarenta metros.
+# A whole wordmark hung off a parapet is the least legible of everything that
+# was tried: the lockup's bounding box includes the symbol, the air and the
+# ascenders, so at the height that fits under the eaves the letters come out the
+# size of a window. Splitting it in two solves each half separately, and it is
+# also how these are really mounted: the big symbol on the wall, which is a
+# shape and reads at any distance, and the name laid flat on the roof, where it
+# competes with nothing and can be forty metres long.
 #
-#   iso        el símbolo solo, colgado del parapeto
-#   word       el logotipo solo, tumbado en la azotea del edificio dueño
-#   iso_frac   alto del símbolo como fracción de la altura del edificio
-#   roof_frac  cuánto del techo puede ocupar el logotipo
-#   iso_ink    color del isotipo, y word_ink el del logotipo. Son dos porque
-#              no siempre son el mismo: Lemon va verde arriba y negro abajo.
-#   face       pisa el color del cartel que sostiene el isotipo
-#   roof_at    (x, y) del techo donde va el logotipo. Sin esto usa el del
-#              edificio dueño del cartel, que es lo normal; con esto se puede
-#              cruzar a la azotea de al lado, que es lo que pidió Lemon.
+#   iso        the symbol alone, hung off the parapet
+#   word       the wordmark alone, laid flat on the owning building's roof
+#   iso_frac   height of the symbol as a fraction of the building's height
+#   roof_frac  how much of the roof the wordmark may occupy
+#   iso_ink    colour of the symbol, and word_ink that of the wordmark. There
+#              are two because they are not always the same: Lemon is green on
+#              top and black below.
+#   face       overrides the colour of the sign carrying the symbol
+#   roof_at    (x, y) of the roof the wordmark goes on. Without it, the roof of
+#              the building that owns the sign is used, which is the normal
+#              case; with it, the wordmark can cross to the roof next door,
+#              which is what Lemon asked for.
 HERO = {
-    # ---- la tanda de agosto 2026 ------------------------------------------
-    # Las seis en la misma clave y la clave es `facade_only`: el logo pegado a
-    # la pared del edificio y NADA en el techo. El ancla de cada una está en
-    # EXTRA (o en PIN, para las dos que reusan un billboard apagado) y no se
-    # construye; lo único que sale de acá es el logotipo sobre la fachada.
+    # ---- the August 2026 batch --------------------------------------------
+    # All six share one key and the key is `facade_only`: the logo stuck to the
+    # building's wall and NOTHING on the roof. Each one's anchor is in EXTRA (or
+    # in PIN, for the two that reuse a switched-off billboard) and is never
+    # built; the only thing that comes out of here is the wordmark on the
+    # facade.
     #
-    # QUÉ CARA. Son dos las que esta cámara ve, la +X y la +Y, y elegir la más
-    # larga con "wide" es elegir mal: la cara larga de estos edificios suele
-    # ser la de adentro del complejo. Belo, Paisanos y Complif quedaron
-    # colgados de una pared que da a un patio a 17-32 m de la calle, y un logo
-    # de empresa va sobre la vereda. La cara buena se midió contra la tabla de
-    # calles - la que tiene la vereda a menos de 4 m - y en los tres es la +Y,
-    # que es "right". Los otros dos son L y ahí manda otra cosa: la cara que no
-    # da contra el propio brazo. Ver los comentarios de cada uno.
+    # WHICH FACE. This camera sees two of them, +X and +Y, and picking the
+    # longest with "wide" is picking wrong: the long face of these buildings is
+    # usually the one inside the complex. Belo, Paisanos and Complif ended up
+    # hanging off a wall facing a courtyard 17–32 m from the street, and a
+    # company logo goes over the pavement. The good face was measured against
+    # the street table — the one with the kerb under 4 m away — and on all three
+    # it is +Y, which is "right". The other two are Ls and there something else
+    # decides: the face that does not look into its own arm. See the comment on
+    # each.
     "GALICIA": {"iso": "galicia_iso.svg", "word": "galicia_iso.svg",
-                # solo el isotipo, porque es lo único que hay en vector de la
-                # marca actual - ver SOURCES.md. Cuadrado y grande, que es
-                # justo lo que mejor aguanta una pared vista desde 250 m
+                # the symbol only, because it is the only thing the current
+                # brand has in vector form — see SOURCES.md. Square and large,
+                # which is exactly what holds up best on a wall seen from 250 m
                 "facade": True, "facade_only": True, "facade_art": "iso",
-                # EL ALA CHICA Y SU CARA NORTE, y las dos cosas costaron un
-                # render cada una. Este edificio es una L: en el ala grande la
-                # cara larga da contra el otro brazo (el disco entraba medio
-                # metido adentro y asomaba un gajo naranja detrás del techo) y
-                # la otra cara queda a 1,3 m del edificio vecino, que la tapa
-                # entera. El ala chica tiene su cara norte al aire.
+                # THE SMALL WING AND ITS NORTH FACE, and both of those cost a
+                # render each. This building is an L: on the big wing the long
+                # face looks into the other arm (the disc sat half inside it and
+                # an orange sliver poked out behind the roof) and the other face
+                # is 1.3 m from the neighbouring building, which hides it
+                # entirely. The small wing has its north face in open air.
                 "facade_side": "left", "facade_at": (165.3, 11.0),
-                # lo que ata a un isotipo cuadrado es el ALTO de la pared, no
-                # el ancho: a 0,52 el disco medía 12,7 m sobre 27 m de pared
+                # what binds a square symbol is the HEIGHT of the wall, not its
+                # width: at 0.52 the disc measured 12.7 m on a 27 m wall
                 "facade_frac": 0.72, "facade_tall": 0.76,
                 "facade_z": 0.62, "facade_depth": 0.45},
     "CODERHOUSE": {"word": "coderhouse.svg", "iso": "coderhouse.svg",
-                   # 8,4:1 de una sola palabra: lo que la ata es el ancho, y
-                   # por eso va en la cara larga del edificio más alto
+                   # 8.4:1 of a single word: what binds it is the width, which
+                   # is why it goes on the long face of the tallest building
                    "facade": True, "facade_only": True,
-                   # misma L, mismo problema: en la cara larga la palabra
-                   # entraba a la mitad en el ala de al lado y se leía "CODE"
+                   # same L, same problem: on the long face the word ran half
+                   # into the wing next door and read as "CODE"
                    "facade_side": "left", "facade_at": (201.8, -14.8),
-                   # arriba de todo y con cuerpo, que es la receta de
-                   # Basement: esta fachada tiene una cornisa por piso y una
-                   # palabra chata a media altura sale cortada en tiras
+                   # right at the top and with some body to it, which is the
+                   # Basement recipe: this facade has a cornice per storey, and
+                   # a flat word at mid-height comes out sliced into strips
                    "facade_frac": 0.86, "facade_tall": 0.22,
                    "facade_z": 0.93, "facade_depth": 0.55},
     "BELO": {"word": "belo.svg", "iso": "belo.svg",
              "facade": True, "facade_only": True,
              "facade_side": "right", "facade_at": (172.2, -377.2),
-             # alto: a 0,74 la mitad de abajo quedaba detrás del techo del
-             # edificio de adelante
+             # high: at 0.74 the bottom half sat behind the roof of the building
+             # in front
              "facade_frac": 0.78, "facade_tall": 0.50,
              "facade_z": 0.80, "facade_depth": 0.35},
-    # SE MUDÓ DEL 133 AL 188, y la mudanza es la parte que importa. El 133
-    # parecía libre y no lo estaba: su dirección ya la tenía Tiendanube, cuyo
-    # logotipo está tumbado en el techo del ala de al lado. Dos marcas en una
-    # dirección es exactamente lo que la regla prohíbe, y no lo vio nadie
-    # porque `thin` no mira los puestos a mano y 93 agrupaba por ala.
-    # El 188 tiene 66 m de pared al norte, que es la más larga de la tanda.
+    # MOVED FROM 133 TO 188, and the move is the part that matters. 133 looked
+    # free and was not: its address already belonged to Tiendanube, whose
+    # wordmark is laid flat on the roof of the wing next door. Two brands on one
+    # address is exactly what the rule forbids, and nobody saw it because `thin`
+    # does not look at hand-placed sites and 93 grouped by wing.
+    # 188 has 66 m of north wall, the longest in the batch.
     "REBILL": {"word": "rebill.svg", "iso": "rebill.svg",
                "facade": True, "facade_only": True,
                "facade_side": "right", "facade_at": (333.0, -243.0),
                "facade_frac": 0.55, "facade_tall": 0.35,
                "facade_z": 0.72, "facade_depth": 0.30},
-    # LAS DOS CARAS DEL 146, una por arte, que es el reparto de Mercado Libre:
-    # el isotipo lima en el frente que da a la avenida, y el logotipo cruzando
-    # la cara izquierda, que son 35 m de pared contra los 14,5 del frente. Es
-    # la respuesta a lo que a este edificio le sobra y le falta: la cara buena
-    # es corta y alta, así que ahí va el símbolo, que es cuadrado; la larga es
-    # baja, así que ahí va la palabra, que es 6:1.
+    # BOTH FACES OF 146, one art each, which is the Mercado Libre arrangement:
+    # the lime symbol on the front facing the avenue, and the wordmark across
+    # the left face, which is 35 m of wall against the front's 14.5. It is the
+    # answer to what this building has too much and too little of: the good face
+    # is short and tall, so the symbol goes there, being square; the long one is
+    # low, so the word goes there, being 6:1.
     #
-    # El ala 146 es la otra ala del mismo edificio donde está el ancla, así que
-    # las dos artes siguen siendo una marca por dirección. El archivo trae
-    # logotipo e isotipo en una pieza cada uno, y se parte por posición como
-    # Naranja X: el blanco es la palabra, el lima de la derecha es el símbolo.
+    # Wing 146 is the other wing of the same building the anchor is on, so the
+    # two arts are still one brand per address. The file carries the wordmark
+    # and the symbol as one piece each, and is split by position like Naranja X:
+    # the white part is the word, the lime on the right is the symbol.
     "PAISANOS": {"iso": "paisanos.svg", "word": "paisanos.svg",
                  "iso_x": [0.55, 1.01], "word_x": [-0.01, 0.55],
                  "facade": True, "facade_only": True,
                  "facade_arts": ["iso", "word"],
                  "facade_at": (194.9, -149.8), "facade_depth": 0.40,
-                 # el símbolo, en el frente. Este edificio tiene 16,9 m y lo
-                 # que lo limita es el alto de la pared. De cornisa a vereda NO
-                 # entra: la planta baja está retranqueada y el pie del logo se
-                 # metía adentro (99_check_overlap, 8 pares de triángulos).
-                 # Entre 4,9 y 16,4 m hay pared de verdad.
+                 # the symbol, on the front. This building is 16.9 m and what
+                 # limits it is the height of the wall. From cornice to kerb it
+                 # does NOT fit: the ground floor is set back and the foot of
+                 # the logo pushed inside it (99_check_overlap, 8 triangle
+                 # pairs). Between 4.9 and 16.4 m there is real wall.
                  "iso_facade_side": "right", "iso_facade_frac": 0.90,
                  "iso_facade_tall": 0.68, "iso_facade_z": 0.63,
-                 # y la palabra, en un renglón, sobre la cara izquierda
+                 # and the word, on one line, across the left face
                  "word_facade_side": "left", "word_oneline": True,
                  "word_facade_frac": 0.74, "word_facade_tall": 0.30,
                  "word_facade_z": 0.62},
     "COMPLIF": {"word": "complif.svg", "iso": "complif.svg",
                 "facade": True, "facade_only": True,
                 "facade_side": "right", "facade_at": (195.0, -368.7),
-                # a fondo: la cara que da a la calle de este edificio es la
-                # corta, 14,5 m, y es el techo de lo que Complif puede medir
+                # all the way: the street-facing wall of this building is the
+                # short one, 14.5 m, and it is the ceiling on what Complif can
+                # measure
                 "facade_frac": 0.95, "facade_tall": 0.34,
                 "facade_z": 0.74, "facade_depth": 0.32},
     "AUTH0": {"iso": "auth0_iso.svg", "word": "auth0_word.svg",
@@ -241,43 +249,43 @@ HERO = {
               "iso_frac": 0.86, "roof_frac": 0.78,
               "roof_at": (181.5, -303.4),
               "iso_ink": "#44df19", "word_ink": "#111111",
-              # el disco pasa a crema: el verde del isotipo sobre el verde que
-              # tenia el mastil no se veia, y el color que manda es el del logo
+              # the disc turns cream: the symbol's green on the green the mast
+              # already had did not read, and the colour that wins is the logo's
               "face": "#f7f3e8"},
-    # el isotipo en el roofmark del techo y el logotipo cruzando la fachada
-    # izquierda, que es la cara que esta camara ve de ese lado
+    # the symbol in the roofmark and the wordmark across the left facade, which
+    # is the face this camera sees on that side
     "TAKENOS": {"iso": "takenos_iso.svg", "word": "takenos_word.svg",
                 "iso_frac": 0.80, "roof_frac": 0.0,
                 "facade": True, "facade_side": "left",
                 "facade_frac": 0.80, "facade_tall": 0.26, "facade_z": 0.60,
                 "iso_ink": "#6d37d5", "word_ink": "#6d37d5"},
-    # el isotipo solo sobre la medianera, sin panel, y el logotipo tumbado en
-    # el techo del 128, que corre a lo largo del lado de 35 m
+    # the symbol alone on the party wall, with no panel, and the wordmark laid
+    # flat on the roof of 128, which runs along the 35 m side
     "TIENDANUBE": {"iso": "tiendanube_iso.svg", "word": "tiendanube_word.svg",
                    "wall_frac": 1.0, "roof_frac": 0.80,
                    "roof_at": (165.34, -149.69)},
-    # el mismo archivo partido por color: los nueve trazos naranjas son la
-    # palabra, los dos violetas son la X. Sin panel: las letras directas en el
-    # techo y la X colgada del frente
+    # the same file split by colour: the nine orange strokes are the word, the
+    # two violet ones are the X. No panel: the letters straight onto the roof
+    # and the X hung off the front
     "NARANJA X": {"iso": "naranjax.svg", "word": "naranjax.svg",
                   "iso_x": [0.85, 1.01], "word_x": [-0.01, 0.85],
                   "wall_frac": 1.0, "roof_frac": 0.78},
-    # el lockup entero colgado del frente, nada en el techo. El archivo trae
-    # una forma sin color ocupando el 40% izquierdo que no es parte de la
-    # marca: el corte empieza en 0.38 y la deja afuera
+    # the whole lockup hung off the front, nothing on the roof. The file carries
+    # a colourless shape occupying the left 40 % that is not part of the brand:
+    # the crop starts at 0.38 and leaves it out
     "POMELO": {"word": "pomelo.svg", "iso": "pomelo.svg",
                "word_x": [0.55, 1.01], "iso_x": [0.38, 0.55],
                "roof_art": "iso", "iso_roof_frac": 0.42,
-               # hacia la esquina de la entrada, no en el medio del techo
+               # towards the entrance corner, not the middle of the roof
                "iso_roof_shift": (0.0, 0.22), "iso_roof_rot": 90,
                "facade_depth": 0.30,
                "facade": True, "facade_only": True, "facade_side": "right",
-               # alto en la pared a proposito: delante hay dos farolas de
-               # 9.1 m y arboles de vereda, y a media altura el logo queda
-               # detras de ellos
+               # high on the wall on purpose: in front of it are two 9.1 m
+               # street lamps and pavement trees, and at mid-height the logo
+               # ends up behind them
                "facade_frac": 0.74, "facade_tall": 0.26, "facade_z": 0.86},
-    # el isotipo enorme sobre la calle en un edificio y el logotipo tumbado en
-    # el techo del de al lado: dos direcciones distintas para una marca sola
+    # the huge symbol over the street on one building and the wordmark laid flat
+    # on the roof of the one next door: two different addresses for one brand
     "AEROLAB": {"iso": "aerolab.svg", "word": "aerolab.svg",
                 "iso_x": [-0.01, 0.21], "word_x": [0.21, 1.01],
                 "facade": True, "facade_only": True, "facade_art": "iso",
@@ -287,75 +295,75 @@ HERO = {
                 "roof_art": "word", "roof_at": (33.75, 5.13),
                 "word_roof_frac": 0.78,
                 "iso_ink": "#ff510d", "word_ink": "#1c1c1c"},
-    # se muda del 113 al 179: el logotipo en un renglon sobre la pared y el
-    # icono de Preguntados acostado en el techo, que es lo que esa empresa
-    # pone en un edificio antes que su propio nombre
+    # moves from 113 to 179: the wordmark on one line across the wall and the
+    # Preguntados icon laid flat on the roof, which is what that company puts on
+    # a building ahead of its own name
     "ETERMAX": {"word": "etermax_word.svg", "icon": "preguntados.svg",
                 "iso": "etermax_word.svg",
                 "facade": True, "facade_only": True, "facade_side": "right",
                 "facade_at": (316.25, -149.69),
-                # dos renglones es como se escribe esta marca, asi que lo que
-                # ata es la altura y no el ancho: 0.24 daba un logo de 5.8 m
-                # en una pared de 35
+                # two lines is how this brand is written, so what binds it is
+                # the height and not the width: 0.24 gave a 5.8 m logo on a 35 m
+                # wall
                 "facade_frac": 0.74, "facade_tall": 0.54,
                 "facade_z": 0.76, "facade_depth": 0.30,
-                # blanco: el archivo trae el gris casi negro de la marca y
-                # esa fachada es marron oscura, asi que el logo desaparecia
+                # white: the file carries the brand's near-black grey and that
+                # facade is dark brown, so the logo disappeared
                 "word_ink": "#ffffff",
                 "roof_art": "icon", "roof_at": (316.25, -149.69),
                 "icon_roof_frac": 0.46},
-    # ocupa el 84, que quedo libre cuando basement se fue al 123
+    # takes 84, which came free when Basement moved to 123
     "HUMAND": {"iso": "humand.svg", "word": "humand.svg",
                "facade": True, "facade_only": True, "facade_side": "left",
                "facade_at": (-84.25, 57.75),
-               # ESTE SIGUE SEPARADO DE SU PARED, y a proposito. El footprint
-               # de este edificio va 1.2 m mas ancho que la fachada, y el
-               # cartel se apoya en el borde del footprint. Acercarlo con un
-               # `facade_proud` negativo no lo pega: lo mete DENTRO del
-               # volumen, y 99_check_overlap lo encuentra ahi (246 a 1685
-               # pares de triangulos segun cuanto se acerque). Es el unico de
-               # los diez al que le sobra aire.
+               # THIS ONE IS STILL OFF ITS WALL, and on purpose. This building's
+               # footprint runs 1.2 m wider than the facade, and the sign rests
+               # on the edge of the footprint. Pulling it in with a negative
+               # `facade_proud` does not stick it to the wall: it puts it INSIDE
+               # the volume, and 99_check_overlap finds it there (246 to 1685
+               # triangle pairs depending on how far in it goes). It is the only
+               # one of the ten with air to spare.
                "facade_frac": 0.70, "facade_tall": 0.18,
                "facade_z": 0.93, "facade_depth": 0.55},
-    # se muda del 84 al 123: el parapeto desaparece de su edificio y el
-    # logotipo aparece colgado de la pared del otro, dejando el 84 libre
+    # moves from 84 to 123: the parapet disappears from its building and the
+    # wordmark appears hung off the other one's wall, leaving 84 free
     "BASEMENT": {"iso": "basement.svg", "word": "basement.svg",
                  "facade": True, "facade_only": True, "facade_side": "wide",
                  "facade_at": (66.25, 17.63),
-                 # arriba de todo y con cuerpo: estas fachadas tienen una
-                 # cornisa por piso y un logo chato a media altura queda
-                 # cortado en tiras por ellas
+                 # right at the top and with some body: these facades have a
+                 # cornice per storey and a flat logo at mid-height comes out
+                 # sliced into strips by them
                  "facade_frac": 0.80, "facade_tall": 0.20,
                  "facade_z": 0.93, "facade_depth": 0.55},
-    # el triangulo solo en el disco, chico, y el logo entero sobre la pared
+    # the triangle alone on the disc, small, and the whole logo on the wall
     "VERCEL": {"iso": "vercel_iso.svg", "word": "vercel.svg",
                "iso_frac": 0.52,
                "facade": True, "facade_side": "left",
                "facade_frac": 0.66, "facade_tall": 0.20, "facade_z": 0.74,
                "facade_depth": 0.30,
                "iso_ink": "#111111", "word_ink": "#111111"},
-    # el 120 queda vacio: el mural se va entero a la pared del 101
+    # 120 is left empty: the whole mural moves to the wall of 101
     "UALA": {"iso": "uala2.svg", "word": "uala2.svg",
              "facade": True, "facade_only": True, "facade_side": "left",
              "facade_at": (-12.79, -89.29),
              "facade_frac": 0.80, "facade_tall": 0.20, "facade_z": 0.80,
              "facade_depth": 0.30},
-    # el complejo de tres alas: el apreton en el techo del 114, el logotipo
-    # sobre la pared izquierda de esa misma ala, que mira a la plaza
+    # the three-wing complex: the handshake on the roof of 114, the wordmark on
+    # the left wall of that same wing, which looks onto the plaza
     "MERCADO LIBRE": {"iso": "ml_iso.svg", "word": "mercadolibre.svg",
                       "facade": True, "facade_only": True,
                       "facade_arts": ["iso", "word"],
                       "facade_at": (43.75, -155.38),
                       "facade_depth": 0.35,
-                      # el apreton en la cara del frente
-                     "iso_facade_side": "right", "iso_facade_frac": 0.82,
+                      # the handshake on the front face
+                      "iso_facade_side": "right", "iso_facade_frac": 0.82,
                       "iso_facade_tall": 0.52, "iso_facade_z": 0.74,
-                      # y el logotipo, en un solo renglon, sobre la cara larga
-                      # que mira a la plaza
+                      # and the wordmark, on a single line, across the long face
+                      # that looks onto the plaza
                       "word_facade_side": "left", "word_oneline": True,
                       "word_facade_frac": 0.88, "word_facade_tall": 0.30,
                       "word_facade_z": 0.72},
-    # y el apreton celeste en el ala de al lado
+    # and the light-blue handshake on the wing next door
     "MERCADO PAGO": {"iso": "mp_iso.svg", "word": "mp_iso.svg",
                      "facade_only": True, "facade_arts": ["iso"],
                      "facade_at": (23.66, -155.38),
@@ -365,71 +373,59 @@ HERO = {
 }
 
 
-# Carteles con la marca clavada a mano, y carteles que no se construyen.
+# Signs whose size is set by hand, as a fraction of the one 04 planned. The plan
+# sizes by what fits on the roof and by what reads at a distance, which are two
+# good rules and neither of them looks at the frame: a 19 m disc can fit and
+# still eat the corner.
 #
-# El reparto por visibilidad de 04 es una buena regla y no sabe mirar. Cuando
-# alguien mira el cuadro y dice "esta marca va en ESE cartel", eso gana: es la
-# única información que ninguna métrica de este proyecto puede producir. PIN se
-# aplica antes del reparto y saca esa marca del pool, así que el resto se
-# reparte igual que siempre entre los que quedan.
-#
-# DROP es lo mismo por la negativa. El billboard de Lemon se sacó porque la
-# marca se mudó al mástil de al lado y al techo vecino, y dos veces la misma
-# marca en el mismo cuadro es una marca menos en el video.
-# Carteles a los que se les cambia el tamano a mano, como fraccion del que
-# planifico 04. El plan dimensiona por lo que entra en el techo y por lo que se
-# lee a distancia, que son dos buenas reglas y ninguna de las dos mira el
-# cuadro: un disco de 19 m puede caber y aun asi comerse la esquina.
-#
-# El solido publicado NO se achica con esto. Sigue reservando el espacio
-# original, asi que un cartel encogido deja aire alrededor en vez de invitar a
-# que le planten un arbol al lado.
+# The published solid does NOT shrink with this. It goes on reserving the
+# original space, so a shrunken sign leaves air around it instead of inviting a
+# tree to be planted beside it.
 SIZE = {"Sign.005": 0.62,
-        # el disco de Vercel: solo un triangulo, y chico
+        # the Vercel disc: just a triangle, and small
         "Sign.001": 0.42}
 
-# Carteles nuevos sobre techos elegidos a mano, y la razón por la que esta
-# tabla va por COORDENADA y no por Sign.NNN como PIN.
+# New signs on hand-picked roofs, and the reason this table goes by COORDINATE
+# rather than by Sign.NNN like PIN.
 #
-# Sign.NNN es un ordinal: `thin()` ordena los carteles por lo que la cámara ve
-# de cada uno y recién ahí los numera, así que un cartel nuevo se mete en el
-# medio del ranking y le corre el número a todos los que ve peor. Un cartel
-# agregado por acá le habría cambiado el techo a la mitad de las marcas ya
-# aprobadas, en silencio. Por eso estos se planifican durante el recorrido de
-# lotes (que es lo único que puede reservarles el lugar contra los equipos de
-# azotea) pero se numeran DESPUÉS de todo, a partir de Sign.094: el reparto de
-# los 94 de siempre queda intacto y estos seis se agregan atrás.
+# Sign.NNN is an ordinal: `thin()` sorts the signs by how much of each one the
+# camera sees and only then numbers them, so a new sign lands in the middle of
+# the ranking and shifts the number of everything it sees less of. A sign added
+# here would have silently changed the roof of half the already-approved brands.
+# So these are planned during the lot pass (which is the only thing that can
+# reserve their space against the rooftop plant) but numbered AFTER everything
+# else, starting at Sign.094: the usual 94 keep their allocation intact and
+# these are appended behind them.
 #
-#   at     el centro del ala del techo, tal como sale de city_solids.json.
-#          Entre paréntesis, el número de spot con `?spots=1` en el navegador,
-#          que es como se eligieron.
-#   kind   parapet | roofmark | mast, los mismos tres formatos de 04.
-#   grow   el multiplicador de tamaño de shape_sign.
+#   at     the centre of the roof wing, straight out of city_solids.json.
+#          In brackets, the spot number from `?spots=1` in the browser, which is
+#          how they were picked.
+#   kind   parapet | roofmark | mast, the same three formats as 04.
+#   grow   the size multiplier for shape_sign.
 #
-# EL TAMAÑO LO DECIDE EL TECHO, no este número. `grow` está topeado por lo que
-# entra en el ala, así que la escala de una marca se elige eligiendo el techo:
-# el mástil de Galicia mide 21 m porque está en un ala de 28, y Complif mide
-# 10 en una de 20. `grow` solo termina de acomodar, y el piso es el mismo que
-# mide 93_check_signs: 5 % del ancho de cuadro, o el cartel no se entrega.
+# THE ROOF DECIDES THE SIZE, not this number. `grow` is capped by what fits on
+# the wing, so a brand's scale is chosen by choosing the roof: the Galicia mast
+# is 21 m because it is on a 28 m wing, and Complif is 10 on a 20 m one. `grow`
+# only finishes the fit, and the floor is the one 93_check_signs measures: 5 %
+# of the frame width, or the sign is not delivered.
 EXTRA = [
-    # LOS CUATRO SON ANCLAS, NO CARTELES. Cada uno lleva su marca a un edificio
-    # y ahí termina su trabajo: la entrada de HERO que le corresponde tiene
-    # `facade_only`, así que 10_signs no levanta ningún panel y lo único que se
-    # construye es el logo pegado a la pared. El formato que dice acá no se ve
-    # en ningún lado; está porque un cartel tiene que existir en el manifiesto
-    # para que una marca se le pueda clavar.
+    # ALL THREE ARE ANCHORS, NOT SIGNS. Each one carries its brand to a building
+    # and its job ends there: the matching HERO entry has `facade_only`, so
+    # 10_signs raises no panel and the only thing built is the logo stuck to the
+    # wall. The format named here is never seen anywhere; it is here because a
+    # sign has to exist in the manifest for a brand to be pinned to it.
     #
-    # Primero fueron carteles de verdad - roofmarks y billboards - que es lo
-    # que el reparto sabe hacer solo. Está mal para esta ciudad: las marcas se
-    # vienen sumando colgadas del frente, que es donde un logotipo tiene 28 m
-    # de pared y se lee, y no tumbadas en una azotea, donde a 250 m son un
-    # rectángulo pálido.
+    # They started as real signs — roofmarks and billboards — which is what the
+    # allocation knows how to do on its own. That is wrong for this city: brands
+    # have been going up hung off the front, where a wordmark has 28 m of wall
+    # and reads, rather than laid flat on a roof, where at 250 m they are a pale
+    # rectangle.
     #
-    # Coderhouse en el edificio más alto del corredor (32 m).
+    # Coderhouse on the tallest building of the corridor (32 m).
     {"at": (201.8, -14.8), "spot": 153, "brand": "CODERHOUSE",
      "kind": "roofmark", "grow": 1.45},
-    # Complif, la más chica de las seis, en el último edificio libre del
-    # corredor: 14,5 x 18 en el borde sur, 2 s de paso.
+    # Complif, the smallest of the six, on the last free building of the
+    # corridor: 14.5 x 18 on the south edge, 2 s of screen time.
     {"at": (195.0, -368.7), "spot": 148, "brand": "COMPLIF",
      "kind": "roofmark", "grow": 1.45},
     {"at": (201.8, -184.2), "spot": 152, "brand": "PAISANOS",
@@ -437,21 +433,33 @@ EXTRA = [
 ]
 
 
-# Direcciones donde DOS marcas conviven a propósito, y por qué.
+# Addresses where TWO brands coexist on purpose, and why.
 #
-# 93_check_signs prohíbe dos marcas en una dirección, y la regla es buena: dos
-# logos en un edificio leen como una empresa con dos marcas. Pero hay un caso
-# donde la respuesta correcta es que sí, y sin esta tabla la única salida era
-# apagar el chequeo o mentirle. Se declara, con el motivo, y se ve en el
-# informe: una excepción anotada no es lo mismo que una regla que no corre.
+# 93_check_signs forbids two brands on one address, and the rule is a good one:
+# two logos on a building read as one company with two brands. But there is a
+# case where the right answer is yes, and without this table the only way out
+# was to switch the check off or lie to it. It is declared, with the reason, and
+# it shows up in the report: a recorded exception is not the same thing as a
+# rule that does not run.
 SHARED = {
-    # el complejo de tres alas: Mercado Libre en un ala y el apretón celeste de
-    # Mercado Pago en la de al lado. Son dos marcas de la misma casa y así se
-    # montan de verdad.
-    (33.75, -167.0): "Mercado Libre y Mercado Pago, misma casa",
+    # the three-wing complex: Mercado Libre on one wing and the light-blue
+    # Mercado Pago handshake on the one next door. Two brands from the same
+    # house, and that is how they are really mounted.
+    (33.75, -167.0): "Mercado Libre and Mercado Pago, same house",
 }
 
 
+# Signs with the brand pinned by hand, and signs that are not built at all.
+#
+# 04's allocation by visibility is a good rule and it cannot look at anything.
+# When somebody looks at the frame and says "this brand goes on THAT sign", that
+# wins: it is the only information no metric in this project can produce. PIN is
+# applied before the allocation and takes that brand out of the pool, so the
+# rest is shared out among what is left exactly as before.
+#
+# DROP is the same thing in the negative. The Lemon billboard was removed
+# because the brand moved to the mast next door and the neighbouring roof, and
+# the same brand twice in one frame is one brand fewer in the video.
 PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        "Sign.018": "TIENDANUBE", "Sign.008": "NARANJA X",
        "Sign.009": "POMELO", "Sign.020": "AEROLAB",
@@ -459,38 +467,40 @@ PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        "Sign.006": "SATELLOGIC", "Sign.007": "DESPEGAR",
        "Sign.004": "UALA", "Sign.002": "MERCADO LIBRE",
        "Sign.016": "MERCADO PAGO",
-       # LOS TRES QUE VUELVEN A ENCENDERSE. 012 y 017 son billboards que se
-       # apagaron porque la marca que llevaban se había mudado a otro lado del
-       # cuadro, no porque el lugar estuviera mal: 012 es el mejor lugar libre
-       # de la ciudad (13,7 s en cuadro) y estaba oscuro. Se les clava una
-       # marca nueva y se los saca de DROP.
+       # THE TWO THAT COME BACK ON. 012 and 017 are billboards that were
+       # switched off because the brand they carried had moved elsewhere in the
+       # frame, not because the site was bad: 012 is the best free site in the
+       # city (13.7 s on camera) and it was dark. A new brand is pinned to them
+       # and they come out of DROP.
        "Sign.012": "GALICIA", "Sign.017": "BELO",
-       # y Rebill en el 188, que llevaba a RIPIO: no es cliente, no tiene
-       # vector y aparecía con el símbolo genérico. Ripio baja un lugar en el
-       # reparto, no se va del cuadro.
+       # and Rebill on 188, which carried RIPIO: not a client, no vector, and it
+       # was showing up with the generic symbol. Ripio drops one place in the
+       # allocation, it does not leave the frame.
        "Sign.015": "REBILL",
-       # Sign.013 se probó para Complif y NO SIRVE, aunque el reparto lo diera
-       # por libre: su dueño es el edificio de Etermax, cuyo logotipo cuelga de
-       # la fachada y cuyo ícono está tumbado en el techo, los dos mudados ahí
-       # por HERO. El registro de un cartel apunta al techo donde se planificó,
-       # así que un edificio con dos logos encima figuraba vacío. Complif se fue
-       # al spot 148, que está libre de verdad, y esto quedó anotado porque el
-       # próximo que mire la tabla va a ver el mismo hueco.
-       # las que sobrevivieron al descarte de repetidas, clavadas para que el
-       # proximo pin no las mueva a otro techo
-       "Sign.000": "GLOBANT", "Sign.003": "BASEMENT",
+       # Sign.013 was tried for Complif and DOES NOT WORK, even though the
+       # allocation called it free: its owner is the Etermax building, whose
+       # wordmark hangs off the facade and whose icon is laid flat on the roof,
+       # both moved there by HERO. A sign's record points at the roof it was
+       # planned on, so a building with two logos on it read as empty. Complif
+       # went to spot 148, which is genuinely free, and this is recorded here
+       # because the next person to read the table will see the same gap.
+       #
+       # the ones that survived the duplicate cull, pinned so the next pin does
+       # not move them to another roof
+       "Sign.000": "GLOBANT",
        "Sign.010": "TECHNISYS", "Sign.011": "ALEPH",
-       # el parapeto que sobraba de basement, reusado para humand
+       # the parapet Basement no longer needed, reused for Humand
        "Sign.052": "HUMAND", "Sign.003": "BASEMENT",
        "Sign.058": "ETERMAX"}
-DROP = {"Sign.054",          # satellogic plano en el 98: queda el 3d del 163
-        # el techo de RIPIO en el 179, que es el edificio de Etermax: su
-        # logotipo cuelga de esa fachada y el ícono de Preguntados está tumbado
-        # en ese techo. Dos marcas en una dirección, y encima Ripio quedaba
-        # repetido en cámara. Apareció cuando Rebill se mudó y el reparto le
-        # dio ese lugar al siguiente de la lista.
+DROP = {"Sign.054",          # flat Satellogic on 98: the 3D one on 163 remains
+        # the RIPIO roof on 179, which is the Etermax building: its wordmark
+        # hangs off that facade and the Preguntados icon is laid flat on that
+        # roof. Two brands on one address, and Ripio came out repeated on camera
+        # on top of that. It surfaced when Rebill moved and the allocation gave
+        # that site to the next brand on the list.
         "Sign.013",
-        # la segunda copia de una marca que ya aparece en otro lado. Se
-        # descarta la que la camara ve peor, y a igualdad la mas plana: un
-        # cartel fuera del cuadro no compensa ser mas tridimensional.
+        # the second copy of a brand that already appears elsewhere. The one the
+        # camera sees least is dropped, and on a tie the flatter one: a sign
+        # outside the frame does not earn its keep by being more three-
+        # dimensional.
         "Sign.053", "Sign.055", "Sign.056"}

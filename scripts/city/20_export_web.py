@@ -249,25 +249,24 @@ def roof_spots():
     roof is a label pointing at the wrong thing. Same reason 10_signs.deck_z
     exists.
 
-    LO QUE SE NUMERA SON ALAS, Y LA REGLA ES POR EDIFICIO. Esa diferencia hizo
-    que el overlay dijera 149 techos libres cuando libres había 68: marcaba
-    ocupada UNA caja, aquella cuyo centro coincidía con el `owner` del cartel, y
-    una L son varias alas superpuestas, así que las otras salían numeradas y en
-    blanco. Alguien elegía un techo de esa lista, y el techo resultaba ser el
-    ala de atrás de un edificio que ya llevaba marca — que es lo que la regla de
-    una marca por dirección existe para impedir.
+    WHAT GETS NUMBERED IS WINGS, AND THE RULE IS PER BUILDING. That difference
+    is what made the overlay say 149 roofs were free when 68 were: it marked ONE
+    box occupied, the one whose centre matched the sign's `owner`, and an L is
+    several overlapping wings, so the others came out numbered and blank.
+    Somebody would pick a roof off that list, and the roof would turn out to be
+    the back wing of a building that already carried a brand — which is exactly
+    what the one-brand-per-address rule exists to prevent.
 
-    Un edificio es una CELDA DE LOTE, y eso lo publica 04 en
-    city_buildings.json. Agrupar las alas por solapamiento parecía razonable y
-    fue la segunda respuesta equivocada: los footprints salen con 0,9 m de
-    padding, así que dos vecinos separados por un retiro chico se superponen
-    exactamente lo mismo que los dos brazos de una L. Desde la geometría no se
-    distinguen.
+    A building is a LOT CELL, and 04 publishes that in city_buildings.json.
+    Grouping the wings by overlap looked reasonable and was the second wrong
+    answer: footprints come out with 0.9 m of padding, so two neighbours with a
+    small setback overlap exactly as much as the two arms of an L. From the
+    geometry alone they cannot be told apart.
 
-    Y quién ocupa cada edificio lo contesta `_common.brand_addresses`, que es la
-    misma pregunta que hace 93 para prohibir dos marcas en una dirección y 90
-    para no ofrecer un edificio tomado. Una sola copia: dos es cómo una de las
-    dos se queda corta.
+    And who occupies each building is answered by `_common.brand_addresses`,
+    which is the same question 93 asks to forbid two brands on one address and
+    90 asks to avoid offering a taken building. One copy only: two is how one of
+    them ends up falling short.
     """
     boxes = [b for b in json.loads(SOLIDS.read_text())["boxes"]
              if b[7] in ("buildings", "porteno")

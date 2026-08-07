@@ -1,82 +1,85 @@
-# Los logos, de dónde salió cada uno
+# The logos, and where each one came from
 
-28 marcas para reemplazar a las 42 inventadas de `renders/city_signs.json`. Cada
-archivo es el mejor formato que existe públicamente, buscado en este orden:
-SVG del sitio oficial → SVG de Wikimedia Commons → PNG de la mayor resolución
-que haya.
+> **These are third-party trademarks.** None of them is a licensed asset: they
+> are here to mock up the city. Before publishing the video, somebody has to
+> decide whether that is editorial use or whether permission is needed, and that
+> decision is not a technical one. The same goes for this repository: the files
+> under `assets/logos/` are the property of their respective owners and are not
+> covered by whatever terms apply to the rest of the project.
 
-**Son marcas de terceros.** Ninguno es un asset con licencia de uso: están acá
-para maquetar la ciudad. Antes de publicar el video hay que decidir si eso es
-uso editorial o si hace falta permiso, y esa decisión no es técnica.
+28 brands replacing the 42 invented ones in `renders/city_signs.json`. Each file
+is the best format that exists publicly, looked for in this order: SVG from the
+official site → SVG from Wikimedia Commons → the highest-resolution PNG there
+is.
 
 ## Vector (18)
 
-| archivo | marca | fuente |
+| file | brand | source |
 |---|---|---|
-| `aerolab.svg` | Aerolab | SVG inline del header de aerolab.co |
-| `aleph.svg` | Aleph | SVG inline de alephholding.com |
-| `auth0.svg` | Auth0 | worldvectorlogo. Isotipo escudo, sin wordmark |
-| `basement.svg` | Basement | SVG inline de basement.studio |
+| `aerolab.svg` | Aerolab | inline SVG from the aerolab.co header |
+| `aleph.svg` | Aleph | inline SVG from alephholding.com |
+| `auth0.svg` | Auth0 | worldvectorlogo. Shield symbol, no wordmark |
+| `basement.svg` | Basement | inline SVG from basement.studio |
 | `despegar.svg` | Despegar | Wikimedia Commons |
-| `digitalhouse.svg` | Digital House | CDN Prismic de digitalhouse.com |
+| `digitalhouse.svg` | Digital House | Prismic CDN, digitalhouse.com |
 | `globant.svg` | Globant | Wikimedia Commons, 2999x520 |
-| `increase.svg` | Increase | SVG inline de increasecard.com |
-| `lemon.svg` | Lemon | SVG inline de lemon.me |
-| `mercadolibre.svg` | Mercado Libre | Commons, wordmark español. **Sin el apretón de manos** |
-| `mural.svg` | Mural | Commons, versión 2022. **Trae caja blanca de fondo** |
+| `increase.svg` | Increase | inline SVG from increasecard.com |
+| `lemon.svg` | Lemon | inline SVG from lemon.me |
+| `mercadolibre.svg` | Mercado Libre | Commons, Spanish wordmark. **No handshake** |
+| `mural.svg` | Mural | Commons, 2022 version. **Carries a white background box** |
 | `naranjax.svg` | Naranja X | Wikimedia Commons |
-| `pomelo.svg` | Pomelo | SVG inline de pomelo.la |
-| `satellogic.svg` | Satellogic | WordPress de satellogic.com |
-| `technisys.svg` | Technisys | web.archive.org, captura de 2021. La marca ya no existe: SoFi la absorbió |
-| `tiendanube.svg` | Tiendanube | SVG inline de tiendanube.com |
+| `pomelo.svg` | Pomelo | inline SVG from pomelo.la |
+| `satellogic.svg` | Satellogic | satellogic.com WordPress |
+| `technisys.svg` | Technisys | web.archive.org, 2021 capture. The brand no longer exists: SoFi absorbed it |
+| `tiendanube.svg` | Tiendanube | inline SVG from tiendanube.com |
 | `uala.svg` | Ualá | Wikimedia Commons |
 | `vercel.svg` | Vercel | worldvectorlogo |
 
-## Vector, la tanda de agosto 2026 (7)
+## Vector, the August 2026 batch (7)
 
-Los seis clientes nuevos. Todos se normalizaron igual antes de guardarlos:
-`width`/`height` explícitos sacados del `viewBox`, porque el importador de
-Blender no entiende `width="100%"` y devuelve una curva vacía sin avisar.
+The six new clients. All of them were normalised the same way before being
+saved: explicit `width`/`height` taken from the `viewBox`, because Blender's
+importer does not understand `width="100%"` and returns an empty curve without
+saying so.
 
-| archivo | marca | fuente |
+| file | brand | source |
 |---|---|---|
-| `belo.svg` | Belo | SVG inline de belo.app. El `fill` venía como `var(--token-…, rgb(83,0,218))` y se reemplazó por `#5300da`: Blender no resuelve variables CSS y lo importaba negro |
-| `coderhouse.svg` | Coderhouse | CDN de Framer de coderhouse.com, 811x236. Solo logotipo, 8,4:1 |
-| `complif.svg` | Complif | CDN de Webflow de complif.com, 690x189. **Blanco**: pide fachada oscura |
-| `complif_dark.svg` | Complif | el mismo archivo con el `fill` en `#1c1c1c`, para cuando la marca se mude a una pared clara. Hoy no se usa: la fachada que le tocó es de ladrillo oscuro |
-| `galicia_iso.svg` | Galicia | **el isotipo solo**, del sitio de Paisanos, que hizo trabajo para ellos. Es la marca actual (círculo naranja, daga blanca). El logotipo nuevo en minúscula NO está público en vector: Commons, logotyp.us y seeklogo tienen todos el anterior, la caja naranja con "Galicia" en serif |
-| `paisanos.svg` | Paisanos | SVG inline de paisanos.io. Logotipo blanco más isotipo lima: pide fondo oscuro |
-| `rebill.svg` | Rebill | SVG inline de rebill.com. Viene en `currentColor`, o sea sin color: manda el `ink` de la tabla |
+| `belo.svg` | Belo | inline SVG from belo.app. The `fill` arrived as `var(--token-…, rgb(83,0,218))` and was replaced with `#5300da`: Blender does not resolve CSS variables and imported it black |
+| `coderhouse.svg` | Coderhouse | Framer CDN, coderhouse.com, 811x236. Wordmark only, 8.4:1 |
+| `complif.svg` | Complif | Webflow CDN, complif.com, 690x189. **White**: needs a dark facade |
+| `complif_dark.svg` | Complif | the same file with the `fill` at `#1c1c1c`, for when the brand moves to a light wall. Unused today: the facade it landed on is dark brick |
+| `galicia_iso.svg` | Galicia | **the symbol alone**, from the Paisanos site, who did work for them. It is the current brand (orange circle, white dagger). The new lowercase wordmark is NOT public in vector form: Commons, logotyp.us and seeklogo all carry the previous one, the orange box with "Galicia" in serif |
+| `paisanos.svg` | Paisanos | inline SVG from paisanos.io. White wordmark plus lime symbol: needs a dark background |
+| `rebill.svg` | Rebill | inline SVG from rebill.com. Arrives as `currentColor`, i.e. with no colour: the table's `ink` wins |
 
 ## Raster (5)
 
-| archivo | marca | fuente y tamaño |
+| file | brand | source and size |
 |---|---|---|
 | `etermax.png` | Etermax | Commons, 3735x2377 |
-| `modo.png` | MODO | CDN Storyblok de modo.com.ar, 436x96. **El más chico de todos** |
+| `modo.png` | MODO | Storyblok CDN, modo.com.ar, 436x96. **The smallest of the lot** |
 | `olx.png` | OLX | Commons, 1000x1000 |
 | `ripio.png` | Ripio | Commons, 5000x2292 |
-| `uala_iso.png` | Ualá | Commons, imagotipo 4501x4501 |
+| `uala_iso.png` | Ualá | Commons, 4501x4501 combination mark |
 
-## Lo que hay que resolver antes de aplicarlos
+## What has to be sorted out before applying them
 
-**Cuatro son blancos**: `aerolab`, `aleph`, `digitalhouse`, `pomelo` vienen de
-sitios de fondo oscuro y desaparecen sobre una fachada clara. O se consigue la
-variante oscura, o el cartel que los lleve tiene que ser de fondo oscuro por
-decisión de diseño.
+**Four are white**: `aerolab`, `aleph`, `digitalhouse` and `pomelo` come from
+dark-background sites and disappear on a light facade. Either the dark variant
+gets sourced, or the sign carrying them has to be dark by design decision.
 
-**`mural.svg` trae la caja blanca** del logo, que en un roofmark queda como un
-rectángulo blanco alrededor del mark. Hay que recortarla o usarla como el panel
-mismo.
+**`mural.svg` carries the logo's white box**, which on a roofmark comes out as a
+white rectangle around the mark. It has to be cropped out or used as the panel
+itself.
 
-**`modo.png` es 436x96** y es raster. En una medianera de 34 m no aguanta. Si
-MODO va a un formato grande, hay que buscar el vector.
+**`modo.png` is 436x96** and raster. On a 34 m party wall it does not hold up.
+If MODO goes on a large format, the vector has to be found.
 
-**Los 45 roofmarks y los 13 mástiles piden isotipo, no wordmark.** Casi todos
-estos archivos son el logotipo horizontal completo, que leído desde 250 m de
-altura es una línea de texto ilegible. Falta una segunda ronda que junte el
-símbolo suelto de las que lo tienen: el apretón de manos de Mercado Libre, la X
-de Naranja, las dos nubes de Tiendanube, el triángulo de Vercel, el escudo de
-Auth0 (ese ya está así).
+**The 45 roofmarks and the 13 masts want a symbol, not a wordmark.** Almost all
+of these files are the full horizontal wordmark, which read from 250 m up is an
+illegible line of text. A second round is missing, to collect the standalone
+symbol from the brands that have one: the Mercado Libre handshake, the Naranja
+X, the two Tiendanube clouds, the Vercel triangle, the Auth0 shield (that one is
+already like this).
 
-`_contact.png` es la hoja de contacto de los 22, para mirarlos juntos.
+`_contact.png` is the contact sheet of all of them, for looking at them together.

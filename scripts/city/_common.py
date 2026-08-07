@@ -27,18 +27,18 @@ BLEND = R / "city.blend"
 LOTS = R / "city_lots.json"       # street and block tables, written by 03
 SOLIDS = R / "city_solids.json"   # footprints, written by 04, 06, 06b, 08, 10
 SIGNS = R / "city_signs.json"     # the sign manifest, planned by 04, built by 10
-# Qué ALAS forman cada EDIFICIO, escrito por 04 y leído por 90 y por el export.
+# Which WINGS make up each BUILDING, written by 04 and read by 90 and the export.
 #
-# Es el dato que no existía y del que salieron casi todos los errores de una
-# tanda entera de marcas. `city_solids.json` publica un rectángulo por ala, y
-# una L son varias alas que se tocan: nada permitía decir si dos techos eran
-# dos edificios o dos brazos de uno. El overlay del navegador decía 149 techos
-# libres cuando libres había 68, se puso una marca en el edificio de otra, y
-# agrupar por solapamiento tampoco sirve porque los footprints vienen con 0,9 m
-# de padding y dos vecinos separados por un retiro chico se "tocan" igual.
+# This is the fact that did not exist, and almost every error in a whole batch
+# of brands came out of it. `city_solids.json` publishes one rectangle per wing,
+# and an L is several wings that touch: nothing could tell whether two roofs
+# were two buildings or two arms of one. The browser overlay called 149 roofs
+# free when 68 were, a brand landed on a building another one already had, and
+# grouping by overlap does not work either, because footprints are published
+# with 0.9 m of padding and two neighbours with a small setback "touch" as well.
 #
-# 04 lo sabe sin ambigüedad - una celda de lote es un edificio - así que lo
-# escribe. Es la misma decisión que `own()`: lo anota el único paso que lo sabe.
+# 04 knows without ambiguity — a lot cell is a building — so it writes it down.
+# Same decision as `own()`: the only step that knows is the one that records it.
 BUILDINGS = R / "city_buildings.json"
 
 # --- how long the shot is --------------------------------------------------
@@ -766,39 +766,41 @@ def blib_fcurves(ob):
 # Un logo de marca sobre una fachada tiene tres maneras de no existir, y las
 # tres cuestan un render cada una si se eligen a ojo:
 #
-#   1. la pared da contra el otro brazo de la propia L,
-#   2. la pared da contra el vecino, a un metro,
-#   3. la pared da a un patio y no a la calle.
+#   1. the wall looks into the other arm of its own L,
+#   2. the wall looks into the neighbour, a metre away,
+#   3. the wall faces a courtyard rather than the street.
 #
-# En una tanda de seis marcas pasaron las tres. Se elegía la cara "más larga",
-# que en estos edificios es casi siempre la de adentro del complejo. Esto lo
-# contesta midiendo, y vive acá porque lo preguntan dos: 90_brand_sites para
-# elegir, y 93_check_signs para avisar cuando lo elegido quedó tapado.
+# In one batch of six brands all three happened. The "longest" face was being
+# picked, and on these buildings that is almost always the one inside the
+# complex. This answers it by measuring, and it lives here because two callers
+# ask: 90_brand_sites to choose, and 93_check_signs to report when what was
+# chosen ended up hidden.
 #
-# La cámara es ortográfica y fija, así que "hacia la cámara" es un solo vector
-# para toda la ciudad. Preguntar por distancia no alcanza: un edificio a 12 m
-# con 20 m de alto tapa una pared que tiene 6 m de aire por delante.
+# The camera is orthographic and fixed, so "towards the camera" is a single
+# vector for the whole city. Asking by distance is not enough: a building 12 m
+# away and 20 m tall hides a wall with 6 m of clear air in front of it.
 def view_vector():
-    """El versor que apunta a la cámara desde cualquier punto de la ciudad."""
+    """The unit vector pointing at the camera from anywhere in the city."""
     az, el = math.radians(AZIMUTH), math.radians(ELEVATION)
     return (math.cos(el) * math.cos(az), math.cos(el) * math.sin(az),
             math.sin(el))
 
 
-# Las dos caras que esta cámara ve. 0 es +X y 1 es +Y; screen_xy pone +X a la
-# izquierda del cuadro, que es lo que 10_signs llama "left".
+# The two faces this camera sees. 0 is +X and 1 is +Y; screen_xy puts +X on the
+# left of the frame, which is what 10_signs calls "left".
 FACES = ((0, "left"), (1, "right"))
 
 
 def wall_seen(sol, box, axis, z, samples=21, far=90.0, step=2.0):
-    """Qué fracción de la cara +axis de `box` le llega a la cámara, a altura z.
+    """What fraction of `box`'s +axis face reaches the camera, at height z.
 
-    `sol` es un Solids con los footprints; `box` uno de sus rectángulos. Tira
-    un rayo hacia la cámara desde puntos repartidos a lo largo de la cara y
-    cuenta los que no chocan con NINGÚN otro footprint.
+    `sol` is a Solids carrying the footprints; `box` is one of its rectangles.
+    It casts a ray towards the camera from points spread along the face and
+    counts the ones that hit NO other footprint.
 
-    Se mide a una altura concreta y no "en general" a propósito: la misma pared
-    puede estar tapada a 15 m y libre a 19 porque el vecino termina en 16,9.
+    It is measured at one specific height rather than "in general" on purpose:
+    the same wall can be hidden at 15 m and clear at 19 because the neighbour
+    stops at 16.9.
     """
     cx, cy, w, d = box[0], box[1], box[2], box[3]
     run = d if axis == 0 else w
@@ -822,11 +824,11 @@ def wall_seen(sol, box, axis, z, samples=21, far=90.0, step=2.0):
 
 
 def wall_to_street(site, box, axis):
-    """Metros desde la cara +axis hasta el borde de la calle más cercana.
+    """Metres from the +axis face to the edge of the nearest street.
 
-    La otra mitad de la pregunta: una pared puede estar perfectamente a la
-    vista de la cámara y dar a un patio interno. Un logo de empresa va sobre la
-    vereda. Tres de seis marcas quedaron colgadas a 17-32 m de la calle.
+    The other half of the question: a wall can be perfectly visible to the
+    camera and still face an internal courtyard. A company logo goes over the
+    pavement. Three brands out of six ended up hanging 17–32 m from the street.
     """
     edge = box[0] + box[2] / 2 if axis == 0 else box[1] + box[3] / 2
     lines = zip(site["streets_x"], site["widths_x"]) if axis == 0 else \
@@ -835,21 +837,21 @@ def wall_to_street(site, box, axis):
 
 
 def brand_addresses(sites, signs, hero):
-    """Qué marca ocupa cada edificio. La respuesta completa, no la del registro.
+    """Which brand occupies each building. The full answer, not the record's.
 
-    Un cartel apunta al techo donde se planificó, y su logotipo puede terminar
-    colgado de OTRO edificio: `facade_at` y `roof_at` en HERO mudan el arte, y
-    Basement, Ualá y Etermax están así. Preguntarle al registro deja esas tres
-    direcciones marcadas como vacías, y ahí se metieron dos marcas de más en una
-    misma dirección en una sola tanda - una detectada mirando un render y la
-    otra porque una marca no aparecía en el mapa del navegador.
+    A sign points at the roof it was planned on, and its wordmark can end up
+    hung off ANOTHER building: `facade_at` and `roof_at` in HERO move the art,
+    and Basement, Ualá and Etermax are all like that. Asking the record leaves
+    those three addresses marked empty, and that is where two extra brands
+    landed on an already-taken address in a single batch — one caught by looking
+    at a render, the other because a brand was missing from the browser map.
 
-    Vive acá porque lo preguntan dos y con la misma respuesta: 93 para avisar
-    que una dirección tiene dos marcas, y 90 para no ofrecer un edificio que ya
-    está tomado. Dos copias de esta pregunta es cómo una de las dos se queda
-    corta.
+    It lives here because two callers ask it and need the same answer: 93 to
+    report an address carrying two brands, and 90 to avoid offering a building
+    that is already taken. Two copies of this question is how one of them ends
+    up falling short.
 
-    Devuelve {(bx, by): {marca, ...}} sobre las celdas de city_buildings.json.
+    Returns {(bx, by): {brand, ...}} over the cells in city_buildings.json.
     """
     def lands_on(x, y):
         for s in sites:
@@ -858,11 +860,11 @@ def brand_addresses(sites, signs, hero):
                     return tuple(s["at"])
         return None
 
-    # LA DIRECCIÓN ES DONDE ESTÁ EL ARTE, no donde se planificó el cartel.
-    # `built` lo escribe 10_signs midiendo la malla, así que ya trae el logo
-    # mudado a la pared del vecino sin tener que releer HERO. Cuando falta - un
-    # manifiesto viejo - se cae al plan y al destino declarado en HERO, que es
-    # la respuesta aproximada.
+    # THE ADDRESS IS WHERE THE ART IS, not where the sign was planned.
+    # `built` is written by 10_signs measuring the mesh, so it already carries
+    # the logo moved to the neighbour's wall without having to re-read HERO.
+    # When it is missing — an old manifest — it falls back to the plan and to
+    # the destination declared in HERO, which is the approximate answer.
     claims = []
     for rec in signs:
         if rec.get("drop"):

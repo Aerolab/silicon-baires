@@ -676,30 +676,31 @@ def plan_sign(bx, by, w, d, top, floors, r, signs, sol=None, owner=None):
     return keep
 
 
-EXTRAS = []       # los carteles de _brands.EXTRA, ya planificados
-# Un renglón por edificio: dónde está, qué alto llega y de qué alas se compone.
-# Lo llena place_on_lot y se publica en city_buildings.json. Ver la nota de
-# BUILDINGS en _common.
+EXTRAS = []       # the signs from _brands.EXTRA, already planned
+# One row per building: where it is, how high it reaches and which wings make it
+# up. Filled by place_on_lot and published to city_buildings.json. See the note
+# on BUILDINGS in _common.
 SITES = []
 
 
 def plan_extra(bx, by, wings, top, sol):
-    """Un cartel puesto a mano sobre un ala elegida por coordenada.
+    """A hand-placed sign on a wing chosen by coordinate.
 
-    Se llama desde el recorrido de lotes y no después, y esa es toda la razón
-    de que exista en vez de ser tres líneas al final del step: la reserva. El
-    lugar que ocupa un cartel se le pasa a `roof_props` como `keep` mientras se
-    puebla ese techo, así que un cartel agregado más tarde se encuentra un
-    tanque de agua parado encima. Es la misma razón por la que `plan_sign` se
-    llama antes que los equipos de azotea y no después.
+    It is called from the lot pass and not afterwards, and that is the entire
+    reason it exists instead of being three lines at the end of the step: the
+    reservation. The space a sign takes is handed to `roof_props` as `keep`
+    while that roof is being populated, so a sign added later finds a water tank
+    standing on it. Same reason `plan_sign` is called before the rooftop plant
+    and not after.
 
-    Sale de un stream propio (`sign_rng`, sembrado en la posición) como el
-    relleno del corredor, así que agregar una marca no le mueve un ladrillo al
-    resto de la ciudad.
+    It draws from its own stream (`sign_rng`, seeded on the position) like the
+    corridor filler, so adding a brand does not move a single brick anywhere
+    else in the city.
 
-    Devuelve la reserva en coordenadas del lote, o None si acá no hay nada
-    puesto a mano. Que el formato no entre se avisa: es el único caso en el que
-    una marca pedida no aparece, y en un render se ve igual que un techo vacío.
+    Returns the reservation in lot coordinates, or None if nothing is
+    hand-placed here. A format that does not fit is reported: it is the one case
+    where a requested brand simply does not appear, and in a render that looks
+    exactly like an empty roof.
     """
     for (ox, oy, ww, dd) in wings:
         wx, wy = bx + ox, by + oy
@@ -1103,8 +1104,8 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
         # of to the office park. If the billboard draw misses it still gets an
         # ordinary sign, so the corridor does not end up with bald roofs.
         bank = avenue_bank(av, bx + hx, by + hy, hw, hd)
-        # cuántos carteles había antes de esta celda. Es la única forma honesta
-        # de preguntar "¿este edificio ya tiene marca?" - ver plan_extra.
+        # how many signs there were before this cell. It is the only honest way
+        # to ask "does this building already have a brand?" — see plan_extra.
         before = len(signs)
         planned, keep = False, None
         if bank is not None:
@@ -1121,19 +1122,21 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
                              sol, owner=(bx, by))
         if keep is not None:
             keep = (keep[0] + hx, keep[1] + hy, keep[2], keep[3])
-        # y los puestos a mano, solo donde el reparto no dejó nada.
+        # and the hand-placed ones, only where the allocation left nothing.
         #
-        # LA PREGUNTA ES SI SE AGREGÓ UN CARTEL, NO SI QUEDÓ LUGAR EN EL TECHO,
-        # y confundirlas puso a Rebill en el edificio de Tiendanube. `keep` es
-        # la reserva contra los equipos de azotea, y una medianera no reserva
-        # nada: es un mural en una pared. Así que en un edificio con mural
-        # `keep` vuelve None con el cartel ya puesto, y por ahí se colaba una
-        # segunda marca en la misma dirección - que es justo lo que `thin` no
-        # puede atajar, porque los de mano no pasan por thin a propósito.
+        # THE QUESTION IS WHETHER A SIGN WAS ADDED, NOT WHETHER THERE IS ROOM
+        # LEFT ON THE ROOF, and confusing the two put Rebill on Tiendanube's
+        # building. `keep` is the reservation against the rooftop plant, and a
+        # party wall reserves nothing: it is a mural on a wall. So on a building
+        # with a mural `keep` comes back None with the sign already placed, and
+        # that is where a second brand slipped onto the same address — which is
+        # exactly what `thin` cannot catch, because hand-placed signs
+        # deliberately do not go through thin.
         if len(signs) == before:
             keep = plan_extra(bx, by, wings, top, sol) or keep
-        # EL EDIFICIO, escrito acá porque acá es donde se sabe cuáles alas son
-        # el mismo. Después no hay forma de recuperarlo: ver BUILDINGS.
+        # THE BUILDING, written here because here is where it is known which
+        # wings are the same one. Afterwards there is no way to recover it: see
+        # BUILDINGS.
         SITES.append({"at": [round(bx, 2), round(by, 2)], "top": round(top, 2),
                       "wings": [[round(bx + o, 2), round(by + q, 2),
                                  round(a, 2), round(b, 2)]
@@ -1309,10 +1312,10 @@ def assign_brands(signs):
     camp, av_pool = brand_pools(SIGN_FACES, AV_FACES)
     # a pinned brand is dealt to its own sign and taken out of the pool, so the
     # rest of the deal is the same deal it always was, one name shorter
-    # `pin` en el registro es lo mismo que PIN pero sin pasar por el nombre:
-    # los carteles puestos a mano se numeran al final, después de este reparto
-    # en todo salvo el orden, así que no tienen Sign.NNN sobre el que pinnear
-    # cuando se eligen. Ver EXTRA en _brands.py.
+    # `pin` on the record is the same thing as PIN but without going through the
+    # name: hand-placed signs are numbered last, after this allocation in
+    # everything but order, so they have no Sign.NNN to pin against at the time
+    # they are chosen. See EXTRA in _brands.py.
     pinned = set(PIN.values()) | {r["pin"] for r in signs if r.get("pin")}
     camp = [f for f in camp if f[0] not in pinned]
     av_pool = [f for f in av_pool if f[0] not in pinned]
@@ -1462,15 +1465,15 @@ def main():
     for i, rec in enumerate(signs):
         rec["name"] = f"Sign.{i:03d}"
 
-    # Y RECIÉN AHORA los puestos a mano, numerados atrás de todo. El mismo
-    # segundo pase de encaje, y a propósito NO pasan por `thin`: el que eligió
-    # ese techo estaba mirando el cuadro, que es lo único que thin no sabe
-    # hacer. Lo que thin cuida igual - que dos marcas no se peguen en pantalla
-    # - lo mide 93_check_signs, que es donde se ve si esta elección estuvo mal.
+    # AND ONLY NOW the hand-placed ones, numbered behind everything else. The
+    # same second fitting pass, and deliberately NOT through `thin`: whoever
+    # chose that roof was looking at the frame, which is the one thing thin
+    # cannot do. What thin protects anyway — two brands not sticking together on
+    # screen — is measured by 93_check_signs, which is where a bad choice shows.
     #
-    # Numerados últimos porque thin ordena por visibilidad antes de numerar:
-    # ver la nota de EXTRA en _brands.py. Metidos en el ranking, estos seis le
-    # habrían corrido el Sign.NNN a media ciudad y con él todos los PIN.
+    # Numbered last because thin sorts by visibility before numbering: see the
+    # note on EXTRA in _brands.py. Dropped into the ranking, these six would
+    # have shifted the Sign.NNN of half the city and every PIN with it.
     extras, lost_fit = refit(EXTRAS, sol)
     for k, rec in enumerate(extras):
         rec["name"] = f"Sign.{len(signs) + k:03d}"

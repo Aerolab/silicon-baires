@@ -52,11 +52,11 @@ CLEAR = {"tree": 3.2, "shrub": 1.6, "bench": 1.2, "person": 0.4,
 RAD = {"Tree0": 3.33, "Tree1": 2.60, "Tree2": 4.38, "Tree3": 1.84,
        "Conifer0": 2.73, "Conifer1": 2.08, "Shrub": 1.13,
        "Jacaranda0": 3.53, "Jacaranda1": 4.68, "Jacaranda2": 4.71}
-# Y LO ALTO QUE ES CADA UNO, que es la otra mitad de la misma pregunta. Se
-# llena en main() midiendo el KIT, por lo mismo que RAD está medido y no
-# supuesto. Un árbol se consultaba contra los sólidos a la altura del tronco,
-# así que un mural colgado a 4 m no existía para él: Tree2 creció a través del
-# de Ualá, que está 9,7 s en cuadro. Ver Solids.hit(z_to=...).
+# AND HOW TALL EACH ONE IS, which is the other half of the same question. It is
+# filled in main() by measuring the KIT, for the same reason RAD is measured and
+# not guessed. A tree was queried against the solids at trunk height, so a mural
+# hung at 4 m did not exist as far as it was concerned: Tree2 grew through the
+# Ualá one, which is on camera for 9.7 s. See Solids.hit(z_to=...).
 TALL = {}
 # a bus is two and a half cars long. One "car" clearance let the buses through
 VEHICLE = {"Bus": 5.6, "Truck": 4.2, "Colectivo0": 5.7, "Colectivo1": 5.7,
@@ -749,7 +749,7 @@ def main():
                    "footprints they publish, and an empty table plants a whole "
                    "city of trees inside the buildings")
     kit = {ob.name: ob for ob in bpy.data.collections["KIT"].objects}
-    # medido, no supuesto, igual que RAD. Ver la nota de TALL.
+    # measured, not guessed, same as RAD. See the note on TALL.
     for nm in RAD:
         ob = kit.get(nm)
         TALL[nm] = (max(v[2] for v in ob.bound_box) * ob.scale.z

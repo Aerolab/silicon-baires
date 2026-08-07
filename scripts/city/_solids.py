@@ -88,13 +88,13 @@ class Solids:
         "is this person inside anything" always says yes; asking "is this
         person inside a sign or a cupola" is the question that means something.
 
-        `z_to` PREGUNTA POR UNA ALTURA Y NO POR UN PUNTO, y esa diferencia dejó
-        un plátano de 12 m creciendo a través del mural de Ualá. Un árbol se
-        preguntaba a la altura del tronco, un mural está colgado entre 3,9 y
-        8,0 m, y a la altura del tronco no hay nada: la consulta pasaba y el
-        árbol subía por delante del panel. 99_check_overlap lo encontró porque
-        él prueba el footprint en planta y no mira z, que para este caso es la
-        pregunta correcta. Un objeto alto se consulta con su alto.
+        `z_to` ASKS ABOUT A HEIGHT AND NOT ABOUT A POINT, and that difference
+        left a 12 m plane tree growing through the Ualá mural. A tree was being
+        queried at trunk height, a mural hangs between 3.9 and 8.0 m, and at
+        trunk height there is nothing there: the query passed and the tree grew
+        up in front of the panel. 99_check_overlap found it because it tests the
+        footprint in plan and ignores z, which for this case is the right
+        question. A tall object is queried with its height.
         """
         if self._grid is None:
             self._build_grid()
