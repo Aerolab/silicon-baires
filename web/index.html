@@ -36,13 +36,28 @@
                display: none; }
       #stats.on { display: block; }
       #load { position: fixed; inset: 0; display: grid; place-items: center;
-              background: #0d0d0f; z-index: 20; transition: opacity .4s; }
+              background: #0d0d0f; z-index: 20; transition: opacity .5s; }
       #load.gone { opacity: 0; pointer-events: none; }
+      #load .box { display: flex; flex-direction: column; gap: 14px;
+                   align-items: center; width: 240px; }
       #load span { opacity: .5; letter-spacing: .14em; text-transform: uppercase; }
+      /* Una barra y un porcentaje, no un spinner: la ciudad son 8 MB y lo que
+         una persona quiere saber mientras espera es cuánto falta. */
+      #bar { width: 100%; height: 2px; background: rgba(255,255,255,.12);
+             overflow: hidden; }
+      #bar i { display: block; height: 100%; width: 0%; background: #d8352a;
+               transition: width .25s ease-out; }
+      #pct { opacity: .35; font-variant-numeric: tabular-nums; letter-spacing: .08em; }
     </style>
   </head>
   <body>
-    <div id="load"><span>cargando la ciudad…</span></div>
+    <div id="load">
+      <div class="box">
+        <span>cargando la ciudad</span>
+        <div id="bar"><i></i></div>
+        <span id="pct">0%</span>
+      </div>
+    </div>
     <div id="hud">
       <button id="play" title="Pausar (espacio)" aria-label="Pausar"></button>
       <input id="scrub" type="range" min="1" max="624" value="1" step="1" />

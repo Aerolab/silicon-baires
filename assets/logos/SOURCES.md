@@ -1,6 +1,6 @@
 # Los logos, de dónde salió cada uno
 
-22 marcas para reemplazar a las 42 inventadas de `renders/city_signs.json`. Cada
+28 marcas para reemplazar a las 42 inventadas de `renders/city_signs.json`. Cada
 archivo es el mejor formato que existe públicamente, buscado en este orden:
 SVG del sitio oficial → SVG de Wikimedia Commons → PNG de la mayor resolución
 que haya.
@@ -31,6 +31,22 @@ uso editorial o si hace falta permiso, y esa decisión no es técnica.
 | `tiendanube.svg` | Tiendanube | SVG inline de tiendanube.com |
 | `uala.svg` | Ualá | Wikimedia Commons |
 | `vercel.svg` | Vercel | worldvectorlogo |
+
+## Vector, la tanda de agosto 2026 (7)
+
+Los seis clientes nuevos. Todos se normalizaron igual antes de guardarlos:
+`width`/`height` explícitos sacados del `viewBox`, porque el importador de
+Blender no entiende `width="100%"` y devuelve una curva vacía sin avisar.
+
+| archivo | marca | fuente |
+|---|---|---|
+| `belo.svg` | Belo | SVG inline de belo.app. El `fill` venía como `var(--token-…, rgb(83,0,218))` y se reemplazó por `#5300da`: Blender no resuelve variables CSS y lo importaba negro |
+| `coderhouse.svg` | Coderhouse | CDN de Framer de coderhouse.com, 811x236. Solo logotipo, 8,4:1 |
+| `complif.svg` | Complif | CDN de Webflow de complif.com, 690x189. **Blanco**: pide fachada oscura |
+| `complif_dark.svg` | Complif | el mismo archivo con el `fill` en `#1c1c1c`, para cuando la marca se mude a una pared clara. Hoy no se usa: la fachada que le tocó es de ladrillo oscuro |
+| `galicia_iso.svg` | Galicia | **el isotipo solo**, del sitio de Paisanos, que hizo trabajo para ellos. Es la marca actual (círculo naranja, daga blanca). El logotipo nuevo en minúscula NO está público en vector: Commons, logotyp.us y seeklogo tienen todos el anterior, la caja naranja con "Galicia" en serif |
+| `paisanos.svg` | Paisanos | SVG inline de paisanos.io. Logotipo blanco más isotipo lima: pide fondo oscuro |
+| `rebill.svg` | Rebill | SVG inline de rebill.com. Viene en `currentColor`, o sea sin color: manda el `ink` de la tabla |
 
 ## Raster (5)
 

@@ -40,7 +40,9 @@ from _common import (FPS, FRAMES, MOVE, AZIMUTH, ELEVATION, DISTANCE,
                      HERO_WIDTH, ASPECT, SHOT_ZOOM, EASE_IN, EASE_OUT,
                      LOOK, EXPOSURE, WHITE_BALANCE, SUN_ENERGY, SUN_ANGLE,
                      SUN_COLOR, SKY_STRENGTH, SKY_SATURATION,
-                     shot_at, open_city, R, SOLIDS, SIGNS)
+                     shot_at, open_city, R, SOLIDS, SIGNS,
+                     BUILDINGS, brand_addresses)
+from _brands import HERO
 
 WEB = ROOT / "web" / "public"
 
@@ -246,17 +248,45 @@ def roof_spots():
     differ by the height of the parapet, and a label floating a metre over the
     roof is a label pointing at the wrong thing. Same reason 10_signs.deck_z
     exists.
+
+    LO QUE SE NUMERA SON ALAS, Y LA REGLA ES POR EDIFICIO. Esa diferencia hizo
+    que el overlay dijera 149 techos libres cuando libres había 68: marcaba
+    ocupada UNA caja, aquella cuyo centro coincidía con el `owner` del cartel, y
+    una L son varias alas superpuestas, así que las otras salían numeradas y en
+    blanco. Alguien elegía un techo de esa lista, y el techo resultaba ser el
+    ala de atrás de un edificio que ya llevaba marca — que es lo que la regla de
+    una marca por dirección existe para impedir.
+
+    Un edificio es una CELDA DE LOTE, y eso lo publica 04 en
+    city_buildings.json. Agrupar las alas por solapamiento parecía razonable y
+    fue la segunda respuesta equivocada: los footprints salen con 0,9 m de
+    padding, así que dos vecinos separados por un retiro chico se superponen
+    exactamente lo mismo que los dos brazos de una L. Desde la geometría no se
+    distinguen.
+
+    Y quién ocupa cada edificio lo contesta `_common.brand_addresses`, que es la
+    misma pregunta que hace 93 para prohibir dos marcas en una dirección y 90
+    para no ofrecer un edificio tomado. Una sola copia: dos es cómo una de las
+    dos se queda corta.
     """
     boxes = [b for b in json.loads(SOLIDS.read_text())["boxes"]
              if b[7] in ("buildings", "porteno")
              and b[2] * b[3] >= 120.0 and b[6] >= 8.0]
     boxes.sort(key=lambda b: (round(b[0], 1), round(b[1], 1)))
+
+    sites = json.loads(BUILDINGS.read_text())["sites"] if BUILDINGS.exists() \
+        else []
+    signs = json.loads(SIGNS.read_text())
+    owners = brand_addresses(sites, signs, HERO)
+
     taken = {}
-    for rec in json.loads(SIGNS.read_text()):
-        if rec.get("drop"):
+    for s_ in sites:
+        who = owners.get(tuple(s_["at"]))
+        if not who:
             continue
-        taken[(round(rec["owner"][0], 1), round(rec["owner"][1], 1))] = \
-            rec["text"]
+        label = sorted(who)[0]
+        for wx, wy, w, d in s_["wings"]:
+            taken[(round(wx, 1), round(wy, 1))] = label
 
     ob = bpy.data.objects.get("buildings")
     inv = ob.matrix_world.inverted() if ob else None

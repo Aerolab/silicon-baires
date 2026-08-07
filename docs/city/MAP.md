@@ -45,10 +45,10 @@ emptied and rebuilt on every run, so anything else that writes into it is lost.
 | `02_kit` | — | `KIT` (purged by hand, see below) | — |
 | `02b_porteno_kit` | `KIT` | adds to `KIT` | — |
 | `03_ground` | `KIT` | `SITE` | `city_lots.json` |
-| `04_buildings` | `KIT`, `SITE`, lots | `BUILDINGS`, `ROOFPROPS`, `CAMPUSROOF` | solids `buildings`, `city_signs.json` |
+| `04_buildings` | `KIT`, `SITE`, lots | `BUILDINGS`, `ROOFPROPS`, `CAMPUSROOF` | solids `buildings`, `city_signs.json`, `city_buildings.json` |
 | `06_landmarks` | `KIT`, `SITE`, lots | `LANDMARKS`, `LANDMARK_PROPS` | solids `landmarks` |
 | `06b_porteno` | `KIT`, `SITE`, lots | `PORTENO` | solids `porteno` |
-| `10_signs` | `BUILDINGS`, signs manifest | `SIGNS` | solids `signs` |
+| `10_signs` | `BUILDINGS`, signs manifest | `SIGNS` | solids `signs`, **`built` back into `city_signs.json`** |
 | `05_life` | `KIT`, `SITE`, `BUILDINGS`, lots, **solids**, **the site mesh itself** | `NATURE`, `FURNITURE`, `TRAFFIC`, `PEOPLE`, `ROOFPEOPLE` | — |
 | `08_title` | `BUILDINGS`, `NATURE`, lots | `TITLE` | — (it DELETES from other collections) |
 | `11_animate` | `TRAFFIC`, `TITLE`, lots, solids | `AIR` | — (animates `TRAFFIC`, `PEOPLE`) |
@@ -239,11 +239,53 @@ missing — which is why `open_city(needs_files=...)` checks first.
 | `city_lots.json` | 03 | 04, 05, 06, 06b, 08, 11, 95 |
 | ⤷ its `crossings` key | 03 (only where a zebra was actually painted) | 05 |
 | `city_solids.json` | 04, 06, 06b, 10 (per tag) | 05, 11, 99 |
-| `city_signs.json` | 04 | 10 |
+| `city_signs.json` | 04 (the plan), 10 (the `built` key) | 10, 90, 93, 20 |
+| `city_buildings.json` | 04 | 90, 93, 20 |
 
 `city_solids.json` is merged per tag, never rewritten whole: the steps run one
 at a time and each rebuilds only its own layer, so a whole-file rewrite would
 silently drop the layers still standing in the `.blend`.
+
+**`Sign.NNN` is a rank, not an address.** `thin()` sorts every sign by what the
+camera makes of it and only then numbers them, so a sign added anywhere lands in
+the middle of that ranking and shifts the number of everything it outshines —
+along with every `PIN`, `DROP` and `SIZE` entry keyed on those numbers. That is
+why the hand-placed signs of `_brands.EXTRA` are planned during the lot walk
+(the only moment that can reserve their roof against the rooftop units) but
+numbered last, from `Sign.094` up. Adding a client must not move somebody else's
+logo to a different building.
+
+**A roof spot is a WING; one brand per address is about the BUILDING.** The
+`?spots=1` overlay numbers every roof box, and it used to mark taken only the box
+whose centre matched the sign's `owner` — so the other wings of an L showed as
+free, and so did the three buildings whose logo `HERO` hangs on a neighbouring
+facade. It reported 149 roofs free when 68 were, and a client was placed on a
+building another brand already had.
+
+Grouping wings by overlap does not fix it either, and that was the second wrong
+answer: every footprint is published **0.9 m padded**, so two neighbours with a
+small setback overlap exactly as much as two arms of one L. There is no way to
+tell them apart from the geometry.
+
+So step 04 writes it down — `city_buildings.json`, one entry per lot cell with
+its wings — because a lot cell *is* a building and 04 is the only step that
+knows. `_common.brand_addresses()` is the one query over it, used by
+`93_check_signs` to enforce one brand per address and by `90_brand_sites` to
+avoid offering a building that is taken. Deliberate exceptions are declared in
+`_brands.SHARED` with their reason.
+
+**A sign's address is where its ARTWORK is, not where it was planned.** With
+`facade_only` the record points at an anchor that is never built while the logo
+hangs off a wall that can belong to the building next door. `brand_addresses`
+claims from `built` for exactly that reason.
+
+**`built` is written by 10, into the manifest 04 wrote.** It is the bounding box
+of the mesh that actually exists, and it is the only honest input to
+`93_check_signs`: for a `facade_only` brand the plan says "roofmark, 7.1 m" and
+the wall carries a 27.6 m wordmark. Measure it from `ob.location + v.co` and not
+from `matrix_world` — the matrix is recomputed on the next depsgraph evaluation,
+so reading it straight after setting `.location` returns the identity and every
+sign in the city measures from the origin.
 
 **The sign manifest is positional.** `10_signs` gives billboards and medianeras
 a private material per sign, named off the planned object (`Logo Sign.045 BOCA`)

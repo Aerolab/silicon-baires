@@ -24,8 +24,9 @@ import sys, pathlib, json, math, collections
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "city"))
-from _common import (SIGNS, SOLIDS, FPS, FRAMES, ASPECT,
-                     screen_xy, shot_at, shot_cover)
+from _common import (SIGNS, SOLIDS, BUILDINGS, FPS, FRAMES, ASPECT,
+                     screen_xy, shot_at, shot_cover, brand_addresses)
+from _brands import HERO, SHARED
 
 # What counts as delivered. Both, not either: 5 per cent of the frame width is
 # 96 px at 1080p, which is the point a wordmark stops being a coloured smudge,
@@ -38,13 +39,34 @@ MIN_SECS = 1.0
 MIN_GAP = 0.10
 
 
+def where(s):
+    """Dónde está y qué mide ESTE cartel, tal como quedó construido.
+
+    `built` lo escribe 10_signs midiendo la malla; el registro de 04 es el
+    plan. Para casi todos son lo mismo. Para una marca con `facade_only` no:
+    el plan es un ancla que no se levanta y dice "roofmark de 7,1 m" mientras
+    en la pared hay un logotipo de 27,6, así que este chequeo informaba mal
+    justo las marcas que mejor se entregan. Si falta `built` - un manifiesto
+    de antes de que 10 lo escribiera - cae al plan, que es la respuesta vieja.
+    """
+    b = s.get("built")
+    return (b[0], b[1], b[2], b[3], b[4]) if b else \
+        (s["x"], s["y"], s["z"], s["w"], s["h"])
+
+
 def main():
     signs = json.loads(SIGNS.read_text())
     boxes = json.loads(SOLIDS.read_text())["boxes"]
+    if not any(s.get("built") for s in signs):
+        print("  ! el manifiesto no trae `built`: corré 10_signs.py y este\n"
+              "    chequeo pasa a medir la malla en vez del plan\n")
 
     rows = []
     for s in signs:
-        secs, frac = shot_cover(s["x"], s["y"], s["z"], s["w"], s["h"])
+        if s.get("drop"):
+            continue
+        x, y, z, w, h = where(s)
+        secs, frac = shot_cover(x, y, z, w, h)
         rows.append((s, secs, frac))
 
     seen = [(s, secs, frac) for s, secs, frac in rows if secs > 0]
@@ -64,22 +86,27 @@ def main():
         print(f"  repeated on camera: {', '.join(sorted(dupes))}")
 
     # --- one sign per building ---------------------------------------------
-    # Against the published footprints rather than against anything the sign
-    # remembers about itself: the owner is a fact of the geometry, and asking
-    # the sign is asking the code that placed it whether it placed it right.
-    where = collections.defaultdict(list)
-    for s in signs:
-        hit = None
-        for b in boxes:
-            if b[7] not in ("buildings", "porteno"):
-                continue
-            if abs(s["x"] - b[0]) <= b[2] / 2 + 2.5 and \
-                    abs(s["y"] - b[1]) <= b[3] / 2 + 2.5:
-                if hit is None or b[2] * b[3] < hit[2] * hit[3]:
-                    hit = b
-        if hit is not None:
-            where[(round(hit[0], 1), round(hit[1], 1))].append(s["name"])
-    shared = {k: v for k, v in where.items() if len(v) > 1}
+    # POR `owner`, QUE ES LA CELDA, y no por la caja de footprint en la que cae
+    # el cartel. Esta prueba se hacía contra las cajas con el argumento de que
+    # la geometría es el hecho y preguntarle al cartel es preguntarle al código
+    # que lo puso si lo puso bien. El argumento es bueno y la ejecución estaba
+    # mal: UNA CAJA ES UN ALA, NO UN EDIFICIO. Una L son varios rectángulos, y
+    # dos marcas en dos alas de la misma dirección caen en cajas distintas y
+    # pasaban las dos. Tiendanube y Rebill compartieron edificio así.
+    #
+    # Y CUENTA LO QUE HERO MUDÓ, que es la otra mitad y la que faltaba: el
+    # logotipo de una marca puede colgar de la pared de otro edificio, así que
+    # una dirección con dos marcas encima podía pasar con las dos contentas.
+    # `brand_addresses` en _common es la respuesta, una sola vez, y 90 usa la
+    # misma para no ofrecer un edificio ocupado.
+    if not BUILDINGS.exists():
+        raise SystemExit("falta city_buildings.json: corré 04_buildings.py")
+    sites = json.loads(BUILDINGS.read_text())["sites"]
+    shared = {k: sorted(v)
+              for k, v in brand_addresses(sites, signs, HERO).items()
+              if len(v) > 1 and k not in SHARED}
+    for k in SHARED:
+        print(f"  · dos marcas por decisión en {k}: {SHARED[k]}")
     if shared:
         print(f"\n  ✗ {len(shared)} buildings carry more than one sign:")
         for k, v in sorted(shared.items())[:8]:
@@ -96,7 +123,7 @@ def main():
         ox, oy = screen_xy(tx, ty, 0.0)
         here = []
         for s, secs, frac in good:
-            sx, sy = screen_xy(s["x"], s["y"], s["z"])
+            sx, sy = screen_xy(*where(s)[:3])
             dx, dy = (sx - ox) / width, (sy - oy) / width
             if abs(dx) < 0.5 and abs(dy) < ASPECT / 2:
                 here.append((dx, dy, s["text"]))
@@ -125,7 +152,7 @@ def main():
         ox, oy = screen_xy(tx, ty, 0.0)
         n = 0
         for s, secs, frac in good:
-            sx, sy = screen_xy(s["x"], s["y"], s["z"])
+            sx, sy = screen_xy(*where(s)[:3])
             if abs(sx - ox) < width / 2 and abs(sy - oy) < width * ASPECT / 2:
                 n += 1
         print(f"    t={(f - 1) / FPS:5.1f}s  {'█' * n} {n}")

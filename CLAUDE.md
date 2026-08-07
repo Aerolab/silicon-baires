@@ -223,7 +223,12 @@ python3 scripts/city/97_check_title.py renders/city_08_title_only.png
 `93_check_signs.py` counts the thing the video is actually for. The signs are
 planned for a camera that crosses the city on one diagonal, so "77 signs built"
 and "how many a viewer sees" are different numbers by a factor of four, and only
-the second one matters.
+the second one matters. It measures `built` — the mesh step 10 made — because
+the plan and the result stopped being the same thing once brands started hanging
+off facades. See **How a brand gets added** below.
+
+There is one more script in that family and it is not a check: `90_brand_sites.py`
+answers where the next client can go, before anything is edited.
 
 **A hold in `11_animate` is a placement, and it has to pass what a placement
 passes.** Resolving a junction moves one car up to 45 m back along its lane, so
@@ -381,16 +386,79 @@ built as buildings on the street grid). Both documents record the attempts that
 were wrong as well as the one that stuck — the title was got wrong three times,
 and every wrong version measured well.
 
-Three files travel with the `.blend` and are read by later steps, so do not
+Four files travel with the `.blend` and are read by later steps, so do not
 delete them: `renders/city_solids.json`, the rectangle every solid thing
 occupies; `renders/city_signs.json`, the manifest of company signs (name,
-position, orientation, face size, and `owner` — the building it belongs to,
+position, orientation, face size, `owner` — the building it belongs to,
 recorded by the step that places it because an L is several overlapping wings
-and recovering the address afterwards is a guess) for dropping real artwork on
-later; and
-`renders/city_lots.json`, the street and block tables, which also carry the
+and recovering the address afterwards is a guess — and `built`, what step 10
+actually made, which is not the same thing: see below); `renders/city_lots.json`,
+the street and block tables, which also carry the
 section of the Avenida 9 de Julio under `avenue9j` — steps 05 and 06b build
-from that key rather than from a second copy of the numbers.
+from that key rather than from a second copy of the numbers; and
+`renders/city_buildings.json`, **which wings make up each building**.
+
+That last one is new and it exists because a whole batch of client logos went
+wrong without it. `city_solids.json` publishes one rectangle per WING, and an L
+is several wings that touch, so nothing could tell two buildings apart from two
+arms of one. The browser overlay called 149 roofs free when 68 were, a client
+landed on a building another brand already had, and grouping by overlap does not
+work either: every footprint is published 0.9 m padded, so two neighbours with a
+small setback "touch" as well. Step 04 knows without ambiguity — a lot cell is a
+building — so it writes it down. Same decision as `own()`: the only step that
+knows is the one that records it.
+
+## How a brand gets added
+
+The judgement is almost always the same, and it is not a matter of taste: a
+client goes on a building nobody else has, on a wall the camera can see that
+faces a street, at the biggest size that wall allows. All four of those have
+numeric answers, and answering them by eye is what turned six logos into an
+afternoon of renders.
+
+```bash
+./bl scripts/city/90_brand_sites.py       # which buildings are free, and which wall
+```
+
+It reports, per free building: the wall to use, how much of it the camera
+actually sees, how far the kerb is, how big a wordmark and a symbol fit, and
+what that would deliver in the frame. Copy the coordinate into `_brands.EXTRA`
+as `at`, the wall into that brand's `HERO` entry as `facade_side`, then rebuild
+`04 → 10` and **look at it**.
+
+Five things this project has already got wrong, so do not re-derive them:
+
+- **A logo goes on the FRONT, not on the roof.** That is how every brand here is
+  mounted: a `HERO` entry with `facade_only`, artwork stuck to a wall, nothing
+  built on the deck. The anchor in `EXTRA` exists only so the manifest has a
+  record to pin a brand to; its `kind` is never seen. Roofmarks and billboards
+  read as a pale rectangle from 250 m.
+- **"The longest wall" is the wrong wall.** On these blocks the long face is the
+  one inside the complex. Three brands ended up hanging over a courtyard 17–32 m
+  from the street. The wall that faces the street has its kerb under 4 m away,
+  and `90_brand_sites` measures it.
+- **A wall can be perfectly street-facing and still invisible**, because the
+  building's own other arm, or the neighbour a metre away, stands in front of
+  it. That is a sightline question, not a distance one: a block 12 m away and
+  20 m tall hides a wall with 6 m of clear air in front. `_common.wall_seen`
+  casts toward the camera and answers it.
+- **What binds the size is the aspect.** A wordmark is bound by the width of the
+  wall, a square symbol by its height — and the ground floor is set back, so the
+  logo lives between about 5 m and the parapet. Paisanos gets 9,6 m as a symbol
+  on its street face and 25 m as a word on its long one; both walls, one brand,
+  is what `facade_arts: ["iso", "word"]` is for.
+- **One brand per address, and the check now counts what HERO moved.** A sign
+  record points at the roof it was planned on while its artwork can hang off a
+  neighbour's wall, so a building carrying two logos used to read as empty.
+  Deliberate exceptions go in `_brands.SHARED` with their reason, which is not
+  the same as the rule not running.
+
+**`93_check_signs` measures what was built, not what was planned.** Step 10
+writes `built` back into the manifest — the bounding box of the mesh it actually
+made. For most signs the two agree. For a `facade_only` brand they do not: the
+plan is an anchor that is never raised, so the check was reporting "roofmark,
+7.1 m" for a 27.6 m wordmark on a wall, and calling this project's best-placed
+clients too small to count.
 
 **The street tables are per axis and they are not interchangeable.** A street
 running along X sits at a Y coordinate, so it comes out of the Y table. Reading
@@ -461,13 +529,17 @@ scripts/                  Blender scripts, one per task
 scripts/city/_common.py   the shared numbers, the mesh plumbing, the step scaffold
 scripts/city/_palette.py  every colour in the city, once
 scripts/city/_solids.py   the footprint table and the spatial query behind it
+scripts/city/_brands.py   the real brands, where each one hangs, and why
 scripts/city/_stage.py    the empty stage. Runs once. DESTROYS the city
 scripts/city/_archive/    spikes kept as evidence; their numbers are not current
+scripts/city/90_brand_sites.py  where the next client fits. Run before editing _brands
 docs/city/MAP.md          the dependency graph: read before changing anything
+assets/logos/SOURCES.md   where every logo came from, and what each file lacks
 scripts/verify_setup.py   environment self-check
 scripts/_introspect/      probes that interrogate the API; the probe*.json are the evidence
 renders/                  outputs (gitignored: regenerated by running the scripts)
-                          including city.blend, city_solids.json, city_signs.json
+                          including city.blend, city_solids.json, city_signs.json,
+                          city_buildings.json
 web/                      the city in the browser (three.js + Vite). See its README
 web/public/               written by 20_export_web.py; gitignored, regenerate it
 .claude/skills/blender/   project skill: verified 5.2 API, look dev, recipes

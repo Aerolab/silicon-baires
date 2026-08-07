@@ -27,6 +27,19 @@ BLEND = R / "city.blend"
 LOTS = R / "city_lots.json"       # street and block tables, written by 03
 SOLIDS = R / "city_solids.json"   # footprints, written by 04, 06, 06b, 08, 10
 SIGNS = R / "city_signs.json"     # the sign manifest, planned by 04, built by 10
+# Qué ALAS forman cada EDIFICIO, escrito por 04 y leído por 90 y por el export.
+#
+# Es el dato que no existía y del que salieron casi todos los errores de una
+# tanda entera de marcas. `city_solids.json` publica un rectángulo por ala, y
+# una L son varias alas que se tocan: nada permitía decir si dos techos eran
+# dos edificios o dos brazos de uno. El overlay del navegador decía 149 techos
+# libres cuando libres había 68, se puso una marca en el edificio de otra, y
+# agrupar por solapamiento tampoco sirve porque los footprints vienen con 0,9 m
+# de padding y dos vecinos separados por un retiro chico se "tocan" igual.
+#
+# 04 lo sabe sin ambigüedad - una celda de lote es un edificio - así que lo
+# escribe. Es la misma decisión que `own()`: lo anota el único paso que lo sabe.
+BUILDINGS = R / "city_buildings.json"
 
 # --- how long the shot is --------------------------------------------------
 # It lives here because steps 11 and 12 both need it and they disagreed once:
@@ -747,3 +760,126 @@ def preview(width=HERO_WIDTH, target=None, frame=None):
 def blib_fcurves(ob):
     import blib
     return blib.fcurves(ob)
+
+
+# --- ¿la cámara ve esta pared? ---------------------------------------------
+# Un logo de marca sobre una fachada tiene tres maneras de no existir, y las
+# tres cuestan un render cada una si se eligen a ojo:
+#
+#   1. la pared da contra el otro brazo de la propia L,
+#   2. la pared da contra el vecino, a un metro,
+#   3. la pared da a un patio y no a la calle.
+#
+# En una tanda de seis marcas pasaron las tres. Se elegía la cara "más larga",
+# que en estos edificios es casi siempre la de adentro del complejo. Esto lo
+# contesta midiendo, y vive acá porque lo preguntan dos: 90_brand_sites para
+# elegir, y 93_check_signs para avisar cuando lo elegido quedó tapado.
+#
+# La cámara es ortográfica y fija, así que "hacia la cámara" es un solo vector
+# para toda la ciudad. Preguntar por distancia no alcanza: un edificio a 12 m
+# con 20 m de alto tapa una pared que tiene 6 m de aire por delante.
+def view_vector():
+    """El versor que apunta a la cámara desde cualquier punto de la ciudad."""
+    az, el = math.radians(AZIMUTH), math.radians(ELEVATION)
+    return (math.cos(el) * math.cos(az), math.cos(el) * math.sin(az),
+            math.sin(el))
+
+
+# Las dos caras que esta cámara ve. 0 es +X y 1 es +Y; screen_xy pone +X a la
+# izquierda del cuadro, que es lo que 10_signs llama "left".
+FACES = ((0, "left"), (1, "right"))
+
+
+def wall_seen(sol, box, axis, z, samples=21, far=90.0, step=2.0):
+    """Qué fracción de la cara +axis de `box` le llega a la cámara, a altura z.
+
+    `sol` es un Solids con los footprints; `box` uno de sus rectángulos. Tira
+    un rayo hacia la cámara desde puntos repartidos a lo largo de la cara y
+    cuenta los que no chocan con NINGÚN otro footprint.
+
+    Se mide a una altura concreta y no "en general" a propósito: la misma pared
+    puede estar tapada a 15 m y libre a 19 porque el vecino termina en 16,9.
+    """
+    cx, cy, w, d = box[0], box[1], box[2], box[3]
+    run = d if axis == 0 else w
+    half = (w if axis == 0 else d) / 2
+    vx, vy, vz = view_vector()
+    seen = 0
+    for i in range(samples):
+        t = -run / 2 + run * i / (samples - 1)
+        px, py = ((cx + half + 0.3, cy + t) if axis == 0
+                  else (cx + t, cy + half + 0.3))
+        k = step
+        while k < far:
+            hit = sol.hit(px + vx * k, py + vy * k, z + vz * k, 0.0,
+                          tags=("buildings", "porteno"))
+            if hit is not None and hit is not box:
+                break
+            k += step
+        else:
+            seen += 1
+    return seen / samples
+
+
+def wall_to_street(site, box, axis):
+    """Metros desde la cara +axis hasta el borde de la calle más cercana.
+
+    La otra mitad de la pregunta: una pared puede estar perfectamente a la
+    vista de la cámara y dar a un patio interno. Un logo de empresa va sobre la
+    vereda. Tres de seis marcas quedaron colgadas a 17-32 m de la calle.
+    """
+    edge = box[0] + box[2] / 2 if axis == 0 else box[1] + box[3] / 2
+    lines = zip(site["streets_x"], site["widths_x"]) if axis == 0 else \
+        zip(site["streets_y"], site["widths_y"])
+    return min(abs(s - edge) - w / 2 for s, w in lines)
+
+
+def brand_addresses(sites, signs, hero):
+    """Qué marca ocupa cada edificio. La respuesta completa, no la del registro.
+
+    Un cartel apunta al techo donde se planificó, y su logotipo puede terminar
+    colgado de OTRO edificio: `facade_at` y `roof_at` en HERO mudan el arte, y
+    Basement, Ualá y Etermax están así. Preguntarle al registro deja esas tres
+    direcciones marcadas como vacías, y ahí se metieron dos marcas de más en una
+    misma dirección en una sola tanda - una detectada mirando un render y la
+    otra porque una marca no aparecía en el mapa del navegador.
+
+    Vive acá porque lo preguntan dos y con la misma respuesta: 93 para avisar
+    que una dirección tiene dos marcas, y 90 para no ofrecer un edificio que ya
+    está tomado. Dos copias de esta pregunta es cómo una de las dos se queda
+    corta.
+
+    Devuelve {(bx, by): {marca, ...}} sobre las celdas de city_buildings.json.
+    """
+    def lands_on(x, y):
+        for s in sites:
+            for wx, wy, w, d in s["wings"]:
+                if abs(x - wx) <= w / 2 + 2.0 and abs(y - wy) <= d / 2 + 2.0:
+                    return tuple(s["at"])
+        return None
+
+    # LA DIRECCIÓN ES DONDE ESTÁ EL ARTE, no donde se planificó el cartel.
+    # `built` lo escribe 10_signs midiendo la malla, así que ya trae el logo
+    # mudado a la pared del vecino sin tener que releer HERO. Cuando falta - un
+    # manifiesto viejo - se cae al plan y al destino declarado en HERO, que es
+    # la respuesta aproximada.
+    claims = []
+    for rec in signs:
+        if rec.get("drop"):
+            continue
+        b = rec.get("built")
+        if b:
+            claims.append((b[0], b[1], rec["text"]))
+            continue
+        claims += [(rec["owner"][0], rec["owner"][1], rec["text"]),
+                   (rec["x"], rec["y"], rec["text"])]
+        h = hero.get(rec["text"]) or {}
+        for k in ("facade_at", "roof_at"):
+            if h.get(k):
+                claims.append((h[k][0], h[k][1], rec["text"]))
+    out = {}
+    for x, y, who in claims:
+        at = lands_on(x, y)
+        if at is not None:
+            out.setdefault(at, set()).add(who)
+    return out

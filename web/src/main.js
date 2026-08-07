@@ -78,7 +78,15 @@ new EXRLoader().load(`./${sky.file}${v}`, (tex) => {
 
 // --- the city --------------------------------------------------------------
 const loadEl = document.getElementById("load");
-const city = await loadCity(v);
+const barEl = document.querySelector("#bar i");
+const pctEl = document.getElementById("pct");
+const city = await loadCity(v, (p) => {
+  const n = Math.round(p * 100);
+  if (barEl) barEl.style.width = `${n}%`;
+  if (pctEl) pctEl.textContent = `${n}%`;
+});
+if (barEl) barEl.style.width = "100%";
+if (pctEl) pctEl.textContent = "100%";
 scene.add(city.root);
 Object.assign(window, { city, scene, THREE, renderer, sunLight });
 // camera and controls are attached further down, once they exist.

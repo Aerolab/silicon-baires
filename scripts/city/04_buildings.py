@@ -17,10 +17,11 @@ sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
 from _common import (Mesh, collection, instance, mat, paint, rng, counts,
-                     R, LOTS, SOLIDS, SIGNS, open_city, save_city, purge,
+                     R, LOTS, SOLIDS, SIGNS, BUILDINGS, open_city, save_city,
+                     purge,
                      preview, ASPECT, FRAMES, screen_xy, shot_at, shot_cover)
 from _solids import Solids
-from _brands import pools as brand_pools, LOGOS, PIN, DROP, HERO
+from _brands import pools as brand_pools, LOGOS, PIN, DROP, HERO, EXTRA
 
 
 # --- the signs are for the camera, and the camera goes one way -------------
@@ -675,6 +676,51 @@ def plan_sign(bx, by, w, d, top, floors, r, signs, sol=None, owner=None):
     return keep
 
 
+EXTRAS = []       # los carteles de _brands.EXTRA, ya planificados
+# Un renglón por edificio: dónde está, qué alto llega y de qué alas se compone.
+# Lo llena place_on_lot y se publica en city_buildings.json. Ver la nota de
+# BUILDINGS en _common.
+SITES = []
+
+
+def plan_extra(bx, by, wings, top, sol):
+    """Un cartel puesto a mano sobre un ala elegida por coordenada.
+
+    Se llama desde el recorrido de lotes y no después, y esa es toda la razón
+    de que exista en vez de ser tres líneas al final del step: la reserva. El
+    lugar que ocupa un cartel se le pasa a `roof_props` como `keep` mientras se
+    puebla ese techo, así que un cartel agregado más tarde se encuentra un
+    tanque de agua parado encima. Es la misma razón por la que `plan_sign` se
+    llama antes que los equipos de azotea y no después.
+
+    Sale de un stream propio (`sign_rng`, sembrado en la posición) como el
+    relleno del corredor, así que agregar una marca no le mueve un ladrillo al
+    resto de la ciudad.
+
+    Devuelve la reserva en coordenadas del lote, o None si acá no hay nada
+    puesto a mano. Que el formato no entre se avisa: es el único caso en el que
+    una marca pedida no aparece, y en un render se ve igual que un techo vacío.
+    """
+    for (ox, oy, ww, dd) in wings:
+        wx, wy = bx + ox, by + oy
+        for e in EXTRA:
+            if math.hypot(wx - e["at"][0], wy - e["at"][1]) > 0.8:
+                continue
+            if any(x["pin"] == e["brand"] for x in EXTRAS):
+                continue                    # ya colocada en otra ala
+            made = shape_sign(e["kind"], wx, wy, ww, dd, top,
+                              sign_rng(wx, wy), sol, e.get("grow", 1.0))
+            if made is None:
+                print(f"  ! {e['brand']}: un {e['kind']} no entra en el spot "
+                      f"{e['spot']} ({wx:.1f}, {wy:.1f})")
+                return None
+            rec, keep = made
+            rec.update(name="Extra", pin=e["brand"], owner=own(None, bx, by))
+            EXTRAS.append(rec)
+            return (keep[0] + ox, keep[1] + oy, keep[2], keep[3])
+    return None
+
+
 def shape_sign(kind, bx, by, w, d, top, r, sol, grow):
     """The geometry of one format on one roof, or None if it does not fit.
 
@@ -1057,6 +1103,9 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
         # of to the office park. If the billboard draw misses it still gets an
         # ordinary sign, so the corridor does not end up with bald roofs.
         bank = avenue_bank(av, bx + hx, by + hy, hw, hd)
+        # cuántos carteles había antes de esta celda. Es la única forma honesta
+        # de preguntar "¿este edificio ya tiene marca?" - ver plan_extra.
+        before = len(signs)
         planned, keep = False, None
         if bank is not None:
             # the board goes on the widest roof the building has, the mural on
@@ -1072,6 +1121,23 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
                              sol, owner=(bx, by))
         if keep is not None:
             keep = (keep[0] + hx, keep[1] + hy, keep[2], keep[3])
+        # y los puestos a mano, solo donde el reparto no dejó nada.
+        #
+        # LA PREGUNTA ES SI SE AGREGÓ UN CARTEL, NO SI QUEDÓ LUGAR EN EL TECHO,
+        # y confundirlas puso a Rebill en el edificio de Tiendanube. `keep` es
+        # la reserva contra los equipos de azotea, y una medianera no reserva
+        # nada: es un mural en una pared. Así que en un edificio con mural
+        # `keep` vuelve None con el cartel ya puesto, y por ahí se colaba una
+        # segunda marca en la misma dirección - que es justo lo que `thin` no
+        # puede atajar, porque los de mano no pasan por thin a propósito.
+        if len(signs) == before:
+            keep = plan_extra(bx, by, wings, top, sol) or keep
+        # EL EDIFICIO, escrito acá porque acá es donde se sabe cuáles alas son
+        # el mismo. Después no hay forma de recuperarlo: ver BUILDINGS.
+        SITES.append({"at": [round(bx, 2), round(by, 2)], "top": round(top, 2),
+                      "wings": [[round(bx + o, 2), round(by + q, 2),
+                                 round(a, 2), round(b, 2)]
+                                for o, q, a, b in wings]})
         # A U has two arms on the avenue and a T has an arm and a flank, so
         # they have two party walls looking at it and were being given one.
         # Capped at one extra: three murals on one address is a lot advertising
@@ -1112,6 +1178,55 @@ def track(rec, step=8):
         if abs(sx - ox) < width / 2 and abs(sy - oy) < width * ASPECT / 2:
             out[f] = width
     return out
+
+
+def refit(records, sol):
+    """The second pass over the words, with every building published.
+
+    A sign is planned in the same loop that publishes the buildings, so when it
+    is planned the buildings that come after it do not exist yet and it cannot
+    see the one it is about to run into. Re-checking here is the whole fix.
+
+    A function rather than a block inside main() because the hand-placed signs
+    need exactly the same pass and for exactly the same reason: they are
+    planned in that loop too. Two copies of a fit check is how one of them ends
+    up being the lenient one.
+
+    Returns (kept, dropped).
+    """
+    kept, dropped = [], 0
+    for rec in records:
+        if rec["kind"] == "parapet":
+            fit = sign_fits(sol, rec["x"], rec["y"], rec["w"], rec["z"],
+                            rec["h"])
+        elif rec["kind"] == "medianera":
+            # a mural is 34 m of wall, so it has more of the neighbour's
+            # building to run into than a word does, not less
+            fit = panel_fits(sol, rec["x"], rec["y"], rec["rot"], rec["w"],
+                             rec["z"] + rec["h"] / 2)
+            if fit is not None:
+                fit = modules(fit, MODULE_W)   # still whole panels afterwards
+                if fit < 10 * MODULE_W:
+                    fit = None
+        elif rec["kind"] == "mast":
+            # The mast had no fit check at all, on either pass, and it is the
+            # one format that reaches furthest: a 16 m disc stood on edge at
+            # 45 degrees in plan swings 5.7 m out in x and y at once, well past
+            # the parapet it is standing behind. One of them was inside the
+            # building next door and the only reason it was found is that the
+            # overlap check tests every loose object, not the ones somebody
+            # remembered to validate.
+            fit = mast_fits(sol, rec["x"], rec["y"], rec["rot"], rec["w"],
+                            rec["z"])
+        else:
+            kept.append(rec)
+            continue
+        if fit is None:
+            dropped += 1
+            continue
+        rec["w"] = fit
+        kept.append(rec)
+    return kept, dropped
 
 
 def thin(signs):
@@ -1194,7 +1309,11 @@ def assign_brands(signs):
     camp, av_pool = brand_pools(SIGN_FACES, AV_FACES)
     # a pinned brand is dealt to its own sign and taken out of the pool, so the
     # rest of the deal is the same deal it always was, one name shorter
-    pinned = set(PIN.values())
+    # `pin` en el registro es lo mismo que PIN pero sin pasar por el nombre:
+    # los carteles puestos a mano se numeran al final, después de este reparto
+    # en todo salvo el orden, así que no tienen Sign.NNN sobre el que pinnear
+    # cuando se eligen. Ver EXTRA en _brands.py.
+    pinned = set(PIN.values()) | {r["pin"] for r in signs if r.get("pin")}
     camp = [f for f in camp if f[0] not in pinned]
     av_pool = [f for f in av_pool if f[0] not in pinned]
     by_name = {f[0]: f for f in brand_pools(SIGN_FACES, AV_FACES)[0]
@@ -1207,7 +1326,7 @@ def assign_brands(signs):
                                    rec["w"], rec["h"])[1],
         reverse=True)
     for rec in ranked:
-        face = by_name.get(PIN.get(rec["name"]))
+        face = by_name.get(rec.get("pin") or PIN.get(rec["name"]))
         if face is None:
             av = rec["kind"] in ("medianera", "billboard")
             pool = pools[av]
@@ -1327,37 +1446,7 @@ def main():
     # publishes the buildings, so when it is planned the buildings that come
     # after it do not exist yet and it cannot see the one it is about to run
     # into. Re-checking here, with everything published, is the whole fix.
-    dropped = 0
-    for rec in list(signs):
-        if rec["kind"] == "parapet":
-            fit = sign_fits(sol, rec["x"], rec["y"], rec["w"], rec["z"],
-                            rec["h"])
-        elif rec["kind"] == "medianera":
-            # a mural is 34 m of wall, so it has more of the neighbour's
-            # building to run into than a word does, not less
-            fit = panel_fits(sol, rec["x"], rec["y"], rec["rot"], rec["w"],
-                             rec["z"] + rec["h"] / 2)
-            if fit is not None:
-                fit = modules(fit, MODULE_W)   # still whole panels afterwards
-                if fit < 10 * MODULE_W:
-                    fit = None
-        elif rec["kind"] == "mast":
-            # The mast had no fit check at all, on either pass, and it is the
-            # one format that reaches furthest: a 16 m disc stood on edge at
-            # 45 degrees in plan swings 5.7 m out in x and y at once, well past
-            # the parapet it is standing behind. One of them was inside the
-            # building next door and the only reason it was found is that the
-            # overlap check tests every loose object, not the ones somebody
-            # remembered to validate.
-            fit = mast_fits(sol, rec["x"], rec["y"], rec["rot"], rec["w"],
-                            rec["z"])
-        else:
-            continue
-        if fit is None:
-            signs.remove(rec)
-            dropped += 1
-        else:
-            rec["w"] = fit
+    signs, dropped = refit(signs, sol)
     if dropped:
         print(f"  {dropped} signs dropped: no room once every building was in")
 
@@ -1372,6 +1461,25 @@ def main():
     # ones failed or never existed.
     for i, rec in enumerate(signs):
         rec["name"] = f"Sign.{i:03d}"
+
+    # Y RECIÉN AHORA los puestos a mano, numerados atrás de todo. El mismo
+    # segundo pase de encaje, y a propósito NO pasan por `thin`: el que eligió
+    # ese techo estaba mirando el cuadro, que es lo único que thin no sabe
+    # hacer. Lo que thin cuida igual - que dos marcas no se peguen en pantalla
+    # - lo mide 93_check_signs, que es donde se ve si esta elección estuvo mal.
+    #
+    # Numerados últimos porque thin ordena por visibilidad antes de numerar:
+    # ver la nota de EXTRA en _brands.py. Metidos en el ranking, estos seis le
+    # habrían corrido el Sign.NNN a media ciudad y con él todos los PIN.
+    extras, lost_fit = refit(EXTRAS, sol)
+    for k, rec in enumerate(extras):
+        rec["name"] = f"Sign.{len(signs) + k:03d}"
+    signs.extend(extras)
+    want = {e["brand"] for e in EXTRA}
+    got = {rec["pin"] for rec in extras}
+    print(f"  puestos a mano: {len(extras)} de {len(EXTRA)}"
+          + (f"   NO ENTRARON: {', '.join(sorted(want - got))}"
+             if want != got else ""))
 
     # MARKED, not removed, and marked BEFORE the deal. Deleting the record
     # would renumber every sign after it, and Sign.NNN is what PIN, the
@@ -1403,6 +1511,9 @@ def main():
 
     sol.merge_into(SOLIDS, "buildings")
     (SIGNS).write_text(json.dumps(signs, indent=1))
+    (BUILDINGS).write_text(json.dumps({"sites": SITES}, indent=1))
+    print(f"  buildings published: {len(SITES)}  "
+          f"({sum(len(s['wings']) for s in SITES)} wings)")
     kinds = {}
     for s in signs:
         kinds[s["kind"]] = kinds.get(s["kind"], 0) + 1

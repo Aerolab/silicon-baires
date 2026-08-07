@@ -21,12 +21,19 @@ const _q = new THREE.Quaternion();
 const _s = new THREE.Vector3();
 const ONE = new THREE.Vector3(1, 1, 1);
 
-export async function loadCity(v = "") {
+export async function loadCity(v = "", onProgress = null) {
   const draco = new DRACOLoader().setDecoderPath("./draco/");
   const loader = new GLTFLoader().setDRACOLoader(draco);
 
   const [gltf, motion] = await Promise.all([
-    loader.loadAsync(`./city.glb${v}`),
+    // El glb son 5.8 de los 8.5 MB, así que su progreso ES el progreso. Con
+    // gzip por el medio `total` llega en 0 a veces: entonces se informa lo
+    // descargado y la barra se mueve igual, contra un tamaño estimado.
+    loader.loadAsync(`./city.glb${v}`, (e) => {
+      if (!onProgress) return;
+      const total = e.total || 6.2e6;
+      onProgress(Math.min(0.98, e.loaded / total));
+    }),
     fetch(`./city_motion.json${v}`).then((r) => r.json()),
   ]);
   draco.dispose();

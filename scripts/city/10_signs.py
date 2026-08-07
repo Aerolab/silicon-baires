@@ -875,7 +875,19 @@ def build(rec, coll, site):
             letters(m, rec, face,
                     x @ Matrix.Translation(Vector((0, -PROUD, -CAP - DROP))))
     elif kind == "billboard":
-        billboard(m, rec, face, ink, frame, x, art)
+        if hero and hero.get("facade_only"):
+            # el cartel no se levanta: la marca vive en una pared. Es lo mismo
+            # que ya hacian parapeto, medianera y roofmark, y faltaba aca - un
+            # billboard es una estructura suelta parada en un techo, asi que
+            # dejarlo construido con el logo mudado deja un panel en blanco
+            # sobre pilotes, que es peor que no tener nada.
+            for k in hero.get("facade_arts",
+                              [hero.get("facade_art", "word")]):
+                hero_facade(m, rec, hero, site, key=k)
+            if hero.get("roof_art"):
+                hero_word(m, rec, hero, site, key=hero["roof_art"])
+        else:
+            billboard(m, rec, face, ink, frame, x, art)
     elif kind == "medianera":
         if hero and hero.get("facade_only"):
             # el mural se va entero: la marca vive en la pared de otro edificio
@@ -979,6 +991,28 @@ def main():
         # published so the overlap check knows these are meant to be there,
         # and so anything placed later keeps out of them
         zs = [(ob.matrix_world @ v.co).z for v in ob.data.vertices]
+        # LO QUE SE CONSTRUYÓ DE VERDAD, anotado de vuelta en el manifiesto.
+        #
+        # El registro de 04 es un PLAN, y para una marca con `facade_only` es
+        # un ancla que no se levanta: dice "roofmark de 7,1 m" mientras en la
+        # pared hay un logotipo de 27,6. 93_check_signs medía el plan, así que
+        # informaba mal justo las marcas que mejor se entregan - y también las
+        # daba por chicas cuando no lo eran. Lo escribe este paso porque es el
+        # único que tiene la malla.
+        if len(ob.data.vertices):
+            # ob.location + v.co, y NO matrix_world: la matriz se recalcula en
+            # la próxima evaluación del depsgraph, así que leerla acá devuelve
+            # la identidad y los 97 carteles miden desde el origen.
+            loc = ob.location
+            pts = [(v.co[0] + loc[0], v.co[1] + loc[1], v.co[2] + loc[2])
+                   for v in ob.data.vertices]
+            lo = [min(p[i] for p in pts) for i in range(3)]
+            hi = [max(p[i] for p in pts) for i in range(3)]
+            rec["built"] = [round((lo[0] + hi[0]) / 2, 2),
+                            round((lo[1] + hi[1]) / 2, 2),
+                            round((lo[2] + hi[2]) / 2, 2),
+                            round(max(hi[0] - lo[0], hi[1] - lo[1]), 2),
+                            round(hi[2] - lo[2], 2)]
         if rec["kind"] == "medianera":
             # a square the width of a 34 m mural would reach 17 m out over the
             # pavement and refuse every tree and every pedestrian along the
@@ -994,6 +1028,8 @@ def main():
             sol.add(rec["x"], rec["y"], rec["w"] + 1.0, rec["w"] + 1.0,
                     0.0, min(zs), max(zs))
     sol.merge_into(SOLIDS, "signs")
+    # el manifiesto sale de acá con una clave más de la que entró: ver `built`
+    (SIGNS).write_text(json.dumps(plan, indent=1))
 
     # the SVG importer leaves one material per fill behind on every import, and
     # they outlive the curves: new_from_object copies them onto the mesh, and

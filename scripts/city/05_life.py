@@ -52,6 +52,12 @@ CLEAR = {"tree": 3.2, "shrub": 1.6, "bench": 1.2, "person": 0.4,
 RAD = {"Tree0": 3.33, "Tree1": 2.60, "Tree2": 4.38, "Tree3": 1.84,
        "Conifer0": 2.73, "Conifer1": 2.08, "Shrub": 1.13,
        "Jacaranda0": 3.53, "Jacaranda1": 4.68, "Jacaranda2": 4.71}
+# Y LO ALTO QUE ES CADA UNO, que es la otra mitad de la misma pregunta. Se
+# llena en main() midiendo el KIT, por lo mismo que RAD está medido y no
+# supuesto. Un árbol se consultaba contra los sólidos a la altura del tronco,
+# así que un mural colgado a 4 m no existía para él: Tree2 creció a través del
+# de Ualá, que está 9,7 s en cuadro. Ver Solids.hit(z_to=...).
+TALL = {}
 # a bus is two and a half cars long. One "car" clearance let the buses through
 VEHICLE = {"Bus": 5.6, "Truck": 4.2, "Colectivo0": 5.7, "Colectivo1": 5.7,
            "Colectivo2": 5.7, "Colectivo3": 5.7}
@@ -113,7 +119,8 @@ def fit_tree(name, sc, x, y, z):
     """
     for nm, s in ((name, sc), (name, sc * 0.7), ("Tree3", 0.85),
                   ("Shrub", 1.3)):
-        if SOLIDS.hit(x, y, z, RAD[nm] * s) is None:
+        if SOLIDS.hit(x, y, z, RAD[nm] * s,
+                      z_to=z + TALL.get(nm, 0.0) * s) is None:
             return nm, s
     SKIPPED["tree"] = SKIPPED.get("tree", 0) + 1
     return None
@@ -225,7 +232,8 @@ def avenue_trees(kit, coll, data, r):
                     # no kerb here: the plaza, or a stub too short to build
                     SKIPPED["tree"] = SKIPPED.get("tree", 0) + 1
                     continue
-                if SOLIDS.hit(x, y, lift, RAD[name] * sc * 0.7) is not None:
+                if SOLIDS.hit(x, y, lift, RAD[name] * sc * 0.7,
+                              z_to=lift + TALL.get(name, 0.0) * sc) is not None:
                     SKIPPED["tree"] = SKIPPED.get("tree", 0) + 1
                     continue
                 instance(kit[name], coll, (x, y, lift),
@@ -267,7 +275,8 @@ def rim_avenue_trees(kit, coll, data, r):
             if not a <= y <= b:
                 SKIPPED["tree"] = SKIPPED.get("tree", 0) + 1
                 continue
-            if SOLIDS.hit(x, y, lift, RAD[name] * sc * 0.7) is not None:
+            if SOLIDS.hit(x, y, lift, RAD[name] * sc * 0.7,
+                              z_to=lift + TALL.get(name, 0.0) * sc) is not None:
                 SKIPPED["tree"] = SKIPPED.get("tree", 0) + 1
                 continue
             instance(kit[name], coll, (x, y, lift), r.uniform(0, 6.28), sc)
@@ -740,6 +749,11 @@ def main():
                    "footprints they publish, and an empty table plants a whole "
                    "city of trees inside the buildings")
     kit = {ob.name: ob for ob in bpy.data.collections["KIT"].objects}
+    # medido, no supuesto, igual que RAD. Ver la nota de TALL.
+    for nm in RAD:
+        ob = kit.get(nm)
+        TALL[nm] = (max(v[2] for v in ob.bound_box) * ob.scale.z
+                    if ob else 0.0)
     data = json.loads((LOTS).read_text())
     lots = data["lots"]
     global SUPER, SOLIDS, UNDER

@@ -76,7 +76,7 @@ class Solids:
                                 int((cy + ey) // self.CELL) + 1):
                     self._grid.setdefault((gi, gj), []).append(idx)
 
-    def hit(self, x, y, z=None, pad=0.0, tags=None):
+    def hit(self, x, y, z=None, pad=0.0, tags=None, z_to=None):
         """The box this point is inside, or None.
 
         `pad` grows every footprint outwards, which is how a caller asks for
@@ -87,6 +87,14 @@ class Solids:
         roof is inside the building's own footprint by definition, so asking
         "is this person inside anything" always says yes; asking "is this
         person inside a sign or a cupola" is the question that means something.
+
+        `z_to` PREGUNTA POR UNA ALTURA Y NO POR UN PUNTO, y esa diferencia dejó
+        un plátano de 12 m creciendo a través del mural de Ualá. Un árbol se
+        preguntaba a la altura del tronco, un mural está colgado entre 3,9 y
+        8,0 m, y a la altura del tronco no hay nada: la consulta pasaba y el
+        árbol subía por delante del panel. 99_check_overlap lo encontró porque
+        él prueba el footprint en planta y no mira z, que para este caso es la
+        pregunta correcta. Un objeto alto se consulta con su alto.
         """
         if self._grid is None:
             self._build_grid()
@@ -108,7 +116,9 @@ class Solids:
             # pad is a clearance in plan and deliberately does not apply here:
             # a rooftop unit standing at z1 belongs to the building, and the
             # question being asked is always "is this thing inside the walls"
-            if z is not None and not (z0 - 0.5 <= z < z1):
+            if z is not None and not (
+                    (z0 - 0.5 <= z < z1) if z_to is None
+                    else (z < z1 and z_to >= z0 - 0.5)):
                 continue
             dx, dy = x - cx, y - cy
             if rot:
