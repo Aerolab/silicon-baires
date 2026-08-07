@@ -112,18 +112,27 @@ were wrong as well as the ones that stuck.
   Apple M4 Pro via Metal; measured at 960×540, EEVEE 64 spp is 0.65 s and Cycles
   GPU 512 spp is 3.2 s.
 
-## Licensing, and what this repository does not grant
+## Licensing
 
-**There is no licence.** By default that means all rights reserved: you may read
-this, and you do not have permission to use, copy, modify or redistribute it.
-If you want to, ask.
+**[0BSD](LICENSE).** Take it, use it, change it, ship it, sell it. No attribution
+required, no notice to carry, no conditions at all — it is the most permissive
+licence the OSI approves, MIT with even the copyright line dropped. Credit is
+welcome and is not owed.
 
-Two things are not the author's to license in the first place:
+That covers the code, the documents and the 3D work, which is everything this
+repository is. **Three things in the tree are not ours to license**, and no
+licence here can grant what someone else owns:
 
 - **The logos under `assets/logos/` are third-party trademarks**, collected to
-  mock up the city. They belong to their owners and are not covered by anything
-  here. See [`assets/logos/SOURCES.md`](assets/logos/SOURCES.md).
-- **The Blender MCP add-on is not vendored here.** The optional live-session
-  workflow needs `addon.py` from the upstream project,
-  [ahujasid/blender-mcp](https://github.com/ahujasid/blender-mcp), under its own
-  licence.
+  mock up the city. They belong to their owners. Reusing this city with the
+  brands still on the buildings is a decision you make about their marks, not
+  one 0BSD makes for you. See [`assets/logos/SOURCES.md`](assets/logos/SOURCES.md).
+- **The three.js skills under `.agents/skills/`** are vendored from
+  [CloudAI-X/threejs-skills](https://github.com/CloudAI-X/threejs-skills), listed
+  in `skills-lock.json`, and carry whatever terms that project sets.
+- **The title typeface is not here at all.** PP Monument is commercial; the
+  build reads `CITY_TITLE_FONT` and any heavy grotesque stands in.
+
+And one thing that is simply elsewhere: the optional Blender MCP add-on lives in
+[ahujasid/blender-mcp](https://github.com/ahujasid/blender-mcp), under its own
+licence.
