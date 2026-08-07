@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="641" height="100" viewBox="0 0 641 100">
+  <!-- NOT A LOGO. The black backing plate the Revamos sign sits on, kept as a
+       file because `logo()` is the only thing that puts flat artwork on a wall
+       here and it takes a filename.
+
+       IT IS A SEPARATE ART, NOT A SHAPE INSIDE revamos.svg, and that is the
+       whole reason this file exists. `logo()` extrudes every piece of one
+       artwork to the same depth off the same plane, so a rectangle drawn into
+       the lockup would occupy the same slab as the letters and swallow them.
+       `HERO.facade_arts` is a list and every entry reads its own
+       `<key>_facade_proud` and `<key>_facade_depth`, so two arts on one wall
+       can stand at two depths. The plate goes on at 0.02 and is 0.12 deep; the
+       lockup goes on at 0.16, which leaves 1.6 cm of air between the plate's
+       front face and the logo's back face — enough that they are not coplanar,
+       which is what 92_check_zfight is looking for.
+
+       6.41:1, drawn as a path rather than a <rect> so nothing depends on how
+       much of SVG the importer implements. The ratio is set against the
+       lockup's 7.89:1: at the same width the plate is 21 % taller, which is the
+       margin the mark gets above and below. -->
+  <path fill="#0b0f14" d="M0,0 L641,0 L641,100 L0,100 Z"/>
+</svg>

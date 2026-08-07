@@ -84,6 +84,9 @@ CAMPUS = [
     ("COMPLIF",   "ring",     "#1c1c1c", "#ffffff", "complif.svg"),
     ("REBILL",    "chevron",  "#f7f3e8", "#111111", "rebill.svg"),
     ("PAISANOS",  "square",   "#101820", "#ffffff", "paisanos.svg"),
+    # Spot 75, the whole lockup on the long wall. See HERO for why that wall and
+    # why the size is what it is.
+    ("REVAMOS",   "triangle", "#101820", "#00d9bd", "revamos.svg"),
     # no vector: generic symbol, until the SVG turns up
     ("RIPIO",     "disc",     "#f7f3e8", "#7b2ff7", None),
     ("ETERMAX",   "bars",     "#f7f3e8", "#28292b", "etermax_word.svg"),
@@ -197,6 +200,103 @@ HERO = {
              # in front
              "facade_frac": 0.78, "facade_tall": 0.50,
              "facade_z": 0.80, "facade_depth": 0.35},
+    # SPOT 75, THE LONG WALL, AND AS BIG AS THAT WALL ALLOWS — which is a
+    # smaller number than it looks, for a reason worth writing down.
+    #
+    # The building is a U of three wings. `facade_at` names the east one, and
+    # `hero_facade` centres the artwork on the box it names, with no way to
+    # slide it along. So the size is bounded by the SHORTER half-run from that
+    # centre, not by how much wall the elevation has:
+    #
+    #   east wing face   y -64.95 .. -46.17   centred on -55.56
+    #   half-run north    9.39 m   <- this is the binding one
+    #   half-run south    9.39 m of its own wing, then the south wing carries on
+    #                     to -74.79, but centring cannot reach it
+    #
+    # 2 x 9.39 = 18.78 m of usable wall. `run` in hero_facade is the PADDED box,
+    # 19.68, so 0.945 of it lands the mark at 18.6 m — 9 cm of air at each end.
+    # Bigger than that and the north end leaves the building: at 24.6 m it hung
+    # 2.91 m into open air, which is what a previous pass shipped.
+    #
+    # WHY THE WHOLE LOCKUP AND NOT THE SYMBOL. This wall is the one that makes
+    # it possible. The short +Y wall of the same wing is 9.09 m, and 7.9:1 of
+    # artwork on 9 m gives a 1.04 m cap height. On 18.6 it is 2.36 m.
+    #
+    # THE COST IS THE STREET, AND IT IS NOT A COURTYARD. This building is a U
+    # and it does have an internal court — 9.09 x 18.78 m between the two
+    # vertical wings, opening north — but the sign is not on it. It is on the
+    # OUTER face of the east wing, at x -100.1, looking east across open lawn.
+    # `wall_to_street` reports 31.3 m for it because the nearest kerb on that
+    # axis is genuinely that far, not because anything is in the way; the +Y
+    # face of the same wing has pavement 2.7 m off. Worth stating plainly
+    # because every other warning in this file about a wall 17-32 m from a
+    # street IS about a courtyard, and this one reads like one and is not.
+    #
+    # Taken deliberately: the camera sees 100 % of this face, which is the
+    # question the film asks, and 93 counts it at 0.073 where the short wall
+    # never cleared the 0.05 floor.
+    "REVAMOS": {"lock": "revamos.svg", "plate": "revamos_plate.svg",
+                # TWO ARTS ON ONE WALL, AT TWO DEPTHS. This is the sign panel
+                # this brand needs and the only way to get one on a facade: the
+                # `facade_only` path raises no panel of its own, `medianera` is
+                # planned by plan_avenue and cannot be asked for through EXTRA,
+                # and a rectangle drawn into revamos.svg would be extruded into
+                # the same slab as the letters and swallow them.
+                #
+                # `facade_arts` is a list and `par()` resolves every key per
+                # art, so the plate and the lockup get their own proud and
+                # depth. Order in the list does not decide what is in front —
+                # the two `_facade_proud` values do:
+                #
+                #   plate  proud 0.02  depth 0.12   ->  0.02 .. 0.14 off the box
+                #   lock   proud 0.16  depth 0.30   ->  0.16 .. 0.46
+                #
+                # 1.6 cm of air between the plate's face and the logo's back.
+                # Coplanar is what 92_check_zfight fails on, and touching would
+                # be coplanar.
+                "facade": True, "facade_only": True,
+                "facade_arts": ["plate", "lock"],
+                "plate_facade_proud": 0.02, "plate_facade_depth": 0.12,
+                "lock_facade_proud": 0.16, "lock_facade_depth": 0.30,
+                # the plate takes the whole usable wall; the mark sits inside it
+                # with 70 cm of black at each end
+                "plate_facade_frac": 0.945, "plate_facade_tall": 0.20,
+                "lock_facade_frac": 0.874, "lock_facade_tall": 0.20,
+                "facade_side": "left", "facade_at": (-104.66, -55.56),
+                # WIDTH BINDS. `facade_tall` is left loose at 0.20 (4.1 m) so it
+                # never clamps first — at 7.9:1 the height it asks for is 2.36.
+                "facade_frac": 0.945, "facade_tall": 0.20,
+                # 0.889 = 18.4 m, AND THE HEIGHT IS DOING THE JOB OF A PANEL.
+                # This wordmark is white, and white on this city's warm concrete
+                # is the weakest thing on the block — SOURCES.md lists four
+                # other brands with the same problem and no answer. A black
+                # backing plate is the obvious fix and is not available: there
+                # is no panel in the `facade_only` path, `medianera` is planned
+                # by plan_avenue and cannot be asked for through EXTRA, and a
+                # rectangle drawn into the SVG does not work either — `logo()`
+                # extrudes every piece to the same depth off the same plane, so
+                # the plate would swallow the letters rather than back them.
+                #
+                # The building has the dark ground already. A ray fired at this
+                # wall reads the bands off it, WITH THE DEPTH EACH ONE SITS AT,
+                # and the depth is the half that matters:
+                #
+                #   cornice          x -99.67   stands 0.45 m proud
+                #   spandrel         x -100.12  the warm concrete
+                #   glazing          x -100.87  RECESSED 0.75 m behind it
+                #
+                #   14.00 .. 15.40   Glass Dark   1.40 m   too short for 2.36
+                #    9.34 .. 12.37   Glass Dark   3.03 m   tried, and see below
+                #   17.20 .. 19.60   Glass Dark   2.40 m   <- this one
+                #
+                # The 9.34 band is the tallest and it did not work, because the
+                # logo stands ~0.7 m proud of the spandrel and the glass is 0.75
+                # behind it: at 45 degrees of elevation the camera looks over the
+                # letters onto the spandrel BELOW them, so a band chosen on
+                # height alone still renders against concrete. Parallax, not
+                # arithmetic. The 17.20 band works because the parapet caps it —
+                # there is no spandrel above to fall into view.
+                "facade_z": 0.889, "facade_depth": 0.40},
     # MOVED FROM 133 TO 188, and the move is the part that matters. 133 looked
     # free and was not: its address already belonged to Tiendanube, whose
     # wordmark is laid flat on the roof of the wing next door. Two brands on one
@@ -429,6 +529,13 @@ EXTRA = [
     {"at": (195.0, -368.7), "spot": 148, "brand": "COMPLIF",
      "kind": "roofmark", "grow": 1.45},
     {"at": (201.8, -184.2), "spot": 152, "brand": "PAISANOS",
+     "kind": "roofmark", "grow": 1.45},
+    # Revamos on spot 75. `at` is a WING coordinate and not the building's
+    # address — plan_extra matches it against bx+ox within 0.8 m — and this
+    # building is a U whose address (-113.75, -60.25) is none of its three
+    # wings. An anchor like the three above: HERO is `facade_only`, so no
+    # roofmark is ever raised from it.
+    {"at": (-104.66, -55.56), "spot": 75, "brand": "REVAMOS",
      "kind": "roofmark", "grow": 1.45},
 ]
 

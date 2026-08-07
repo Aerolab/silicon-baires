@@ -27,7 +27,7 @@ laid flat on a roof — so they have to be separate curves. The pairs below shar
 their parent's `viewBox`, which is what makes them a split rather than two
 downloads.
 
-## Vector (41 files)
+## Vector (43 files)
 
 | file | brand | source |
 |---|---|---|
@@ -61,6 +61,8 @@ downloads.
 | `pomelo.svg` | Pomelo | inline SVG from pomelo.la |
 | `preguntados.svg` | Preguntados (etermax) | **source not recorded**. 1788x1788. Laid flat on the Etermax roof: it is what that company puts on a building ahead of its own name |
 | `rebill.svg` | Rebill | inline SVG from rebill.com. Arrives as `currentColor`, i.e. with no colour: the table's `ink` wins |
+| `revamos.svg` | Revamos | supplied by the client, the full lockup, 7.9:1. Arrived as `fill="currentColor"` with the colours in the page's `text-white` / `text-turquoise` classes; both **inlined** as `#ffffff` and `#00d9bd`, because Blender resolves neither `currentColor` nor a `<style>` block — and for the `<style>` form it does not import colourless, it imports **black**, which beats the brand's `ink`. `width`/`height` added from the `viewBox`. **White wordmark**: mounted against the glazing band on spot 75 rather than on the spandrel, see `_brands.HERO` |
+| `revamos_plate.svg` | Revamos | **not a logo**: the black backing plate the Revamos sign sits on, 6.41:1. Drawn here, not sourced. It is a separate file rather than a rectangle inside `revamos.svg` because `logo()` extrudes one artwork's pieces to a single depth — see the note in the file |
 | `satellogic.svg` | Satellogic | satellogic.com WordPress |
 | `takenos_iso.svg` | Takenos | split of the lockup — source not recorded |
 | `takenos_word.svg` | Takenos | split of the lockup — source not recorded |
