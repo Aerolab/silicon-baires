@@ -7,52 +7,73 @@
 > under `assets/logos/` are the property of their respective owners and are not
 > covered by whatever terms apply to the rest of the project.
 
-28 brands replacing the 42 invented ones in `renders/city_signs.json`. Each file
-is the best format that exists publicly, looked for in this order: SVG from the
-official site → SVG from Wikimedia Commons → the highest-resolution PNG there
-is.
+Each file is the best format that exists publicly, looked for in this order: SVG
+from the official site → SVG from Wikimedia Commons → the highest-resolution PNG
+there is.
 
-## Vector (18)
+**This table is the inventory, not a changelog.** Every file in this directory
+gets a row, and a file with no row is a gap in the table rather than a file that
+does not count. Git already records when each one arrived, so they are listed
+alphabetically instead — the question anyone brings here is "is there a vector
+for X, and what does it lack", never "what shipped in August".
+
+**Normalise an SVG before saving it**: explicit `width`/`height` taken from the
+`viewBox`. Blender's importer does not understand `width="100%"` and returns an
+empty curve without saying so.
+
+**`_iso` and `_word` are one lockup split into two files.** `_brands.HERO` mounts
+the symbol and the wordmark in different places — the symbol on a wall, the name
+laid flat on a roof — so they have to be separate curves. The pairs below share
+their parent's `viewBox`, which is what makes them a split rather than two
+downloads.
+
+## Vector (41 files)
 
 | file | brand | source |
 |---|---|---|
 | `aerolab.svg` | Aerolab | inline SVG from the aerolab.co header |
 | `aleph.svg` | Aleph | inline SVG from alephholding.com |
 | `auth0.svg` | Auth0 | worldvectorlogo. Shield symbol, no wordmark |
+| `auth0_iso.svg` | Auth0 | split of the lockup — source not recorded |
+| `auth0_word.svg` | Auth0 | split of the lockup — source not recorded |
 | `basement.svg` | Basement | inline SVG from basement.studio |
-| `despegar.svg` | Despegar | Wikimedia Commons |
-| `digitalhouse.svg` | Digital House | Prismic CDN, digitalhouse.com |
-| `globant.svg` | Globant | Wikimedia Commons, 2999x520 |
-| `increase.svg` | Increase | inline SVG from increasecard.com |
-| `lemon.svg` | Lemon | inline SVG from lemon.me |
-| `mercadolibre.svg` | Mercado Libre | Commons, Spanish wordmark. **No handshake** |
-| `mural.svg` | Mural | Commons, 2022 version. **Carries a white background box** |
-| `naranjax.svg` | Naranja X | Wikimedia Commons |
-| `pomelo.svg` | Pomelo | inline SVG from pomelo.la |
-| `satellogic.svg` | Satellogic | satellogic.com WordPress |
-| `technisys.svg` | Technisys | web.archive.org, 2021 capture. The brand no longer exists: SoFi absorbed it |
-| `tiendanube.svg` | Tiendanube | inline SVG from tiendanube.com |
-| `uala.svg` | Ualá | Wikimedia Commons |
-| `vercel.svg` | Vercel | worldvectorlogo |
-
-## Vector, the August 2026 batch (7)
-
-The six new clients. All of them were normalised the same way before being
-saved: explicit `width`/`height` taken from the `viewBox`, because Blender's
-importer does not understand `width="100%"` and returns an empty curve without
-saying so.
-
-| file | brand | source |
-|---|---|---|
 | `belo.svg` | Belo | inline SVG from belo.app. The `fill` arrived as `var(--token-…, rgb(83,0,218))` and was replaced with `#5300da`: Blender does not resolve CSS variables and imported it black |
 | `coderhouse.svg` | Coderhouse | Framer CDN, coderhouse.com, 811x236. Wordmark only, 8.4:1 |
 | `complif.svg` | Complif | Webflow CDN, complif.com, 690x189. **White**: needs a dark facade |
 | `complif_dark.svg` | Complif | the same file with the `fill` at `#1c1c1c`, for when the brand moves to a light wall. Unused today: the facade it landed on is dark brick |
+| `despegar.svg` | Despegar | Wikimedia Commons |
+| `digitalhouse.svg` | Digital House | Prismic CDN, digitalhouse.com |
+| `etermax_new.svg` | Etermax | **source not recorded**. 38x43, the symbol rather than the wordmark |
+| `etermax_word.svg` | Etermax | **source not recorded**. 7470x4754. This is the one `_brands` uses |
 | `galicia_iso.svg` | Galicia | **the symbol alone**, from the Paisanos site, who did work for them. It is the current brand (orange circle, white dagger). The new lowercase wordmark is NOT public in vector form: Commons, logotyp.us and seeklogo all carry the previous one, the orange box with "Galicia" in serif |
+| `globant.svg` | Globant | Wikimedia Commons, 2999x520 |
+| `humand.svg` | Humand | **source not recorded**. 139x23, wordmark |
+| `increase.svg` | Increase | inline SVG from increasecard.com |
+| `lemon.svg` | Lemon | inline SVG from lemon.me |
+| `lemon_iso.svg` | Lemon | split of `lemon.svg` — same 274x63 viewBox |
+| `lemon_word.svg` | Lemon | split of `lemon.svg` — same 274x63 viewBox |
+| `mercadolibre.svg` | Mercado Libre | Commons, Spanish wordmark. **No handshake** |
+| `ml_iso.svg` | Mercado Libre | the handshake `mercadolibre.svg` lacks — **source not recorded** |
+| `mp_iso.svg` | Mercado Pago | **source not recorded**. 64x64, the light-blue handshake |
+| `mural.svg` | Mural | Commons, 2022 version. **Carries a white background box** |
+| `naranjax.svg` | Naranja X | Wikimedia Commons. Split by colour at runtime, not into files: the nine orange strokes are the word, the two violet ones the X |
 | `paisanos.svg` | Paisanos | inline SVG from paisanos.io. White wordmark plus lime symbol: needs a dark background |
+| `pomelo.svg` | Pomelo | inline SVG from pomelo.la |
+| `preguntados.svg` | Preguntados (etermax) | **source not recorded**. 1788x1788. Laid flat on the Etermax roof: it is what that company puts on a building ahead of its own name |
 | `rebill.svg` | Rebill | inline SVG from rebill.com. Arrives as `currentColor`, i.e. with no colour: the table's `ink` wins |
+| `satellogic.svg` | Satellogic | satellogic.com WordPress |
+| `takenos_iso.svg` | Takenos | split of the lockup — source not recorded |
+| `takenos_word.svg` | Takenos | split of the lockup — source not recorded |
+| `technisys.svg` | Technisys | web.archive.org, 2021 capture. The brand no longer exists: SoFi absorbed it |
+| `tiendanube.svg` | Tiendanube | inline SVG from tiendanube.com |
+| `tiendanube_iso.svg` | Tiendanube | split of `tiendanube.svg` — the two clouds |
+| `tiendanube_word.svg` | Tiendanube | split of `tiendanube.svg` — the wordmark |
+| `uala.svg` | Ualá | Wikimedia Commons |
+| `uala2.svg` | Ualá | **source not recorded**. 1820x420. This is the one `_brands` uses |
+| `vercel.svg` | Vercel | worldvectorlogo |
+| `vercel_iso.svg` | Vercel | the triangle alone, 24x24 — source not recorded |
 
-## Raster (5)
+## Raster (5 files)
 
 | file | brand | source and size |
 |---|---|---|
@@ -62,7 +83,16 @@ saying so.
 | `ripio.png` | Ripio | Commons, 5000x2292 |
 | `uala_iso.png` | Ualá | Commons, 4501x4501 combination mark |
 
-## What has to be sorted out before applying them
+`_contact.png` is the contact sheet, for looking at them together. It is not a
+logo and has no row above.
+
+## What has to be sorted out
+
+**Sixteen files had no provenance at all**, and twelve of them are mounted by
+`_brands.HERO` today. They are marked "source not recorded" above rather than
+left out, because a table that silently covers two thirds of a directory reads
+as complete. Filling them in means finding where each came from; until then the
+gap is at least visible.
 
 **Four are white**: `aerolab`, `aleph`, `digitalhouse` and `pomelo` come from
 dark-background sites and disappear on a light facade. Either the dark variant
@@ -75,11 +105,7 @@ itself.
 **`modo.png` is 436x96** and raster. On a 34 m party wall it does not hold up.
 If MODO goes on a large format, the vector has to be found.
 
-**The 45 roofmarks and the 13 masts want a symbol, not a wordmark.** Almost all
-of these files are the full horizontal wordmark, which read from 250 m up is an
-illegible line of text. A second round is missing, to collect the standalone
-symbol from the brands that have one: the Mercado Libre handshake, the Naranja
-X, the two Tiendanube clouds, the Vercel triangle, the Auth0 shield (that one is
-already like this).
-
-`_contact.png` is the contact sheet of all of them, for looking at them together.
+**The roofmarks and the masts want a symbol, not a wordmark.** Most of these
+files are the full horizontal lockup, which read from 250 m up is an illegible
+line of text. The `_iso` splits above are that problem being worked through one
+brand at a time; the ones without a split still want one.

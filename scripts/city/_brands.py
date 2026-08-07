@@ -71,12 +71,12 @@ CAMPUS = [
     ("TAKENOS",   "disc",     "#f7f3e8", "#6d37d5", "takenos_word.svg"),
     ("MERCADO PAGO", "disc",  "#f7f3e8", "#00bcff", "mp_iso.svg"),
     ("HUMAND",    "ring",     "#f7f3e8", "#182d7a", "humand.svg"),
-    # the three B2B brands from the newest batch. They are pinned through
-    # EXTRA, so their place in this list decides nothing: it is here so the
-    # brand exists with its colour.
+    # These three are pinned through EXTRA, so their place in this list decides
+    # nothing — the order above is the camera's, and a pinned brand never goes
+    # through it. They are here so the brand exists with its colour.
     #
-    # All six of the batch are stuck to a FACADE, with no panel behind them, so
-    # the wall decides the colour rather than this table. Complif is the case
+    # All three are stuck to a FACADE, with no panel behind them, so the wall
+    # decides the colour rather than this table. Complif is the case
     # where it shows: both variants of the file were tried and looked at, and
     # the wall on that corner is dark brick, so the white one from the website
     # wins. The dark variant stayed in assets in case the brand moves to a light
@@ -100,7 +100,7 @@ AVENUE = [
     ("LEMON",        "square",   "#d6f24a", "#003f20", "lemon.svg"),
     ("TIENDANUBE",   "ring",     "#f7f3e8", "#111111", "tiendanube.svg"),
     ("DIGITAL HOUSE", "square",  "#101820", "#ffffff", "digitalhouse.svg"),
-    # the three consumer brands from the newest batch, also pinned through EXTRA
+    # also pinned through EXTRA, so their place in this list decides nothing
     ("GALICIA",      "disc",     "#f7f3e8", "#ff7f00", "galicia_iso.svg"),
     ("CODERHOUSE",   "bars",     "#f7f3e8", "#1d1d1d", "coderhouse.svg"),
     ("BELO",         "disc",     "#f7f3e8", "#5300da", "belo.svg"),
@@ -146,9 +146,9 @@ LOGOS = {b[0]: b[4] for b in CAMPUS + AVENUE if b[4]}
 #              case; with it, the wordmark can cross to the roof next door,
 #              which is what Lemon asked for.
 HERO = {
-    # ---- the August 2026 batch --------------------------------------------
-    # All six share one key and the key is `facade_only`: the logo stuck to the
-    # building's wall and NOTHING on the roof. Each one's anchor is in EXTRA (or
+    # ---- stuck to a wall, with nothing on the roof -------------------------
+    # The six below share one key and the key is `facade_only`: the logo on the
+    # building's wall and NOTHING on the deck. Each one's anchor is in EXTRA (or
     # in PIN, for the two that reuse a switched-off billboard) and is never
     # built; the only thing that comes out of here is the wordmark on the
     # facade.
@@ -202,7 +202,7 @@ HERO = {
     # wordmark is laid flat on the roof of the wing next door. Two brands on one
     # address is exactly what the rule forbids, and nobody saw it because `thin`
     # does not look at hand-placed sites and 93 grouped by wing.
-    # 188 has 66 m of north wall, the longest in the batch.
+    # 188 has 66 m of north wall, the longest of the facade-mounted six.
     "REBILL": {"word": "rebill.svg", "iso": "rebill.svg",
                "facade": True, "facade_only": True,
                "facade_side": "right", "facade_at": (333.0, -243.0),
