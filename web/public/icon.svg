@@ -1,7 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="13" fill="#0d0d0f"/>
-  <!-- one isometric block in the title's red: the only mark that survives 16px -->
-  <path d="M32 11 53 23 32 35 11 23Z" fill="#f04a3d"/>
-  <path d="M11 23 32 35 32 55 11 43Z" fill="#a8241b"/>
-  <path d="M53 23 32 35 32 55 53 43Z" fill="#d8352a"/>
+  <rect width="64" height="64" rx="13" fill="#d8352a"/>
+  <!-- The Obelisco, which the city actually contains: 06b_porteno builds it.
+       The shaft is deliberately fatter than the real monument's proportion.
+       At 16px a faithful one is a hairline and reads as an "i". -->
+  <path d="M32 9 36.5 15 27.5 15Z" fill="#f7f3e8"/>
+  <path d="M27.5 15 36.5 15 39.5 56 24.5 56Z" fill="#f7f3e8"/>
 </svg>
