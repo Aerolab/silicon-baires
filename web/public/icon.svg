@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="13" fill="#0d0d0f"/>
+  <!-- one isometric block in the title's red: the only mark that survives 16px -->
+  <path d="M32 11 53 23 32 35 11 23Z" fill="#f04a3d"/>
+  <path d="M11 23 32 35 32 55 11 43Z" fill="#a8241b"/>
+  <path d="M53 23 32 35 32 55 53 43Z" fill="#d8352a"/>
+</svg>

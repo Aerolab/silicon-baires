@@ -3,7 +3,42 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Buenos Aires — city</title>
+
+    <title>Silicon Baires · Buenos Aires generada por código, en el navegador</title>
+    <meta name="description" content="Una ciudad entera hecha con código en Blender, al estilo de la secuencia de títulos de Silicon Valley, corriendo a 60 fps en WebGL. Dale play, o movés la cámara vos." />
+    <link rel="canonical" href="%SITE_URL%/" />
+    <meta name="author" content="Aerolab" />
+    <meta name="theme-color" content="#0d0d0f" />
+
+    <!-- The card is the whole first impression: on Twitter almost everyone sees
+         this image and never the page. og.jpg is the hero frame cropped to
+         1.91:1 with the title clear of every edge, because the crop a client
+         applies is not the crop you chose. The URLs have to be absolute; the
+         domain is filled in at build time, see the site-url plugin in
+         vite.config.js. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Silicon Baires" />
+    <meta property="og:locale" content="es_AR" />
+    <meta property="og:url" content="%SITE_URL%/" />
+    <meta property="og:title" content="Silicon Baires" />
+    <meta property="og:description" content="Buenos Aires como la secuencia de títulos de Silicon Valley: una ciudad entera generada por código en Blender, a 60 fps en el navegador. La cámara la movés vos." />
+    <meta property="og:image" content="%SITE_URL%/og.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Vista isométrica de una ciudad low poly con BUENOS AIRES construido en letras rojas sobre las torres, y logos de empresas en las fachadas." />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Silicon Baires" />
+    <meta name="twitter:description" content="Buenos Aires como la secuencia de títulos de Silicon Valley: una ciudad entera generada por código en Blender, a 60 fps en el navegador. La cámara la movés vos." />
+    <meta name="twitter:image" content="%SITE_URL%/og.jpg" />
+    <meta name="twitter:image:alt" content="Vista isométrica de una ciudad low poly con BUENOS AIRES construido en letras rojas sobre las torres." />
+
+    <!-- A cropped letter is unreadable at 16px, so the mark is a shape: one
+         isometric block in the title's red. -->
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="icon" href="./icon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="./icon-180.png" />
     <style>
       :root { color-scheme: dark; }
       * { margin: 0; padding: 0; box-sizing: border-box; }
