@@ -1,0 +1,19 @@
+# What does NOT get uploaded to Vercel.
+#
+# This file exists so the answer stops depending on .gitignore. Without a
+# .vercelignore the CLI falls back to git's rules, and git's rules here are
+# written for a different question: `public/city.glb`, `city_motion.json` and
+# `city_sky.exr` are all gitignored — they are build outputs of
+# `20_export_web.py` and committing them would be committing the same city
+# twice — but they are exactly what the deployed site needs. A deploy that
+# quietly drops them is a page that loads to a progress bar and never finishes.
+#
+# The reverse is worse: capture/ is 2.6 GB of rendered video.
+
+node_modules
+dist
+.vite
+.vercel
+capture
+.env*
+.DS_Store

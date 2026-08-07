@@ -2,42 +2,36 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "headers": [
     {
-      "//": "The city, and 90% of what a visit costs. Every one of these is requested with ?v=<stamp>, and the stamp is the glb's mtime, so the URL changes exactly when the bytes do. That is what makes immutable safe: a re-export is a new URL, not a stale cache. Without this a refresh re-downloads 6 MB.",
       "source": "/(city.glb|city_motion.json|city_spots.json|city_sky.exr)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
     {
-      "//": "The one file that carries the stamp cannot be keyed on it. main.js already asks for it with cache: no-store; this says the same thing to every proxy in between, because a cached copy of this file pins the whole page to an old deploy.",
       "source": "/city_shot.json",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
       ]
     },
     {
-      "//": "Decoder builds, versioned by their own contents upstream and never edited here.",
       "source": "/draco/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
     {
-      "//": "Vite already content-hashes these.",
       "source": "/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
       ]
     },
     {
-      "//": "The card and the icons: not versioned, so a day, and stale-while-revalidate so replacing one is never a cold fetch for anybody.",
       "source": "/(og.jpg|icon.svg|icon-32.png|icon-180.png)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
       ]
     },
     {
-      "//": "Nothing here is embeddable and nothing here takes input, so the page says so.",
       "source": "/(.*)",
       "headers": [
         { "key": "X-Content-Type-Options", "value": "nosniff" },

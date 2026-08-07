@@ -13,6 +13,35 @@ Re-run the export after any change to the `.blend`. Nothing else needs to
 change: the browser has no copy of the palette, the grade, the camera path or
 the traffic, it is handed all four.
 
+## Deploying
+
+**The Vercel project is not connected to the git repository**, so pushing to
+GitHub deploys nothing. It goes up from here:
+
+```bash
+cd web
+vercel deploy            # a preview URL. Check it
+vercel promote <url>     # and only then, production
+```
+
+Two files make that safe, and neither is optional:
+
+**`.vercelignore`** exists so the upload set stops depending on `.gitignore`.
+Git's rules here answer a different question: `public/city.glb`,
+`city_motion.json` and `city_sky.exr` are all gitignored, because they are
+outputs of `20_export_web.py` and committing them would commit the same city
+twice. They are also exactly what the deployed page needs. A deploy that
+quietly drops them is a page that loads to a progress bar and never finishes.
+In the other direction, `capture/` is 2.6 GB of rendered video.
+
+**`vercel.json`** sets the cache headers. `city.glb` is 5.7 of the 6.3 MB a
+cold visit costs, and without this it is re-fetched on every refresh. Everything
+requested with `?v=<stamp>` is `immutable` — the stamp is the glb's mtime, so a
+re-export is a new URL rather than a stale cache — and `city_shot.json`, which
+carries the stamp and therefore cannot be keyed on it, stays `must-revalidate`.
+It has no comments because Vercel's schema rejects unknown keys, including
+`"//"`; this paragraph is where they went.
+
 ## What it costs
 
 | | |
