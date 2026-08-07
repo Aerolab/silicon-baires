@@ -552,7 +552,7 @@ web/public/               written by 20_export_web.py; gitignored, regenerate it
 .claude/skills/blender/   project skill: verified 5.2 API, look dev, recipes
 .agents/skills/           installed three.js skills (symlinked from .claude/skills)
 skills-lock.json          which third-party skills are installed, and at which version
-addon.py                  Blender MCP addon, optional
+README.md                 the public face of the repo. CLAUDE.md is the working one
 ```
 
 ## Available skills
@@ -578,8 +578,13 @@ addon.py                  Blender MCP addon, optional
 ## The MCP, optional
 
 The `blender` server (`uvx blender-mcp`) is registered for live sessions, editing a
-scene while a human watches it in the GUI. It requires installing `addon.py` into
-Blender (`Edit > Preferences > Add-ons > Install from Disk`) and clicking
-"Connect to Claude" in the side panel (N key).
+scene while a human watches it in the GUI. It needs that project's Blender add-on
+installed (`Edit > Preferences > Add-ons > Install from Disk`) and "Connect to
+Claude" clicked in the side panel (N key).
+
+**The add-on is not vendored here.** Get `addon.py` from the upstream project,
+[ahujasid/blender-mcp](https://github.com/ahujasid/blender-mcp) — it used to sit
+at the root of this repo as 122 KB of somebody else's code with a one-line
+credit, which is not how a dependency is carried.
 
 Not needed for normal work: the CLI gives the full API and everything stays versioned.
