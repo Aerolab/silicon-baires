@@ -6,16 +6,17 @@ import { EXRLoader } from "three/examples/jsm/loaders/EXRLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { loadCity } from "./city.js";
 import { makePost, ENV_INTENSITY } from "./post.js";
-import { makeCamera, placeHero, shotAt } from "./shot.js";
+import { makeCamera, placeHero, shotAt, fitToAspect } from "./shot.js";
 import { measureFramebuffer, compare } from "./measure.js";
 import { makeSpots } from "./spots.js";
+import { TIER, TIER_WHY } from "./tier.js";
 import { createElement, Play, Pause, Orbit, Clapperboard } from "lucide";
 
 // no-store, and everything else keyed on cfg.stamp: the assets have stable
 // names, so without this a re-export is invisible until a hard reload.
 const cfg = await fetch("./city_shot.json", { cache: "no-store" })
   .then((r) => r.json());
-const { shot, grade, sun, sky } = cfg;
+const { grade, sun, sky } = cfg;      // shot is fitted to the window, below
 const v = cfg.stamp ? `?v=${cfg.stamp}` : "";
 
 // Diagnostic switches, because "it runs at 10 fps" is not a finding and the
@@ -46,15 +47,48 @@ let viewH = capturing ? num("h", 1080) : innerHeight;
 // back down. This page has antialias:false — the scene goes through a
 // half-float render target and MSAA does not survive that — so downsampling
 // is the only antialiasing there is, and at 1x every parapet edge crawls.
-const ss = capturing ? num("ss", 2) : Math.min(devicePixelRatio, 2);
+//
+// Off capture it comes from tier.js, which is where the phone budget lives.
+// ?ss= still wins over both, so a device can be tested at a ratio its tier
+// would never pick.
+const ss = capturing ? num("ss", 2) : num("ss", TIER.pixelRatio);
+
+// --- the shot, fitted to this window ---------------------------------------
+// The rectangle every solid thing in the city occupies, measured by the export
+// off the 533 published footprints. The fence below reads it too, and so does
+// fitToAspect, which is why it is up here rather than down there.
+const bounds = cfg.bounds ?? { x: [-400, 400], y: [-450, 400], top: 80 };
+// A window narrower than 16:9 gets a frame longer than the city unless the
+// shot is refitted; see fitToAspect. ?pelev= and ?pcap= override the two
+// numbers it derives, which is how the values it uses were chosen.
+const fitOpts = {
+  elevation: flags.has("pelev") ? num("pelev", 0) : undefined,
+  cap: flags.has("pcap") ? num("pcap", 0) : undefined,
+  hero: flags.has("phero") ? num("phero", 0) : undefined,
+  off: flags.has("nofit"),
+};
+// Never under capture. 1920x1080 IS the shot's own aspect, so the fit would
+// return it unchanged anyway — but that is an equality between two divisions,
+// and the video is the deliverable. It does not get to depend on a rounding.
+let shot = capturing
+  ? cfg.shot : fitToAspect(cfg.shot, viewW / viewH, bounds, fitOpts);
 
 // --- the renderer ----------------------------------------------------------
-const renderer = new THREE.WebGLRenderer({
-  antialias: false, alpha: false,
-  // Only under capture: toBlob() reads the drawing buffer one task after the
-  // draw, and without this it is already cleared — every PNG comes out blank.
-  preserveDrawingBuffer: capturing,
-});
+// The one call on this page that can fail before anything else exists: no
+// WebGL2, a blocked context, a driver the browser has blacklisted. Uncaught it
+// is a white page, which is the failure this whole guard is here to replace.
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({
+    antialias: false, alpha: false,
+    // Only under capture: toBlob() reads the drawing buffer one task after the
+    // draw, and without this it is already cleared — every PNG comes out blank.
+    preserveDrawingBuffer: capturing,
+  });
+} catch (err) {
+  window.__cityFail?.("Este navegador no pudo abrir WebGL, que es lo que dibuja la ciudad.");
+  throw err;
+}
 renderer.setPixelRatio(ss);
 renderer.setSize(viewW, viewH);
 // NoToneMapping on purpose: the scene renders into a linear buffer and post.js
@@ -64,6 +98,32 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
+
+// --- when the context goes -------------------------------------------------
+// THE ONE FAILURE THAT REPORTS ITSELF. A driver reset, a background tab the
+// system reclaimed, or a GPU allocation that did not fit all end here, and
+// without preventDefault the browser never even tries to give it back.
+//
+// What this cannot catch is the failure tier.js exists for: when Chromium
+// kills the renderer process for memory, no JavaScript on this page runs
+// again, so there is nothing left to draw a message with. Cheap frames are the
+// only defence against that one; this is the defence against everything else.
+let alive = true;
+renderer.domElement.addEventListener("webglcontextlost", (e) => {
+  e.preventDefault();
+  alive = false;                       // stop the loop: drawing now floods errors
+  // force: this one covers the screen even with the city already up, because
+  // a lost context IS the whole page. Everything else after startup is not.
+  window.__cityFail?.(
+    "El navegador cortó la escena 3D, casi siempre por falta de memoria de video.",
+    true);
+}, false);
+renderer.domElement.addEventListener("webglcontextrestored", () => {
+  // Rebuilding 28.215 instances, the PMREM and the post chain by hand is a
+  // second copy of the whole startup. A reload is the same thing, correct by
+  // construction, and by now the visitor is looking at a button anyway.
+  location.reload();
+}, false);
 
 const scene = new THREE.Scene();
 
@@ -75,7 +135,7 @@ const sunLight = new THREE.DirectionalLight(
 sunLight.position.set(...sun.position);
 sunLight.target.position.set(0, 0, 0);
 sunLight.castShadow = !flag("noshadow", 0);
-sunLight.shadow.mapSize.setScalar(flag("shadow", 4096));
+sunLight.shadow.mapSize.setScalar(flag("shadow", TIER.shadowMapSize));
 sunLight.shadow.bias = -0.0006;
 sunLight.shadow.normalBias = 0.35;
 scene.add(sunLight, sunLight.target);
@@ -154,7 +214,6 @@ controls.enabled = false;            // the move owns the camera until "libre"
 // footprints rather than off a bounding box. MARGIN is deliberate slack: the
 // edge of the map should be reachable, just not somewhere you can fall off.
 const MARGIN = 60;                     // metres of overshoot allowed
-const bounds = cfg.bounds ?? { x: [-400, 400], y: [-450, 400], top: 80 };
 const fenceMin = new THREE.Vector3(bounds.x[0] - MARGIN, bounds.y[0] - MARGIN, 0);
 const fenceMax = new THREE.Vector3(bounds.x[1] + MARGIN, bounds.y[1] + MARGIN,
                                    bounds.top);
@@ -212,7 +271,10 @@ function clampToFence(v, radius) {
   return moved;
 }
 
-const post = makePost(renderer, { ...cfg, taps: flag("taps", 24) });
+// shot last, so the post chain anchors its depth of field on the FITTED
+// elevation rather than on the .blend's. They are the same number on 16:9.
+const post = makePost(renderer, {
+  ...cfg, taps: flag("taps", 24), samples: TIER.samples, shot });
 // ?spots=1 — numbered roofs, for pointing at one. Off by default and not part
 // of the piece; see spots.js.
 const spots = flag("spots", 0) ? await makeSpots(camera) : null;
@@ -238,7 +300,18 @@ if (showStats) {
   ui.stats.classList.add("on");
   ui.frame.classList.add("on");
 }
-window.stats = () => ({ fps: Math.round(fps), ...city.stats });
+window.stats = () => ({
+  fps: Math.round(fps), ...city.stats,
+  // What profile this device got and what decided it, because the only thing
+  // that ever comes back from a phone is a screenshot.
+  tier: TIER.name, ss, samples: TIER.samples,
+  shadow: sunLight.shadow.mapSize.x, why: TIER_WHY,
+  // The fitted shot, which on anything 16:9 or wider is the .blend's own.
+  aspect: +(viewW / viewH).toFixed(3),
+  elevation: +shot.elevation.toFixed(1),
+  wOpen: +shot.track[0][0].toFixed(1),
+  wHero: +shot.track[shot.track.length - 1][0].toFixed(1),
+});
 
 let frame = 1;
 let playing = true;
@@ -296,6 +369,11 @@ addEventListener("resize", () => {
   viewW = innerWidth; viewH = innerHeight;
   renderer.setSize(viewW, viewH);
   post.setSize(renderer.domElement.width, renderer.domElement.height);
+  // Rotating a phone changes the aspect by a factor of four, so the fit is
+  // re-derived rather than kept. The post chain's SPREAD_K is not: it anchors
+  // the depth of field on the hero frame, which is a look constant, not a
+  // framing one, and re-anchoring it mid-shot would visibly re-focus.
+  if (!capturing) shot = fitToAspect(cfg.shot, viewW / viewH, bounds, fitOpts);
 });
 
 // --- the loop --------------------------------------------------------------
@@ -388,6 +466,7 @@ function drawFrame(now) {
 }
 
 function tick(now) {
+  if (!alive) return;                  // the context is gone; see webglcontextlost
   requestAnimationFrame(tick);
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
@@ -427,6 +506,10 @@ window.measure = (at = shot.frames) => {
 
 paint();
 loadEl.classList.add("gone");
+// From here on the city is up, so a later error is a bug in one corner rather
+// than a page that never started: the guard in index.html stops covering the
+// screen for it. A lost context still does, because that one IS the whole page.
+window.__cityRunning = true;
 
 if (capturing) {
   // No requestAnimationFrame at all under capture. The loop above advances the

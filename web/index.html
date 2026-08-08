@@ -87,7 +87,58 @@
       #bar i { display: block; height: 100%; width: 0%; background: #d8352a;
                transition: width .25s ease-out; }
       #pct { opacity: .35; font-variant-numeric: tabular-nums; letter-spacing: .08em; }
+
+      /* The page saying it failed, instead of being white. og.jpg is already
+         downloaded on any visit that came from a shared link, and it is the
+         only honest thing to show: this is what you were about to see. */
+      #fail { position: fixed; inset: 0; z-index: 30; display: grid;
+              place-items: center; background: #0d0d0f; padding: 24px;
+              overflow-y: auto; }
+      #fail[hidden] { display: none; }
+      #fail .box { display: flex; flex-direction: column; gap: 16px;
+                   max-width: 460px; text-align: left; }
+      #fail img { width: 100%; border-radius: 8px; display: block;
+                  border: 1px solid rgba(255,255,255,.10); }
+      #fail h1 { font: inherit; font-size: 15px; letter-spacing: .04em; }
+      #fail p { opacity: .6; line-height: 1.7; }
+      #fail button { align-self: start; color: inherit; font: inherit;
+                     cursor: pointer; background: #d8352a; border: 0;
+                     border-radius: 8px; padding: 9px 16px; }
     </style>
+
+    <!-- THE PAGE HAS TO BE ABLE TO SAY THAT IT FAILED, and it has to be able
+         to say it before its own module has parsed, which is why this is
+         inline and in the head rather than in src/.
+
+         What it covers: a module that throws on load, a fetch that never
+         arrives, a WebGL context that cannot be created or is later lost.
+         What it CANNOT cover, and the reason src/tier.js exists: when Chromium
+         kills the renderer process for memory, nothing on this page runs
+         again. There is no handler for that, only a cheaper frame.
+
+         Once main.js sets __cityRunning the screen stops being covered for a
+         stray error: by then the city is up, and a bug in one corner is not a
+         reason to hide it. A lost context is exempt, it passes force. -->
+    <script>
+      window.__cityFail = function (why, force) {
+        if (window.__cityRunning && !force) return;
+        if (window.__cityFailed) return;          // first cause, not the last
+        window.__cityFailed = why;
+        var load = document.getElementById("load");
+        var el = document.getElementById("fail");
+        if (load) load.classList.add("gone");
+        if (!el) return;
+        document.getElementById("failwhy").textContent = why;
+        el.hidden = false;
+      };
+      addEventListener("error", function (e) {
+        window.__cityFail("No se pudo cargar la ciudad: " + (e.message || "error"));
+      });
+      addEventListener("unhandledrejection", function (e) {
+        window.__cityFail("No se pudo cargar la ciudad: " +
+          ((e.reason && e.reason.message) || "no llegaron todos los archivos"));
+      });
+    </script>
   </head>
   <body>
     <div id="load">
@@ -104,6 +155,19 @@
       <button id="free" title="Cámara libre (F)" aria-label="Cámara libre"></button>
     </div>
     <div id="stats"></div>
+    <div id="fail" hidden>
+      <div class="box">
+        <img src="./og.jpg" alt="Vista isométrica de una ciudad low poly con BUENOS AIRES construido en letras rojas sobre las torres." />
+        <!-- Neutral on purpose: this covers both a city that never started and
+             one that was running and got cut off. -->
+        <h1>La ciudad no anda en este equipo</h1>
+        <p id="failwhy"></p>
+        <p>Es una ciudad entera en 3D corriendo en el navegador, y hay teléfonos
+           que se quedan sin memoria de video antes de terminar de dibujarla.
+           Desde una compu anda.</p>
+        <button onclick="location.reload()">Reintentar</button>
+      </div>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

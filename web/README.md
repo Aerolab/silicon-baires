@@ -157,6 +157,124 @@ so a capture that starts before it resolves opens on a darker, contrastier city
 The video ships the page's look, not the render's: `TONEMAP = "none"`. For the
 film grade, set `TONEMAP = "agx"` in `post.js` and record again.
 
+## The phone gets a different frame, and it is not a preference
+
+`src/tier.js` picks three numbers before anything is built. It exists because
+the page shipped one profile and it was a desktop one, so a phone at
+`devicePixelRatio` 2 was asked for about **150 MB of framebuffers** before a
+single triangle of the city:
+
+| | high | low |
+|---|---|---|
+| pixel ratio | `min(dpr, 2)` | `min(dpr, 1.75)` |
+| MSAA on the half-float target | `samples: 4` | `0` |
+| shadow map | 4096² | 1024² |
+| framebuffers + shadow, at 393×851 CSS | ~148 MB | ~16 MB |
+
+Chromium on Android does not degrade under that, it kills the renderer
+process, and what the visitor gets is a white page with a sad-tab favicon.
+It reads exactly like the site being broken, and there is no console to check
+on the other end.
+
+**MSAA is nearly all of it, and it is what a phone needs least**: the parapet
+edges that crawl on a 110 ppi monitor are under the resolution of a 400 ppi
+screen. It is four buffers instead of one, on the largest allocation the page
+makes.
+
+The tier is decided by four signals, because no single one is both available
+and honest everywhere: `userAgentData.mobile`, `(pointer: coarse)`, the short
+side of `screen`, and `deviceMemory` — whose **absence has to read as plenty**,
+or every iPhone and every desktop Safari lands in low. `window.stats().why`
+reports what decided it, which is the only thing that ever comes back from a
+device you do not own.
+
+The capture is always high: it runs in a headless desktop Chromium and the
+video is the deliverable.
+
+## A window too narrow to hold the move gets the shot refitted
+
+`placeHero` honours the shot's **width** on the narrow axis, so a wide window
+shows more city than the render and never less. That is the right rule for
+landscape and it inverts as the window narrows: the extra arrives as
+**height**, and height on a tilted orthographic frame is depth over the ground.
+
+A phone at 0,46 turned the opening 306 m frame into a 662 m one, about 1300 m
+of ground on a city 786 m across. The city came out as a diagonal band with
+sky in one corner and bare site in the other.
+
+**The test is not "narrower than 16:9", and getting that wrong broke desktop.**
+It was, for one revision. 16:10 is 1,6 — so every MacBook, every window that is
+not maximised, and the 1280×800 the checks themselves run in all took the
+phone's framing: the move flattened to one width with no zoom in it, on
+machines that had no problem to fix. The question is whether the frame the
+move opens on still lands on city:
+
+| window | what the city can fill | the move opens on | refit |
+|---|---|---|---|
+| 16:9 | 711 m | 306 m | none |
+| 16:10 | 640 m | 306 m | none |
+| 4:3 | 533 m | 306 m | none |
+| 1:1 | 400 m | 306 m | none |
+| 0,80 | 320 m | 306 m | none |
+| 0,70 | 280 m | 306 m | one width, 156 m |
+| 0,46 phone | 185 m | 306 m | one width, 118 m |
+
+The threshold falls out of it at 0,765 and is not written down anywhere.
+
+**Below it the move does not open**: the whole pan is flown at one width, which
+scales with how far short the frame falls. Every wider opening was put on a
+phone and looked at, and they all spend the one thing a 0,46 frame is short of
+— the city being close enough to read — on a zoom that has nowhere to go.
+
+**The floor is the title, and the .blend measures it.** `20_export_web.py`
+publishes `shot.title_reach`: how far BUENOS AIRES reaches from the centre of
+the frame the move lands on, in screen space, projected on the camera's right
+vector because the camera looks down the 45° diagonal. It is a *reach*, not a
+width — the title is 94,2 m across but sits 50,6 m off centre, so the frame
+needs 101,3 m to hold it and not 94,2. `TITLE_FILL`, 0,86, is the share it may
+take, which puts the phone at 118 m with a margin either side. The browser does
+not know where the title is and does not get to guess: same rule as the
+palette, the grade and the move.
+
+**The elevation is derived from the width actually flown**, which is why it
+stays at the film's 30,6°. Reading the table's 306 m opening needed 57° and
+pinned to the 40° ceiling, flattening the buildings for no reason; at 118 the
+same question answers 19°, under the shot's own angle, so the camera stays
+where the .blend put it. The ceiling is still there for a window that lands
+between the two.
+
+Three widths were measured on the way and `?pcap=` reaches them, because they
+are what a cap *means* on this shot:
+
+- **233 m** — `widest()` at 40°. Still shows a wedge of bare site in the
+  corner: `widest()` assumes a frame **centred** on the city, and the opening
+  one sits out by the south-east corner where the ground runs out sooner.
+- **205 m** — the same wedge, smaller.
+- **185 m** — `widest()` at 30,6°. Clean, and the widest opening that is.
+
+The capture skips the refit outright: 1920×1080 is the shot's own aspect, so it
+would be a no-op, but that is an equality between two divisions and the video
+does not get to depend on a rounding.
+
+## When it fails, it has to say so
+
+There was no net at all: no `webglcontextlost` handler, no `try`/`catch`, no
+capability check. Whatever went wrong, the answer was a white page.
+
+- The guard is **inline in `index.html`, in the head**, because it has to be
+  able to report a module that never parsed.
+- It covers a failed WebGL context, a lost one, a module that throws, and a
+  fetch that never arrives. It shows `og.jpg` and what happened.
+- Once `main.js` sets `__cityRunning` it stops covering the screen for a stray
+  error: the city is up, and a bug in one corner is not a reason to hide it.
+  A lost context passes `force` and is the exception.
+- `webglcontextrestored` reloads. Rebuilding 28.215 instances, the PMREM and
+  the post chain by hand is a second copy of the whole startup.
+
+**What none of this can catch is the failure `tier.js` is for.** When Chromium
+kills the renderer process for memory, no JavaScript on the page runs again.
+There is no handler for that one, only a cheaper frame.
+
 ## Diagnostics
 
 ```
@@ -165,7 +283,16 @@ film grade, set `TONEMAP = "agx"` in `post.js` and record again.
 ?noshadow=1   drop the shadow pass
 ?taps=8       cheaper depth of field
 ?shadow=2048  smaller shadow map
+?tier=low     the phone profile, on whatever you are holding
+?ss=1         the pixel ratio, over whatever the tier picked
+?pelev=45     the fitted elevation, on a window narrower than 16:9
+?pcap=185     the width the move may open to, on a window under 0,765
+?nofit=1      the refit off entirely: the .blend's shot, whatever the window
+?phero=170    the last frame's width — 170 keeps the .blend's own
 ```
+
+`window.stats()` reports the fitted `elevation`, `wOpen` and `wHero` alongside
+the tier, which is the only thing that comes back from a phone you do not own.
 
 From the console: `window.city`, `scene`, `camera`, `controls`, `post`,
 `renderer`, `look.env(x)`, `look.exposure(x)`, `look.contrast(x)`,

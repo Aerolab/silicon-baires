@@ -279,7 +279,10 @@ export function makePost(renderer, cfg) {
   const target = new THREE.WebGLRenderTarget(size.x, size.y, {
     type: THREE.HalfFloatType,          // linear light, not display pixels
     colorSpace: THREE.LinearSRGBColorSpace,
-    samples: 4,                         // MSAA: the city is all hard edges
+    // MSAA: the city is all hard edges. It is also four buffers instead of
+    // one, on the largest allocation the page makes, which is why tier.js sets
+    // this to 0 on a phone. Default stays 4 for a caller that passes nothing.
+    samples: cfg.samples ?? 4,
   });
   target.depthTexture = new THREE.DepthTexture(size.x, size.y);
   target.depthTexture.type = THREE.UnsignedIntType;

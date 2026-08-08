@@ -231,6 +231,45 @@ def built_bounds():
             "top": round(top, 2), "boxes": len(boxes)}
 
 
+def title_reach():
+    """How far BUENOS AIRES reaches from the centre of the last frame, on
+    screen, in metres of frame width.
+
+    HOW WIDE THE FRAME MAY BE CLOSED TO, and the browser cannot work it out:
+    a window narrower than 16:9 refits the shot (see web/src/shot.js), and how
+    far in it may pull is bounded by the one thing the move has to deliver.
+    So the .blend measures it and hands it over, like the palette, the grade
+    and the move — the browser holds no second copy of anything.
+
+    It is a REACH FROM THE TARGET and not the title's own width, because the
+    title is not centred in the frame: 94.2 m wide, but 50.6 m from the centre
+    on the far side, so a frame has to be 101.3 m to hold it and not 94.2.
+
+    Screen space, not world: the camera looks down the 45-degree diagonal, so
+    what bounds the frame is the projection on the camera's right vector.
+    """
+    coll = bpy.data.collections.get("TITLE")
+    if coll is None:
+        return None
+    az, el = math.radians(AZIMUTH), math.radians(ELEVATION)
+    right = (-math.sin(az), math.cos(az), 0.0)
+    up = (-math.cos(az) * math.sin(el), -math.sin(az) * math.sin(el),
+          math.cos(el))
+    _, target = shot_at(FRAMES)              # the frame the move lands on
+    u0 = target[0] * right[0] + target[1] * right[1]
+    v0 = target[0] * up[0] + target[1] * up[1]
+    ru = rv = 0.0
+    for ob in coll.objects:
+        if ob.type != "MESH":
+            continue
+        mw = ob.matrix_world
+        for v in ob.data.vertices:
+            w = mw @ v.co
+            ru = max(ru, abs(w.x * right[0] + w.y * right[1] - u0))
+            rv = max(rv, abs(w.x * up[0] + w.y * up[1] + w.z * up[2] - v0))
+    return {"u": round(ru, 2), "v": round(rv, 2)}
+
+
 def roof_spots():
     """Every roof worth putting a sign on, numbered, for pointing at.
 
@@ -581,6 +620,9 @@ def main():
             "azimuth": AZIMUTH, "elevation": ELEVATION, "distance": DISTANCE,
             "hero_width": HERO_WIDTH, "aspect": ASPECT, "zoom": SHOT_ZOOM,
             "ease": [EASE_IN, EASE_OUT],
+            # How far the title reaches from the centre of the last frame, so
+            # a portrait window knows how far in it may close. See title_reach.
+            "title_reach": title_reach(),
             # width, target x, target y - one row per frame. Sampled here so
             # the browser cannot re-derive the easing and get it wrong.
             "track": shot,
