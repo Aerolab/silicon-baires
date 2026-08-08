@@ -104,6 +104,7 @@ AVENUE = [
     ("GALICIA",      "disc",     "#f7f3e8", "#ff7f00", "galicia_iso.svg"),
     ("CODERHOUSE",   "bars",     "#f7f3e8", "#1d1d1d", "coderhouse.svg"),
     ("BELO",         "disc",     "#f7f3e8", "#5300da", "belo.svg"),
+    ("COCOS",        "ring",     "#f7f3e8", "#002c65", "cocos.svg"),
     # no vector
     ("MODO",         "disc",     "#f7f3e8", "#00a15a", None),
 ]
@@ -235,6 +236,19 @@ HERO = {
                  "word_facade_side": "left", "word_oneline": True,
                  "word_facade_frac": 0.74, "word_facade_tall": 0.30,
                  "word_facade_z": 0.62},
+    # THE BEST FREE WALL THERE WAS, and it stayed free for months: 41.2 m of
+    # north face on a 16.9 m building, seen whole, 10.7 s of the shot. The word
+    # alone, not the lockup: the brand stacks the symbol over the name, which is
+    # 2.2:1, and this wall's usable band — above the ground floor's setback,
+    # under the parapet — is about 11 m on 41, so a 2.2:1 lockup is bound by the
+    # height and lands smaller than the 5:1 word bound by the width. The symbol
+    # has nowhere to go here: the other face of this building looks into the
+    # complex, which is the mistake three brands already made.
+    "COCOS": {"word": "cocos_word.svg", "iso": "cocos_iso.svg",
+              "facade": True, "facade_only": True, "facade_art": "word",
+              "facade_side": "left", "facade_at": (187.0, -75.0),
+              "facade_frac": 0.80, "facade_tall": 0.42,
+              "facade_z": 0.68, "facade_depth": 0.35},
     "COMPLIF": {"word": "complif.svg", "iso": "complif.svg",
                 "facade": True, "facade_only": True,
                 "facade_side": "right", "facade_at": (195.0, -368.7),
@@ -430,6 +444,18 @@ EXTRA = [
      "kind": "roofmark", "grow": 1.45},
     {"at": (201.8, -184.2), "spot": 152, "brand": "PAISANOS",
      "kind": "roofmark", "grow": 1.45},
+    # COCOS IS NOT HERE, and the reason is worth the six lines. Its wall —
+    # (187, -75), the best free one in the city — is a building that already has
+    # a sign record: Sign.002, the Mercado Libre anchor, whose own art HERO
+    # moved to (43.75, -155.38). `plan_extra` only runs on a cell the allocation
+    # left with NO sign at all, so an anchor here is silently never placed: the
+    # step prints `NO ENTRARON: COCOS` and nothing else says a word.
+    #
+    # It does not need one. An anchor exists so a brand has a record to be
+    # pinned to, and the allocation already gives every brand in the tables
+    # above a record; where the art goes is `facade_at`'s decision, not the
+    # record's. So Cocos is pinned in PIN, like the rest, and 90's coordinate
+    # goes straight into HERO.
 ]
 
 
@@ -491,6 +517,11 @@ PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        "Sign.010": "TECHNISYS", "Sign.011": "ALEPH",
        # the parapet Basement no longer needed, reused for Humand
        "Sign.052": "HUMAND", "Sign.003": "BASEMENT",
+       # Cocos. The record is a medianera out at (50, 309) and nothing is built
+       # on it — `facade_only` — so the only thing this pin does is stop the
+       # allocation moving the brand the next time a sign is added. The wall it
+       # actually lands on is in HERO.
+       "Sign.060": "COCOS",
        "Sign.058": "ETERMAX"}
 DROP = {"Sign.054",          # flat Satellogic on 98: the 3D one on 163 remains
         # the RIPIO roof on 179, which is the Etermax building: its wordmark

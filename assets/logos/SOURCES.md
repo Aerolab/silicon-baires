@@ -27,7 +27,7 @@ laid flat on a roof — so they have to be separate curves. The pairs below shar
 their parent's `viewBox`, which is what makes them a split rather than two
 downloads.
 
-## Vector (41 files)
+## Vector (44 files)
 
 | file | brand | source |
 |---|---|---|
@@ -40,6 +40,9 @@ downloads.
 | `belo.svg` | Belo | inline SVG from belo.app. The `fill` arrived as `var(--token-…, rgb(83,0,218))` and was replaced with `#5300da`: Blender does not resolve CSS variables and imported it black |
 | `coderhouse.svg` | Coderhouse | Framer CDN, coderhouse.com, 811x236. Wordmark only, 8.4:1 |
 | `complif.svg` | Complif | Webflow CDN, complif.com, 690x189. **White**: needs a dark facade |
+| `cocos.svg` | Cocos Capital | inline SVG from cocos.capital, 192x86, via a web.archive.org capture: the live site is behind Cloudflare and answers 403 to everything that is not a browser. The stacked lockup — the symbol over the wordmark — with the `clipPath` dropped, because Blender imports the clip rectangle as a curve and it would set the bounds |
+| `cocos_iso.svg` | Cocos Capital | split of `cocos.svg` — the two arcs, navy `#002C65` and blue `#0062E1` |
+| `cocos_word.svg` | Cocos Capital | split of `cocos.svg` — the five letters, 5:1. **This is the one `_brands` uses**: the lockup is 2.2:1 and its wall is bound by the height |
 | `complif_dark.svg` | Complif | the same file with the `fill` at `#1c1c1c`, for when the brand moves to a light wall. Unused today: the facade it landed on is dark brick |
 | `despegar.svg` | Despegar | Wikimedia Commons |
 | `digitalhouse.svg` | Digital House | Prismic CDN, digitalhouse.com |

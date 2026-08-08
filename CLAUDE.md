@@ -425,9 +425,19 @@ afternoon of renders.
 
 It reports, per free building: the wall to use, how much of it the camera
 actually sees, how far the kerb is, how big a wordmark and a symbol fit, and
-what that would deliver in the frame. Copy the coordinate into `_brands.EXTRA`
-as `at`, the wall into that brand's `HERO` entry as `facade_side`, then rebuild
+what that would deliver in the frame. Copy the coordinate into that brand's
+`HERO` entry as `facade_at`, the wall as `facade_side`, then rebuild
 `04 → 10` and **look at it**.
+
+**The coordinate goes in `HERO`, and only sometimes in `EXTRA` as well.** An
+`EXTRA` anchor is placed by `plan_extra`, which runs only on a cell the
+allocation left with **no sign at all** — so on a building that already has a
+record, an anchor is never placed and the step says `NO ENTRARON: X` and nothing
+more. It is also not needed there: the allocation already gives every brand in
+the `_brands` tables a record, and `facade_at` decides where the art goes, not
+the record. Pin the brand in `PIN` so the next sign added does not move it.
+Cocos is the worked example, on a building whose record is the Mercado Libre
+anchor — a `facade_only` brand whose own art `HERO` had moved three blocks away.
 
 Five things this project has already got wrong, so do not re-derive them:
 

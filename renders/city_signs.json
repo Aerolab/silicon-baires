@@ -1559,21 +1559,22 @@
   "run": 64.62371922623495,
   "wall": 16.0,
   "name": "Sign.060",
-  "text": "MODO",
-  "mark": "disc",
+  "text": "COCOS",
+  "mark": "ring",
   "face": "#f7f3e8",
-  "ink": "#00a15a",
+  "ink": "#002c65",
   "owner": [
    50.0,
    309.0
   ],
-  "logo": null,
+  "logo": "cocos.svg",
+  "mount": "facade",
   "built": [
-   83.16,
-   309.0,
-   11.1,
-   29.43,
-   7.4
+   216.49,
+   -75.0,
+   11.46,
+   33.68,
+   6.68
   ]
  },
  {
@@ -1586,10 +1587,10 @@
   "h": 6.324555320336759,
   "lift": 4.2,
   "name": "Sign.061",
-  "text": "QUILME",
+  "text": "MODO",
   "mark": "disc",
-  "face": "#1a7f3c",
-  "ink": "#ffffff",
+  "face": "#f7f3e8",
+  "ink": "#00a15a",
   "owner": [
    172.25,
    74.0
@@ -1614,10 +1615,10 @@
   "run": 57.857161966005236,
   "wall": 23.6,
   "name": "Sign.062",
-  "text": "FERNET",
-  "mark": "ring",
-  "face": "#3b1f13",
-  "ink": "#f2b705",
+  "text": "QUILME",
+  "mark": "disc",
+  "face": "#1a7f3c",
+  "ink": "#ffffff",
   "owner": [
    187.0,
    138.25
@@ -1642,10 +1643,10 @@
   "run": 57.154810664501795,
   "wall": 16.0,
   "name": "Sign.063",
-  "text": "BANCOSUR",
-  "mark": "square",
-  "face": "#123a8f",
-  "ink": "#ffffff",
+  "text": "FERNET",
+  "mark": "ring",
+  "face": "#3b1f13",
+  "ink": "#f2b705",
   "owner": [
    187.0,
    234.0
@@ -1670,9 +1671,9 @@
   "run": 28.29203234487532,
   "wall": 19.8,
   "name": "Sign.064",
-  "text": "TELCO",
-  "mark": "chevron",
-  "face": "#e8262a",
+  "text": "BANCOSUR",
+  "mark": "square",
+  "face": "#123a8f",
   "ink": "#ffffff",
   "owner": [
    172.25,
