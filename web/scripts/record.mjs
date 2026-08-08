@@ -90,7 +90,19 @@ const cleanup = async (code) => {
   if (closing) return;
   closing = true;
   chrome.kill("SIGKILL");
-  fs.rmSync(profile, { recursive: true, force: true });
+  // A THROWAWAY PROFILE MUST NEVER FAIL A FINISHED RECORDING. SIGKILL returns
+  // before the process is reaped, so Chrome goes on writing into this directory
+  // while rmSync is walking it and the delete throws ENOTEMPTY — which `force`
+  // does not cover, it only swallows ENOENT. Unhandled, that took down the
+  // whole run with a stack trace AFTER both video files were already on disk,
+  // which reads exactly like the capture failed. Retry, and if it still will
+  // not go, say so in one line and leave it to the OS: /tmp is /tmp.
+  try {
+    fs.rmSync(profile, { recursive: true, force: true,
+                         maxRetries: 10, retryDelay: 100 });
+  } catch (e) {
+    console.log(`[record] left ${profile} behind (${e.code})`);
+  }
   await server.close();
   process.exit(code);
 };
