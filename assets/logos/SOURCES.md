@@ -27,7 +27,7 @@ laid flat on a roof — so they have to be separate curves. The pairs below shar
 their parent's `viewBox`, which is what makes them a split rather than two
 downloads.
 
-## Vector (44 files)
+## Vector (46 files)
 
 | file | brand | source |
 |---|---|---|
@@ -39,10 +39,10 @@ downloads.
 | `basement.svg` | Basement | inline SVG from basement.studio |
 | `belo.svg` | Belo | inline SVG from belo.app. The `fill` arrived as `var(--token-…, rgb(83,0,218))` and was replaced with `#5300da`: Blender does not resolve CSS variables and imported it black |
 | `coderhouse.svg` | Coderhouse | Framer CDN, coderhouse.com, 811x236. Wordmark only, 8.4:1 |
-| `complif.svg` | Complif | Webflow CDN, complif.com, 690x189. **White**: needs a dark facade |
 | `cocos.svg` | Cocos Capital | inline SVG from cocos.capital, 192x86, via a web.archive.org capture: the live site is behind Cloudflare and answers 403 to everything that is not a browser. The stacked lockup — the symbol over the wordmark — with the `clipPath` dropped, because Blender imports the clip rectangle as a curve and it would set the bounds |
 | `cocos_iso.svg` | Cocos Capital | split of `cocos.svg` — the two arcs, navy `#002C65` and blue `#0062E1` |
 | `cocos_word.svg` | Cocos Capital | split of `cocos.svg` — the five letters, 5:1. **This is the one `_brands` uses**: the lockup is 2.2:1 and its wall is bound by the height |
+| `complif.svg` | Complif | Webflow CDN, complif.com, 690x189. **White**: needs a dark facade |
 | `complif_dark.svg` | Complif | the same file with the `fill` at `#1c1c1c`, for when the brand moves to a light wall. Unused today: the facade it landed on is dark brick |
 | `despegar.svg` | Despegar | Wikimedia Commons |
 | `digitalhouse.svg` | Digital House | Prismic CDN, digitalhouse.com |
@@ -64,6 +64,8 @@ downloads.
 | `pomelo.svg` | Pomelo | inline SVG from pomelo.la |
 | `preguntados.svg` | Preguntados (etermax) | **source not recorded**. 1788x1788. Laid flat on the Etermax roof: it is what that company puts on a building ahead of its own name |
 | `rebill.svg` | Rebill | inline SVG from rebill.com. Arrives as `currentColor`, i.e. with no colour: the table's `ink` wins |
+| `revamos.svg` | Revamos | supplied by the client, the full lockup, 7.9:1. Arrived as `fill="currentColor"` with the colours in the page's `text-white` / `text-turquoise` classes; both **inlined** as `#ffffff` and `#00d9bd`, because Blender resolves neither `currentColor` nor a `<style>` block — and for the `<style>` form it does not import colourless, it imports **black**, which beats the brand's `ink`. `width`/`height` added from the `viewBox`. **White wordmark**: mounted against the glazing band on spot 75 rather than on the spandrel, see `_brands.HERO` |
+| `revamos_plate.svg` | Revamos | **not a logo**: the black backing plate the Revamos sign sits on, 6.41:1. Drawn here, not sourced. It is a separate file rather than a rectangle inside `revamos.svg` because `logo()` extrudes one artwork's pieces to a single depth — see the note in the file |
 | `satellogic.svg` | Satellogic | satellogic.com WordPress |
 | `takenos_iso.svg` | Takenos | split of the lockup — source not recorded |
 | `takenos_word.svg` | Takenos | split of the lockup — source not recorded |
