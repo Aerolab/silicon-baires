@@ -27,7 +27,7 @@ laid flat on a roof — so they have to be separate curves. The pairs below shar
 their parent's `viewBox`, which is what makes them a split rather than two
 downloads.
 
-## Vector (46 files)
+## Vector (47 files)
 
 | file | brand | source |
 |---|---|---|
@@ -38,6 +38,7 @@ downloads.
 | `auth0_word.svg` | Auth0 | split of the lockup — source not recorded |
 | `basement.svg` | Basement | inline SVG from basement.studio |
 | `belo.svg` | Belo | inline SVG from belo.app. The `fill` arrived as `var(--token-…, rgb(83,0,218))` and was replaced with `#5300da`: Blender does not resolve CSS variables and imported it black |
+| `brubank.svg` | Brubank | Webflow CDN, the footer logo of brubank.com, 135x28. Wordmark only, 4.8:1 — this brand has no separate symbol. The header file at the same CDN is the SAME lockup with 35 % of empty viewBox on its right, which would have sized the wall off dead space; both were rasterised and compared before choosing. The four bounding-box `mask` elements and the `clipPath` went out, for the reason recorded under `cocos.svg` |
 | `coderhouse.svg` | Coderhouse | Framer CDN, coderhouse.com, 811x236. Wordmark only, 8.4:1 |
 | `cocos.svg` | Cocos Capital | inline SVG from cocos.capital, 192x86, via a web.archive.org capture: the live site is behind Cloudflare and answers 403 to everything that is not a browser. The stacked lockup — the symbol over the wordmark — with the `clipPath` dropped, because Blender imports the clip rectangle as a curve and it would set the bounds |
 | `cocos_iso.svg` | Cocos Capital | split of `cocos.svg` — the two arcs, navy `#002C65` and blue `#0062E1` |

@@ -389,10 +389,10 @@
   "logo": "takenos_word.svg",
   "mount": "facade",
   "built": [
-   355.33,
-   -184.25,
+   351.91,
+   -163.33,
    21.27,
-   28.32,
+   55.48,
    13.05
   ]
  },
@@ -1587,21 +1587,22 @@
   "h": 6.324555320336759,
   "lift": 4.2,
   "name": "Sign.061",
-  "text": "MODO",
+  "text": "BRUBANK",
   "mark": "disc",
   "face": "#f7f3e8",
-  "ink": "#00a15a",
+  "ink": "#614ad9",
   "owner": [
    172.25,
    74.0
   ],
-  "logo": null,
+  "logo": "brubank.svg",
+  "mount": "facade",
   "built": [
-   170.35,
-   77.24,
-   36.48,
-   12.16,
-   10.52
+   -12.1,
+   -60.71,
+   14.87,
+   23.58,
+   4.81
   ]
  },
  {
@@ -1615,10 +1616,10 @@
   "run": 57.857161966005236,
   "wall": 23.6,
   "name": "Sign.062",
-  "text": "QUILME",
+  "text": "MODO",
   "mark": "disc",
-  "face": "#1a7f3c",
-  "ink": "#ffffff",
+  "face": "#f7f3e8",
+  "ink": "#00a15a",
   "owner": [
    187.0,
    138.25
@@ -1643,10 +1644,10 @@
   "run": 57.154810664501795,
   "wall": 16.0,
   "name": "Sign.063",
-  "text": "FERNET",
-  "mark": "ring",
-  "face": "#3b1f13",
-  "ink": "#f2b705",
+  "text": "QUILME",
+  "mark": "disc",
+  "face": "#1a7f3c",
+  "ink": "#ffffff",
   "owner": [
    187.0,
    234.0
@@ -1671,10 +1672,10 @@
   "run": 28.29203234487532,
   "wall": 19.8,
   "name": "Sign.064",
-  "text": "BANCOSUR",
-  "mark": "square",
-  "face": "#123a8f",
-  "ink": "#ffffff",
+  "text": "FERNET",
+  "mark": "ring",
+  "face": "#3b1f13",
+  "ink": "#f2b705",
   "owner": [
    172.25,
    309.0

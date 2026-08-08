@@ -108,6 +108,7 @@ AVENUE = [
     ("CODERHOUSE",   "bars",     "#f7f3e8", "#1d1d1d", "coderhouse.svg"),
     ("BELO",         "disc",     "#f7f3e8", "#5300da", "belo.svg"),
     ("COCOS",        "ring",     "#f7f3e8", "#002c65", "cocos.svg"),
+    ("BRUBANK",      "disc",     "#f7f3e8", "#614ad9", "brubank.svg"),
     # no vector
     ("MODO",         "disc",     "#f7f3e8", "#00a15a", None),
 ]
@@ -456,6 +457,28 @@ HERO = {
                "facade_frac": 0.66, "facade_tall": 0.20, "facade_z": 0.74,
                "facade_depth": 0.30,
                "iso_ink": "#111111", "word_ink": "#111111"},
+    # THE OTHER ARM OF UALA'S L, and that is the whole point of this entry.
+    # Spots 100 and 101 are not two buildings: they are the two wings of one
+    # cell at (-12.75, -75.0), same 20.65 m top, sharing a continuous west wall.
+    # The `?spots=1` overlay paints every wing of an occupied building green,
+    # which is why both read UALA — Ualá is on 101 and 100 belongs to it.
+    #
+    # So this is a second brand on one address, on purpose, and it is declared
+    # in SHARED below with its reason. What makes it work is that the two walls
+    # are different walls: Ualá takes the east face of the south arm, Brubank
+    # the east face of the north arm, 12 m apart in x and 30 in y.
+    #
+    # `left`, and it IS the biggest face — 29.47 m of run against 13.32 on the
+    # other one, seen whole, 12.7 s at 13.6 % of the frame. left/right here name
+    # which face lands to the left ON SCREEN under the hero camera, not a
+    # compass direction: on this wing the long east wall is the left one.
+    # A pure wordmark at 4.8:1, so the width binds and `facade_tall` is only
+    # there to stop the height taking over.
+    "BRUBANK": {"iso": "brubank.svg", "word": "brubank.svg",
+                "facade": True, "facade_only": True, "facade_art": "word",
+                "facade_side": "left", "facade_at": (-18.96, -60.71),
+                "facade_frac": 0.80, "facade_tall": 0.26,
+                "facade_z": 0.72, "facade_depth": 0.30},
     # 120 is left empty: the whole mural moves to the wall of 101
     "UALA": {"iso": "uala2.svg", "word": "uala2.svg",
              "facade": True, "facade_only": True, "facade_side": "left",
@@ -579,6 +602,25 @@ SHARED = {
     # Mercado Pago handshake on the one next door. Two brands from the same
     # house, and that is how they are really mounted.
     (33.75, -167.0): "Mercado Libre and Mercado Pago, same house",
+    # The L at spots 100 / 101, and this one is NOT two brands from one house:
+    # it is two banks on one building, which is exactly what the rule forbids.
+    # It is here because the alternative on the table was worse. Splitting the
+    # cell into two sites in city_buildings.json would silence the check without
+    # changing anything the camera sees — the two arms are one continuous mass
+    # at 20.65 m sharing a 57 m west wall — and it would hand the same licence to
+    # the other 57 multi-wing buildings, undoing the very grouping `roof_spots`
+    # was fixed to do. So the exception is declared instead of engineered away.
+    #
+    # What keeps it from reading as one company with two brands is the STEP,
+    # and it is the thing to look at if either of them ever moves. Both logos
+    # are on east-facing walls, but the arms are offset 12 m in x, so the two
+    # walls are two planes and not one elevation. They also sit at different
+    # heights on purpose — Ualá at 0.80 of the parapet, Brubank at 0.72 — which
+    # is what stops the eye reading them as one band of signage.
+    #
+    # `right` was rendered as the alternative and is worse: 13.3 m of run
+    # instead of 29.5, and the brown building next door eats the far half of it.
+    (-12.75, -75.0): "Ualá on the south arm, Brubank on the north one, asked for",
 }
 
 
@@ -629,6 +671,11 @@ PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        # allocation moving the brand the next time a sign is added. The wall it
        # actually lands on is in HERO.
        "Sign.060": "COCOS",
+       # Brubank, same shape as Cocos: the record is a billboard out at
+       # (172, 74) that is never built — `facade_only` — and the wall it lands
+       # on is the one in HERO. The pin only stops the allocation walking the
+       # brand off to another roof the next time this table grows.
+       "Sign.061": "BRUBANK",
        "Sign.058": "ETERMAX"}
 DROP = {"Sign.054",          # flat Satellogic on 98: the 3D one on 163 remains
         # the RIPIO roof on 179, which is the Etermax building: its wordmark
