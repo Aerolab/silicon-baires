@@ -87,8 +87,9 @@ CAMPUS = [
     # Spot 75, the whole lockup on the long wall. See HERO for why that wall and
     # why the size is what it is.
     ("REVAMOS",   "triangle", "#101820", "#00d9bd", "revamos.svg"),
-    # no vector: generic symbol, until the SVG turns up
-    ("RIPIO",     "disc",     "#f7f3e8", "#7b2ff7", None),
+    # wordmark traced from the Commons PNG; isologo from the GitHub org avatar
+    # for square roofmarks/masts (see HERO). Pin keeps it on Sign.069.
+    ("RIPIO",     "disc",     "#f7f3e8", "#7908ff", "ripio.svg"),
     ("ETERMAX",   "bars",     "#f7f3e8", "#28292b", "etermax_word.svg"),
     ("OLX",       "ring",     "#f7f3e8", "#6e2fb8", None),
     # The five below are all pinned as well, and all five are on a facade with
@@ -428,9 +429,9 @@ HERO = {
     # THE FRONT OF SPOT 172, one wing at (270.2, -243.0), which is the biggest
     # wall this project has given a brand: 45.9 m of run, `wall_seen` 1.00 and
     # the kerb 3.0 m away. It was held by a SECOND Ripio record whose art was a
-    # generic violet disc — Ripio publishes no vector — so the trade is the one
-    # the video wants, an invented-looking mark out and a real logo in. See the
-    # pin on Sign.019.
+    # generic violet disc — there was no SVG yet — so the trade is the one the
+    # video wants, a duplicate mark out and a real logo in. See the pin on
+    # Sign.019. Ripio now has a traced wordmark and keeps Sign.069.
     #
     # The dark file, not the white one. The wall is `Glass Light`, #5f97a6:
     # white on it is 3.1:1 and the near-black wordmark is 7:1, and this is the
@@ -499,6 +500,14 @@ HERO = {
                  "facade_side": "left", "facade_at": (211.0, -303.4),
                  "facade_frac": 0.45, "facade_tall": 0.20,
                  "facade_z": 0.842, "facade_depth": 0.35},
+    # wordmark on the long parapet (Sign.069) and the square isologo on any
+    # roofmark/mast the brand still holds (Sign.022 is 7.9 m square). Without
+    # the iso the word got squeezed into a disc and read as a violet smudge.
+    # No roof_frac: the roofmark path only raises the symbol; hero_parapet
+    # still lays the word on the parapet building's deck via the default.
+    "RIPIO": {"iso": "ripio_iso.svg", "word": "ripio.svg",
+              "iso_frac": 0.86,
+              "iso_ink": "#7908ff", "word_ink": "#7908ff"},
     "AUTH0": {"iso": "auth0_iso.svg", "word": "auth0_word.svg",
               "iso_frac": 0.55, "roof_frac": 0.72},
     "LEMON": {"iso": "lemon_iso.svg", "word": "lemon_word.svg",
@@ -826,10 +835,13 @@ PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        # city (13.7 s on camera) and it was dark. A new brand is pinned to them
        # and they come out of DROP.
        "Sign.012": "GALICIA", "Sign.017": "BELO",
-       # and Rebill on 188, which carried RIPIO: not a client, no vector, and it
-       # was showing up with the generic symbol. Ripio drops one place in the
-       # allocation, it does not leave the frame.
+       # and Rebill on 188, which carried a second RIPIO drawn as a generic
+       # disc before the wordmark landed. Ripio keeps Sign.069 (pinned below).
        "Sign.015": "REBILL",
+       # the parapet that still carries Ripio after the duplicate cull. With
+       # ripio.svg in the table, this pin is what stops the allocation walking
+       # the brand off to another roof the next time a sign is added.
+       "Sign.069": "RIPIO",
        # Sign.013 was tried for Complif and DOES NOT WORK, even though the
        # allocation called it free: its owner is the Etermax building, whose
        # wordmark hangs off the facade and whose icon is laid flat on the roof,
@@ -867,16 +879,8 @@ PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        # walk the brand off to another roof the next time this table grows.
        # Maslow moved off Pampa's building and onto Sign.019, which is a
        # different kind of takeover: 019 was a SECOND Ripio, drawn as a generic
-       # violet disc because Ripio publishes no vector, and the brand keeps its
-       # parapet on Sign.069.
-       #
-       # AND NEITHER A PIN NOR A DROP MAKES THAT DISC GO AWAY. Both were tried
-       # and both do the same thing, because the pool is shorter than the list
-       # of signs: taking 019 hands Ripio to the next site down (021, which was
-       # OLX), OLX to the one after it (022, Zonda's), and Zonda lands on the
-       # mast Maslow vacated. Four records shuffle and the violet disc is still
-       # on camera, 43 m of street away and a third of the size. A brand only
-       # leaves the frame by leaving the pool or by getting a real vector.
+       # violet disc before the wordmark existed. The brand keeps its parapet
+       # on Sign.069, now with ripio.svg.
        "Sign.019": "MASLOW",        # was a second RIPIO, generic disc
        # Mural moved to spot 107, whose record is Sign.057 — the parapet
        # Bioceres used to hold as an unbuilt anchor. When Bioceres left, the
@@ -885,17 +889,14 @@ PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        # here puts a real brand on the site and retires that sign in one move.
        "Sign.057": "MURAL",         # was PILAR; before that Bioceres' anchor
        "Sign.046": "DECENTRALAND",  # was SALTO; the wall is at (66.2, -231.2)
-       # Bioceres came off the U's west arm and onto spot 155, asked for. Same
-       # shuffle as Maslow above and worth reading together: 021 was the site
-       # Ripio had just been pushed onto, so taking it pushes Ripio on again.
-       # The disc does not leave the frame, it walks.
+       # Bioceres came off the U's west arm and onto spot 155, asked for.
+       # 021 had been a walked Ripio disc before the brand got a real vector.
        "Sign.021": "BIOCERES"}      # was RIPIO on spot 155, before that OLX
 DROP = {"Sign.054",          # flat Satellogic on 98: the 3D one on 163 remains
         # the RIPIO roof on 179, which is the Etermax building: its wordmark
         # hangs off that facade and the Preguntados icon is laid flat on that
-        # roof. Two brands on one address, and Ripio came out repeated on camera
-        # on top of that. It surfaced when Rebill moved and the allocation gave
-        # that site to the next brand on the list.
+        # roof. Two brands on one address. Kept dropped after Ripio got its
+        # SVG so a rebuild does not put a second copy back on that deck.
         "Sign.013",
         # the second copy of a brand that already appears elsewhere. The one the
         # camera sees least is dropped, and on a tie the flatter one: a sign
