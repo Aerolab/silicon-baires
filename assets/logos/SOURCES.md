@@ -27,7 +27,7 @@ laid flat on a roof — so they have to be separate curves. The pairs below shar
 their parent's `viewBox`, which is what makes them a split rather than two
 downloads.
 
-## Vector (60 files)
+## Vector (61 files)
 
 | file | brand | source |
 |---|---|---|
@@ -81,6 +81,7 @@ downloads.
 | `revamos.svg` | Revamos | supplied by the client, the full lockup, 7.9:1. Arrived as `fill="currentColor"` with the colours in the page's `text-white` / `text-turquoise` classes; both **inlined** as `#ffffff` and `#00d9bd`, because Blender resolves neither `currentColor` nor a `<style>` block — and for the `<style>` form it does not import colourless, it imports **black**, which beats the brand's `ink`. `width`/`height` added from the `viewBox`. **White wordmark**: mounted against the glazing band on spot 75 rather than on the spandrel, see `_brands.HERO` |
 | `revamos_plate.svg` | Revamos | **not a logo**: the black backing plate the Revamos sign sits on, 6.41:1. Drawn here, not sourced. It is a separate file rather than a rectangle inside `revamos.svg` because `logo()` extrudes one artwork's pieces to a single depth — see the note in the file |
 | `satellogic.svg` | Satellogic | satellogic.com WordPress |
+| `sla.svg` | SLA | Official SVG from https://slatv.live/sla-logo.svg; 2469x742 viewBox, light mark for the dedicated dark facade |
 | `takenos_iso.svg` | Takenos | split of the lockup — source not recorded |
 | `takenos_word.svg` | Takenos | split of the lockup — source not recorded |
 | `technisys.svg` | Technisys | web.archive.org, 2021 capture. The brand no longer exists: SoFi absorbed it |

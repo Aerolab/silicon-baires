@@ -58,6 +58,9 @@ PALETTE = {
     "Concrete Cool":    ("#b6bcbd", 0.85, 0.0),
     "Concrete Cool2":   ("#8d9599", 0.85, 0.0),
     "Concrete Dark":    ("#6e7276", 0.85, 0.0),
+    # Dedicated near-black facade for SLA's broadcast building. It is slightly
+    # lighter than the asphalt so it holds its silhouette in the daylight shot.
+    "SLA Black":        ("#121417", 0.62, 0.05),
     "Brick Warm":       ("#a86a4c", 0.85, 0.0),
     "Facade Teal":      ("#2f7f74", 0.75, 0.0),
     "Glass Light":      ("#5f97a6", 0.12, 0.0),

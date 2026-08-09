@@ -100,6 +100,12 @@ FAMILIES = [
 
 # cells that get something other than a plain low-rise campus
 TALL = {(1, 2): 18, (7, 6): 12, (7, 2): 8, (1, 5): 9}
+# A single art-directed building is more useful than relying on the lot RNG to
+# produce a dark facade: its wall, roof reservation and footprint stay stable.
+SLA_CELL = (4, 6)
+# The low standard building immediately screen-right of BUENOS AIRES in the
+# hero shot. Its generated "PUERTO" mark is not a real company logo, so SLA
+# replaces the whole ordinary building and its placeholder sign.
 LANDMARKS = {(6, 1), (1, 6), (7, 4)}     # step 06 owns these plots
 # and step 06b owns this one: the Floralis stands on it. "plaza" is not an
 # empty lot - this step builds offices on plazas - so without this the
@@ -1397,6 +1403,62 @@ def build_towers(m, kit, coll, sol, signs, lots, r):
                    keep=keep)
 
 
+def build_sla(m, kit, coll, sol, lots):
+    """SLA's compact black broadcast building, in a fixed, visible cell.
+
+    This stays in 04 instead of being a hand-edited Blender object: its wing is
+    published to the solids/building manifests, its logo gets the normal anchor
+    and every later life/overlap check treats it as part of the city.
+    """
+    lot = next((l for l in lots if tuple(map(int, l["key"])) == SLA_CELL), None)
+    if lot is None:
+        print("  SLA building skipped: its lot does not exist")
+        return
+    cx, cy = lot["x"], lot["y"]
+    w, d, floors = 38.0, 34.0, 6
+    # Private stream: this art-directed building must not move the towers,
+    # south rim or any other building generated after this lot.
+    r = rng(6404)
+    x = xf(cx, cy, 0.0)
+    top = wing(m, 0.0, 0.0, w, d, floors, "curtain",
+               ("SLA Black", "Glass Dark"), x, r, deep=True,
+               deck="Roof Dark", sol=sol, wx=cx, wy=cy)
+    # A shallow crown gives the building a studio silhouette without taking
+    # away the broad facade the wordmark needs.
+    m.slab(0.0, 0.0, w + 0.75, d + 0.75, top - 1.15, top - 0.55,
+           mat("SLA Black"), x)
+    sol.add(cx, cy, w + 0.9, d + 0.9, 0.0, 0.0, top)
+    keep = plan_extra(cx, cy, [(0.0, 0.0, w, d)], top, sol)
+    SITES.append({"at": [round(cx, 2), round(cy, 2)], "top": round(top, 2),
+                  "wings": [[round(cx, 2), round(cy, 2), w, d]]})
+    roof_props(kit, coll, cx, cy, w, d, top - DECK, 0.0, r, True,
+               keep=keep)
+    print(f"  SLA building: {w:.0f} x {d:.0f} m, {top:.1f} m high")
+
+
+def consume_replaced_lot_rng(kit, lot, r, av, sol, signs):
+    """Advance the shared stream as if the replaced ordinary lot still existed.
+
+    Simply skipping a normal lot shifts every later generated building. Build
+    this one into throwaway meshes and discard them so the random sequence,
+    including roof-prop choices, stays on its previous path. Its already-dropped
+    sign record stays in the plan so established Sign.NNN identities do too.
+    """
+    discard_mesh = Mesh()
+    discard_coll = bpy.data.collections.new("SLA_RNG_DISCARD")
+    sites_before = len(SITES)
+    boxes_before = len(sol.boxes)
+    place_on_lot(discard_mesh, kit, discard_coll, sol, signs,
+                 lot["x"], lot["y"], lot["size"], lot["lift"], lot["kind"],
+                 r, av)
+    del SITES[sites_before:]
+    del sol.boxes[boxes_before:]
+    sol._grid = None
+    for ob in list(discard_coll.objects):
+        bpy.data.objects.remove(ob, do_unlink=True)
+    bpy.data.collections.remove(discard_coll)
+
+
 def main():
     open_city(needs_collections=("KIT", "SITE"), needs_files=(LOTS,),
               hint="run 03_ground.py first: the block table is its output")
@@ -1424,6 +1486,9 @@ def main():
         i, j = int(lot["key"][0]), int(lot["key"][1])
         if j == RIM_ROW:
             continue                       # last, and out of its own stream
+        if (i, j) == SLA_CELL:
+            consume_replaced_lot_rng(kit, lot, r, av, sol, signs)
+            continue
         if (i, j) in TALL or (i, j) in LANDMARKS or (i, j) in CAMPUS \
                 or (i, j) in PORTENO:
             continue
@@ -1443,6 +1508,9 @@ def main():
                      lot["size"], lot["lift"], lot["kind"], rr, av)
         n_rim += 1
     print(f"  south rim: {n_rim} lots built from their own stream")
+    # Last so its hand-placed anchor is appended after every existing EXTRA;
+    # adding SLA must not change any established Sign.NNN identity.
+    build_sla(m, kit, pcoll, sol, lots)
     m.build("buildings", bcoll)
 
     # Second pass over the words. A sign is planned in the same loop that

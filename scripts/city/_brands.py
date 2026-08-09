@@ -87,6 +87,8 @@ CAMPUS = [
     # Spot 75, the whole lockup on the long wall. See HERO for why that wall and
     # why the size is what it is.
     ("REVAMOS",   "triangle", "#101820", "#00d9bd", "revamos.svg"),
+    # Dedicated facade-only installation; EXTRA fixes the building and wall.
+    ("SLA",       "bars",     "#101113", "#eaeaea", "sla.svg"),
     # wordmark traced from the Commons PNG; isologo from the GitHub org avatar
     # for square roofmarks/masts (see HERO). Pin keeps it on Sign.069.
     ("RIPIO",     "disc",     "#f7f3e8", "#7908ff", "ripio.svg"),
@@ -134,10 +136,10 @@ def pools(campus_filler, avenue_filler):
     """The real ones first, the invented filler after.
 
     The filler is the tables 04 already had. They are not thrown away: there are
-    99 signs and 37 real brands, so the rest — none of which reaches the camera
+    100 signs and 38 real brands, so the rest — none of which reaches the camera
     at a legible size — still carry the invented ones. The ratio is the thing to
     watch rather than either number: every real brand added takes a record away
-    from a made-up one, and five of them did exactly that in the last batch.
+    from a made-up one, and six of them did exactly that in the last batch.
     """
     return ([b[:4] for b in CAMPUS] + list(campus_filler),
             [b[:4] for b in AVENUE] + list(avenue_filler))
@@ -170,7 +172,7 @@ LOGOS = {b[0]: b[4] for b in CAMPUS + AVENUE if b[4]}
 #              which is what Lemon asked for.
 HERO = {
     # ---- stuck to a wall, with nothing on the roof -------------------------
-    # The six below share one key and the key is `facade_only`: the logo on the
+    # The entries below share one key and the key is `facade_only`: the logo on the
     # building's wall and NOTHING on the deck. Each one's anchor is in EXTRA (or
     # in PIN, for the two that reuse a switched-off billboard) and is never
     # built; the only thing that comes out of here is the wordmark on the
@@ -185,6 +187,13 @@ HERO = {
     # it is +Y, which is "right". The other two are Ls and there something else
     # decides: the face that does not look into its own arm. See the comment on
     # each.
+    "SLA": {"word": "sla.svg", "iso": "sla.svg",
+            "facade": True, "facade_only": True, "facade_art": "word",
+            # The dedicated black building replaces the placeholder at cell 4,6.
+            # Its +X face is deliberately broad and open to the camera.
+            "facade_side": "left", "facade_at": (-26.0, 153.0),
+            "facade_frac": 0.82, "facade_tall": 0.31,
+            "facade_z": 0.67, "facade_depth": 0.36},
     "GALICIA": {"iso": "galicia_iso.svg", "word": "galicia_iso.svg",
                 # the symbol only, because it is the only thing the current
                 # brand has in vector form — see SOURCES.md. Square and large,
@@ -752,6 +761,12 @@ EXTRA = [
     # why the numbers here are not to be quoted anywhere else.
     {"at": (-84.2, -89.8), "spot": 132, "brand": "OPENZEPPELIN",
      "kind": "roofmark", "grow": 1.45},
+    # Built after the normal lot pass so the existing hand-placed signs keep
+    # their Sign.NNN identity.
+    # The roofmark is only an anchor: HERO puts the official wordmark on the
+    # facade and leaves the studio roof clear for its own equipment.
+    {"at": (-26.0, 153.0), "spot": "SLA", "brand": "SLA",
+     "kind": "roofmark", "grow": 1.15},
     # COCOS IS NOT HERE, and the reason is worth the six lines. Its wall —
     # (187, -75), the best free one in the city — is a building that already has
     # a sign record: Sign.002, the Mercado Libre anchor, whose own art HERO
@@ -892,7 +907,8 @@ PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        # Bioceres came off the U's west arm and onto spot 155, asked for.
        # 021 had been a walked Ripio disc before the brand got a real vector.
        "Sign.021": "BIOCERES"}      # was RIPIO on spot 155, before that OLX
-DROP = {"Sign.054",          # flat Satellogic on 98: the 3D one on 163 remains
+DROP = {"Sign.054",          # retired placeholder on SLA's replaced lot; its
+                              # record stays so existing signs are not renumbered
         # the RIPIO roof on 179, which is the Etermax building: its wordmark
         # hangs off that facade and the Preguntados icon is laid flat on that
         # roof. Two brands on one address. Kept dropped after Ripio got its
