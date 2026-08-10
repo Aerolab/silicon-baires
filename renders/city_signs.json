@@ -596,21 +596,21 @@
   "w": 7.919932534345797,
   "h": 7.919932534345797,
   "name": "Sign.022",
-  "text": "RIPIO",
-  "mark": "disc",
+  "text": "OLX",
+  "mark": "ring",
   "face": "#f7f3e8",
-  "ink": "#7908ff",
+  "ink": "#6e2fb8",
   "owner": [
    245.75,
    -243.0
   ],
-  "logo": "ripio.svg",
+  "logo": null,
   "built": [
    244.84,
    -258.69,
-   16.21,
+   16.1,
    7.92,
-   0.38
+   0.16
   ]
  },
  {
@@ -648,10 +648,10 @@
   "w": 5.915293247370042,
   "h": 5.915293247370042,
   "name": "Sign.024",
-  "text": "OLX",
-  "mark": "ring",
-  "face": "#f7f3e8",
-  "ink": "#6e2fb8",
+  "text": "ZONDA",
+  "mark": "chevron",
+  "face": "#e8532a",
+  "ink": "#ffffff",
   "owner": [
    33.75,
    -231.25
@@ -674,9 +674,9 @@
   "w": 5.849350155038271,
   "h": 5.849350155038271,
   "name": "Sign.025",
-  "text": "ZONDA",
-  "mark": "chevron",
-  "face": "#e8532a",
+  "text": "OMBU",
+  "mark": "disc",
+  "face": "#1d7fc4",
   "ink": "#ffffff",
   "owner": [
    66.25,
@@ -727,10 +727,10 @@
   "w": 9.890777766575022,
   "h": 9.890777766575022,
   "name": "Sign.027",
-  "text": "OMBU",
-  "mark": "disc",
-  "face": "#1d7fc4",
-  "ink": "#ffffff",
+  "text": "PAMPA",
+  "mark": "bars",
+  "face": "#f2b705",
+  "ink": "#22201c",
   "owner": [
    -322.25,
    -327.75
@@ -753,10 +753,10 @@
   "w": 15.294244408299514,
   "h": 3.9765035461578737,
   "name": "Sign.028",
-  "text": "PAMPA",
-  "mark": "bars",
-  "face": "#f2b705",
-  "ink": "#22201c",
+  "text": "CEIBO",
+  "mark": "triangle",
+  "face": "#c8102e",
+  "ink": "#ffffff",
   "owner": [
    -322.25,
    -298.25
@@ -765,9 +765,9 @@
   "built": [
    -322.25,
    -283.6,
-   21.08,
+   21.28,
    15.29,
-   3.05
+   3.6
   ]
  },
  {
@@ -779,9 +779,9 @@
   "w": 11.84704343480217,
   "h": 11.84704343480217,
   "name": "Sign.029",
-  "text": "CEIBO",
-  "mark": "triangle",
-  "face": "#c8102e",
+  "text": "YERBA",
+  "mark": "ring",
+  "face": "#2f8f4e",
   "ink": "#ffffff",
   "owner": [
    -337.0,
@@ -805,9 +805,9 @@
   "w": 7.00407350911685,
   "h": 7.00407350911685,
   "name": "Sign.030",
-  "text": "YERBA",
-  "mark": "ring",
-  "face": "#2f8f4e",
+  "text": "RIACHO",
+  "mark": "square",
+  "face": "#2b2f77",
   "ink": "#ffffff",
   "owner": [
    -337.0,
@@ -817,9 +817,9 @@
   "built": [
    -336.62,
    -60.36,
-   27.5,
+   27.52,
    7.0,
-   0.16
+   0.19
   ]
  },
  {
@@ -831,10 +831,10 @@
   "w": 22.0,
   "h": 4.6,
   "name": "Sign.031",
-  "text": "RIACHO",
-  "mark": "square",
-  "face": "#2b2f77",
-  "ink": "#ffffff",
+  "text": "VELOX",
+  "mark": "chevron",
+  "face": "#d9d5cc",
+  "ink": "#c8102e",
   "owner": [
    -337.0,
    153.0
@@ -843,8 +843,8 @@
   "built": [
    -337.0,
    174.68,
-   14.0,
-   21.44,
+   13.97,
+   20.33,
    4.2
   ]
  },
@@ -857,10 +857,10 @@
   "w": 11.580093695123646,
   "h": 11.580093695123646,
   "name": "Sign.032",
-  "text": "VELOX",
-  "mark": "chevron",
-  "face": "#d9d5cc",
-  "ink": "#c8102e",
+  "text": "MATE",
+  "mark": "disc",
+  "face": "#5c3d8f",
+  "ink": "#ffffff",
   "owner": [
    -337.0,
    292.25
@@ -883,9 +883,9 @@
   "w": 6.875578193979654,
   "h": 6.875578193979654,
   "name": "Sign.033",
-  "text": "MATE",
-  "mark": "disc",
-  "face": "#5c3d8f",
+  "text": "SUR",
+  "mark": "bars",
+  "face": "#0f9bd7",
   "ink": "#ffffff",
   "owner": [
    -267.0,
@@ -909,10 +909,10 @@
   "w": 16.55225969179442,
   "h": 16.55225969179442,
   "name": "Sign.034",
-  "text": "SUR",
-  "mark": "bars",
-  "face": "#0f9bd7",
-  "ink": "#ffffff",
+  "text": "ANDA",
+  "mark": "triangle",
+  "face": "#ef7d1a",
+  "ink": "#22201c",
   "owner": [
    -267.0,
    -2.0
@@ -935,10 +935,10 @@
   "w": 8.090457057778025,
   "h": 8.090457057778025,
   "name": "Sign.035",
-  "text": "ANDA",
-  "mark": "triangle",
-  "face": "#ef7d1a",
-  "ink": "#22201c",
+  "text": "LUMA",
+  "mark": "ring",
+  "face": "#e8e4da",
+  "ink": "#1d7fc4",
   "owner": [
    -255.25,
    234.0
@@ -961,10 +961,10 @@
   "w": 22.0,
   "h": 4.6,
   "name": "Sign.036",
-  "text": "LUMA",
-  "mark": "ring",
-  "face": "#e8e4da",
-  "ink": "#1d7fc4",
+  "text": "TANGO",
+  "mark": "square",
+  "face": "#22201c",
+  "ink": "#f2b705",
   "owner": [
    -267.0,
    309.0
@@ -973,8 +973,8 @@
   "built": [
    -267.0,
    342.26,
-   29.2,
-   15.8,
+   29.17,
+   21.47,
    4.2
   ]
  },
@@ -987,10 +987,10 @@
   "w": 8.936925369177445,
   "h": 8.936925369177445,
   "name": "Sign.037",
-  "text": "TANGO",
-  "mark": "square",
-  "face": "#22201c",
-  "ink": "#f2b705",
+  "text": "KETZAL",
+  "mark": "disc",
+  "face": "#0d8a86",
+  "ink": "#ffffff",
   "owner": [
    -198.75,
    -184.75
@@ -999,9 +999,9 @@
   "built": [
    -200.45,
    -185.44,
-   12.32,
+   12.3,
    8.94,
-   0.19
+   0.16
   ]
  },
  {
@@ -1013,10 +1013,10 @@
   "w": 8.734410586749284,
   "h": 8.734410586749284,
   "name": "Sign.038",
-  "text": "KETZAL",
-  "mark": "disc",
-  "face": "#0d8a86",
-  "ink": "#ffffff",
+  "text": "NUBE",
+  "mark": "bars",
+  "face": "#e8e4da",
+  "ink": "#5c3d8f",
   "owner": [
    -163.25,
    -184.75
@@ -1039,10 +1039,10 @@
   "w": 9.487252504896208,
   "h": 9.487252504896208,
   "name": "Sign.039",
-  "text": "NUBE",
-  "mark": "bars",
-  "face": "#e8e4da",
-  "ink": "#5c3d8f",
+  "text": "TALA",
+  "mark": "chevron",
+  "face": "#2f8f4e",
+  "ink": "#f7f3e8",
   "owner": [
    -198.75,
    -149.25
@@ -1065,10 +1065,10 @@
   "w": 18.756514889767374,
   "h": 4.6,
   "name": "Sign.040",
-  "text": "TALA",
-  "mark": "chevron",
-  "face": "#2f8f4e",
-  "ink": "#f7f3e8",
+  "text": "AUSTRAL",
+  "mark": "square",
+  "face": "#0f4c81",
+  "ink": "#ffffff",
   "owner": [
    -198.75,
    11.25
@@ -1077,9 +1077,9 @@
   "built": [
    -198.75,
    24.8,
-   17.85,
-   16.09,
-   4.2
+   17.06,
+   18.76,
+   2.72
   ]
  },
  {
@@ -1091,10 +1091,10 @@
   "w": 18.460524137374964,
   "h": 4.6,
   "name": "Sign.041",
-  "text": "AUSTRAL",
-  "mark": "square",
-  "face": "#0f4c81",
-  "ink": "#ffffff",
+  "text": "LINCE",
+  "mark": "triangle",
+  "face": "#7a3b12",
+  "ink": "#f2b705",
   "owner": [
    -163.25,
    11.25
@@ -1103,9 +1103,9 @@
   "built": [
    -163.25,
    24.62,
-   13.32,
-   18.46,
-   2.82
+   13.97,
+   16.98,
+   4.2
   ]
  },
  {
@@ -1117,10 +1117,10 @@
   "w": 11.88937043040528,
   "h": 11.88937043040528,
   "name": "Sign.042",
-  "text": "LINCE",
-  "mark": "triangle",
-  "face": "#7a3b12",
-  "ink": "#f2b705",
+  "text": "CARDON",
+  "mark": "bars",
+  "face": "#8f2a1c",
+  "ink": "#f7f3e8",
   "owner": [
    -163.25,
    153.0
@@ -1143,10 +1143,10 @@
   "w": 11.73918148726405,
   "h": 11.73918148726405,
   "name": "Sign.043",
-  "text": "CARDON",
-  "mark": "bars",
-  "face": "#8f2a1c",
-  "ink": "#f7f3e8",
+  "text": "NODO",
+  "mark": "ring",
+  "face": "#e8532a",
+  "ink": "#22201c",
   "owner": [
    -181.0,
    309.0
@@ -1169,10 +1169,10 @@
   "w": 14.88414725982486,
   "h": 3.8698782875544637,
   "name": "Sign.044",
-  "text": "NODO",
-  "mark": "ring",
-  "face": "#e8532a",
-  "ink": "#22201c",
+  "text": "ARROYO",
+  "mark": "disc",
+  "face": "#1a7f3c",
+  "ink": "#ffffff",
   "owner": [
    -84.25,
    -298.25
@@ -1181,9 +1181,9 @@
   "built": [
    -84.25,
    -283.04,
-   17.75,
+   16.89,
    14.88,
-   4.09
+   2.38
   ]
  },
  {
@@ -1195,10 +1195,10 @@
   "w": 7.733394936349033,
   "h": 7.733394936349033,
   "name": "Sign.045",
-  "text": "ARROYO",
-  "mark": "disc",
-  "face": "#1a7f3c",
-  "ink": "#ffffff",
+  "text": "FARO",
+  "mark": "chevron",
+  "face": "#f2b705",
+  "ink": "#2b2f77",
   "owner": [
    -113.75,
    -89.75
@@ -1248,10 +1248,10 @@
   "w": 9.87382933094595,
   "h": 9.87382933094595,
   "name": "Sign.047",
-  "text": "FARO",
-  "mark": "chevron",
-  "face": "#f2b705",
-  "ink": "#2b2f77",
+  "text": "RAMBLA",
+  "mark": "square",
+  "face": "#d9d5cc",
+  "ink": "#2f8f4e",
   "owner": [
    -113.75,
    138.25
@@ -1260,9 +1260,9 @@
   "built": [
    -112.79,
    139.44,
-   31.3,
+   31.31,
    9.87,
-   0.16
+   0.19
   ]
  },
  {
@@ -1274,10 +1274,10 @@
   "w": 15.626042928787653,
   "h": 4.06277116148479,
   "name": "Sign.048",
-  "text": "RAMBLA",
-  "mark": "square",
-  "face": "#d9d5cc",
-  "ink": "#2f8f4e",
+  "text": "CUARZO",
+  "mark": "triangle",
+  "face": "#5c3d8f",
+  "ink": "#e8e4da",
   "owner": [
    -84.25,
    138.25
@@ -1286,9 +1286,9 @@
   "built": [
    -84.25,
    149.55,
-   20.88,
+   20.8,
    15.63,
-   2.65
+   2.59
   ]
  },
  {
@@ -1300,10 +1300,10 @@
   "w": 4.933842350245294,
   "h": 4.933842350245294,
   "name": "Sign.049",
-  "text": "CUARZO",
-  "mark": "triangle",
-  "face": "#5c3d8f",
-  "ink": "#e8e4da",
+  "text": "SALTO",
+  "mark": "bars",
+  "face": "#0d8a86",
+  "ink": "#f7f3e8",
   "owner": [
    -113.75,
    167.75
@@ -1326,9 +1326,9 @@
   "w": 8.383324351654785,
   "h": 8.383324351654785,
   "name": "Sign.050",
-  "text": "SALTO",
-  "mark": "bars",
-  "face": "#0d8a86",
+  "text": "TRAMA",
+  "mark": "ring",
+  "face": "#c8102e",
   "ink": "#f7f3e8",
   "owner": [
    -113.75,
@@ -1352,10 +1352,10 @@
   "w": 9.84915414575239,
   "h": 9.84915414575239,
   "name": "Sign.051",
-  "text": "TRAMA",
-  "mark": "ring",
-  "face": "#c8102e",
-  "ink": "#f7f3e8",
+  "text": "PILAR",
+  "mark": "disc",
+  "face": "#22201c",
+  "ink": "#0f9bd7",
   "owner": [
    -113.75,
    309.0
@@ -1703,10 +1703,10 @@
   "w": 15.335936503893397,
   "h": 3.9873434910122834,
   "name": "Sign.065",
-  "text": "PILAR",
-  "mark": "disc",
-  "face": "#22201c",
-  "ink": "#0f9bd7",
+  "text": "VELA",
+  "mark": "chevron",
+  "face": "#0f9bd7",
+  "ink": "#22201c",
   "owner": [
    201.75,
    309.0
@@ -1715,9 +1715,9 @@
   "built": [
    201.75,
    333.26,
-   17.66,
+   17.71,
    15.34,
-   3.81
+   3.92
   ]
  },
  {
@@ -1729,10 +1729,10 @@
   "w": 10.569886703236122,
   "h": 10.569886703236122,
   "name": "Sign.066",
-  "text": "VELA",
-  "mark": "chevron",
-  "face": "#0f9bd7",
-  "ink": "#22201c",
+  "text": "SEIBO",
+  "mark": "square",
+  "face": "#ef7d1a",
+  "ink": "#ffffff",
   "owner": [
    258.0,
    -327.75
@@ -1741,9 +1741,9 @@
   "built": [
    259.62,
    -328.16,
-   23.7,
+   23.72,
    10.57,
-   0.16
+   0.19
   ]
  },
  {
@@ -1755,10 +1755,10 @@
   "w": 22.0,
   "h": 4.6,
   "name": "Sign.067",
-  "text": "SEIBO",
-  "mark": "square",
-  "face": "#ef7d1a",
-  "ink": "#ffffff",
+  "text": "PUERTO",
+  "mark": "triangle",
+  "face": "#123a8f",
+  "ink": "#f2b705",
   "owner": [
    258.0,
    74.0
@@ -1767,9 +1767,9 @@
   "built": [
    258.0,
    106.99,
-   17.79,
-   16.31,
-   4.2
+   17.6,
+   22.0,
+   3.85
   ]
  },
  {
@@ -1781,10 +1781,10 @@
   "w": 13.2,
   "h": 3.432,
   "name": "Sign.068",
-  "text": "PUERTO",
-  "mark": "triangle",
-  "face": "#123a8f",
-  "ink": "#f2b705",
+  "text": "TIMBO",
+  "mark": "bars",
+  "face": "#7a4b9f",
+  "ink": "#f7f3e8",
   "owner": [
    258.0,
    309.0
@@ -1793,9 +1793,9 @@
   "built": [
    258.0,
    299.15,
-   24.55,
+   24.74,
    13.2,
-   2.45
+   2.9
   ]
  },
  {
@@ -1807,21 +1807,21 @@
   "w": 22.0,
   "h": 4.6,
   "name": "Sign.069",
-  "text": "TIMBO",
-  "mark": "bars",
-  "face": "#7a4b9f",
-  "ink": "#f7f3e8",
+  "text": "RIPIO",
+  "mark": "disc",
+  "face": "#f7f3e8",
+  "ink": "#7908ff",
   "owner": [
    333.0,
    -89.75
   ],
-  "logo": null,
+  "logo": "ripio.svg",
   "built": [
    333.0,
-   -75.12,
-   17.8,
-   17.24,
-   4.2
+   -75.13,
+   16.9,
+   12.98,
+   6.09
   ]
  },
  {
@@ -1833,15 +1833,15 @@
   "w": 9.98151939765096,
   "h": 9.98151939765096,
   "name": "Sign.070",
-  "text": "RIPIO",
-  "mark": "disc",
+  "text": "OLX",
+  "mark": "ring",
   "face": "#f7f3e8",
-  "ink": "#7908ff",
+  "ink": "#6e2fb8",
   "owner": [
    333.0,
    -60.25
   ],
-  "logo": "ripio.svg",
+  "logo": null,
   "built": [
    333.5,
    -61.48,
@@ -1859,10 +1859,10 @@
   "w": 9.23461092219643,
   "h": 9.23461092219643,
   "name": "Sign.071",
-  "text": "OLX",
-  "mark": "ring",
-  "face": "#f7f3e8",
-  "ink": "#6e2fb8",
+  "text": "ZONDA",
+  "mark": "chevron",
+  "face": "#e8532a",
+  "ink": "#ffffff",
   "owner": [
    349.75,
    -2.0
@@ -1885,9 +1885,9 @@
   "w": 5.51065957917339,
   "h": 5.51065957917339,
   "name": "Sign.072",
-  "text": "ZONDA",
-  "mark": "chevron",
-  "face": "#e8532a",
+  "text": "OMBU",
+  "mark": "disc",
+  "face": "#1d7fc4",
   "ink": "#ffffff",
   "owner": [
    333.0,
@@ -1911,10 +1911,10 @@
   "w": 22.0,
   "h": 4.6,
   "name": "Sign.073",
-  "text": "OMBU",
-  "mark": "disc",
-  "face": "#1d7fc4",
-  "ink": "#ffffff",
+  "text": "PAMPA",
+  "mark": "bars",
+  "face": "#f2b705",
+  "ink": "#22201c",
   "owner": [
    333.0,
    90.25
@@ -1923,9 +1923,9 @@
   "built": [
    333.0,
    107.02,
-   25.4,
-   15.69,
-   4.2
+   25.35,
+   22.0,
+   3.99
   ]
  },
  {
@@ -1937,10 +1937,10 @@
   "w": 11.1452959905202,
   "h": 11.1452959905202,
   "name": "Sign.074",
-  "text": "PAMPA",
-  "mark": "bars",
-  "face": "#f2b705",
-  "ink": "#22201c",
+  "text": "CEIBO",
+  "mark": "triangle",
+  "face": "#c8102e",
+  "ink": "#ffffff",
   "owner": [
    349.75,
    153.0
@@ -1963,9 +1963,9 @@
   "w": 12.18785284791072,
   "h": 12.18785284791072,
   "name": "Sign.075",
-  "text": "CEIBO",
-  "mark": "triangle",
-  "face": "#c8102e",
+  "text": "YERBA",
+  "mark": "ring",
+  "face": "#2f8f4e",
   "ink": "#ffffff",
   "owner": [
    316.25,
@@ -1989,9 +1989,9 @@
   "w": 17.281289834505973,
   "h": 4.493135356971553,
   "name": "Sign.076",
-  "text": "YERBA",
-  "mark": "ring",
-  "face": "#2f8f4e",
+  "text": "RIACHO",
+  "mark": "square",
+  "face": "#2b2f77",
   "ink": "#ffffff",
   "owner": [
    349.75,
@@ -2001,9 +2001,9 @@
   "built": [
    349.75,
    231.1,
-   21.37,
+   21.04,
    17.28,
-   3.63
+   3.1
   ]
  },
  {
@@ -2015,10 +2015,10 @@
   "w": 8.441761224688252,
   "h": 8.441761224688252,
   "name": "Sign.077",
-  "text": "RIACHO",
-  "mark": "square",
-  "face": "#2b2f77",
-  "ink": "#ffffff",
+  "text": "VELOX",
+  "mark": "chevron",
+  "face": "#d9d5cc",
+  "ink": "#c8102e",
   "owner": [
    316.25,
    246.25
@@ -2027,9 +2027,9 @@
   "built": [
    315.74,
    244.91,
-   12.32,
+   12.3,
    8.44,
-   0.19
+   0.16
   ]
  },
  {
@@ -2041,10 +2041,10 @@
   "w": 8.320306167449145,
   "h": 8.320306167449145,
   "name": "Sign.078",
-  "text": "VELOX",
-  "mark": "chevron",
-  "face": "#d9d5cc",
-  "ink": "#c8102e",
+  "text": "MATE",
+  "mark": "disc",
+  "face": "#5c3d8f",
+  "ink": "#ffffff",
   "owner": [
    349.75,
    246.25
@@ -2067,9 +2067,9 @@
   "w": 11.64534484767386,
   "h": 11.64534484767386,
   "name": "Sign.079",
-  "text": "MATE",
-  "mark": "disc",
-  "face": "#5c3d8f",
+  "text": "SUR",
+  "mark": "bars",
+  "face": "#0f9bd7",
   "ink": "#ffffff",
   "owner": [
    316.25,
@@ -2093,10 +2093,10 @@
   "w": 16.0,
   "h": 16.0,
   "name": "Sign.080",
-  "text": "SUR",
-  "mark": "bars",
-  "face": "#0f9bd7",
-  "ink": "#ffffff",
+  "text": "ANDA",
+  "mark": "triangle",
+  "face": "#ef7d1a",
+  "ink": "#22201c",
   "owner": [
    349.75,
    309.0
@@ -2119,10 +2119,10 @@
   "w": 17.13214991074537,
   "h": 4.454358976793796,
   "name": "Sign.081",
-  "text": "ANDA",
-  "mark": "triangle",
-  "face": "#ef7d1a",
-  "ink": "#22201c",
+  "text": "LUMA",
+  "mark": "ring",
+  "face": "#e8e4da",
+  "ink": "#1d7fc4",
   "owner": [
    -267.0,
    -167.0
@@ -2131,9 +2131,9 @@
   "built": [
    -267.0,
    -148.46,
-   71.05,
-   16.51,
-   4.2
+   70.94,
+   17.13,
+   4.15
   ]
  },
  {
@@ -2145,10 +2145,10 @@
   "w": 20.36191443770774,
   "h": 4.6,
   "name": "Sign.082",
-  "text": "LUMA",
-  "mark": "ring",
-  "face": "#e8e4da",
-  "ink": "#1d7fc4",
+  "text": "TANGO",
+  "mark": "square",
+  "face": "#22201c",
+  "ink": "#f2b705",
   "owner": [
    258.0,
    153.0
@@ -2157,9 +2157,9 @@
   "built": [
    258.0,
    168.74,
-   48.2,
-   15.8,
-   4.2
+   48.06,
+   20.36,
+   3.98
   ]
  },
  {
@@ -2171,10 +2171,10 @@
   "w": 12.026423706897713,
   "h": 12.026423706897713,
   "name": "Sign.083",
-  "text": "TANGO",
-  "mark": "square",
-  "face": "#22201c",
-  "ink": "#f2b705",
+  "text": "KETZAL",
+  "mark": "disc",
+  "face": "#0d8a86",
+  "ink": "#ffffff",
   "owner": [
    -267.0,
    74.0
@@ -2183,9 +2183,9 @@
   "built": [
    -264.76,
    72.37,
-   38.91,
+   38.9,
    12.03,
-   0.19
+   0.16
   ]
  },
  {
@@ -2197,10 +2197,10 @@
   "w": 11.957431290250433,
   "h": 11.957431290250433,
   "name": "Sign.084",
-  "text": "KETZAL",
-  "mark": "disc",
-  "face": "#0d8a86",
-  "ink": "#ffffff",
+  "text": "NUBE",
+  "mark": "bars",
+  "face": "#e8e4da",
+  "ink": "#5c3d8f",
   "owner": [
    -337.0,
    -412.75
@@ -2223,10 +2223,10 @@
   "w": 12.110792794371932,
   "h": 12.110792794371932,
   "name": "Sign.085",
-  "text": "NUBE",
-  "mark": "bars",
-  "face": "#e8e4da",
-  "ink": "#5c3d8f",
+  "text": "TALA",
+  "mark": "chevron",
+  "face": "#2f8f4e",
+  "ink": "#f7f3e8",
   "owner": [
    -198.75,
    -377.25
@@ -2249,10 +2249,10 @@
   "w": 8.927844590404964,
   "h": 8.927844590404964,
   "name": "Sign.086",
-  "text": "TALA",
-  "mark": "chevron",
-  "face": "#2f8f4e",
-  "ink": "#f7f3e8",
+  "text": "AUSTRAL",
+  "mark": "square",
+  "face": "#0f4c81",
+  "ink": "#ffffff",
   "owner": [
    -163.25,
    -377.25
@@ -2261,9 +2261,9 @@
   "built": [
    -164.45,
    -375.88,
-   19.9,
+   19.91,
    8.93,
-   0.16
+   0.19
   ]
  },
  {
@@ -2275,10 +2275,10 @@
   "w": 17.921299244626848,
   "h": 17.921299244626848,
   "name": "Sign.087",
-  "text": "AUSTRAL",
-  "mark": "square",
-  "face": "#0f4c81",
-  "ink": "#ffffff",
+  "text": "LINCE",
+  "mark": "triangle",
+  "face": "#7a3b12",
+  "ink": "#f2b705",
   "owner": [
    -26.0,
    -395.0
@@ -2287,9 +2287,9 @@
   "built": [
    -26.98,
    -392.43,
-   19.91,
+   19.9,
    17.92,
-   0.19
+   0.16
   ]
  },
  {
@@ -2301,10 +2301,10 @@
   "w": 8.576182900876859,
   "h": 8.576182900876859,
   "name": "Sign.088",
-  "text": "LINCE",
-  "mark": "triangle",
-  "face": "#7a3b12",
-  "ink": "#f2b705",
+  "text": "CARDON",
+  "mark": "bars",
+  "face": "#8f2a1c",
+  "ink": "#f7f3e8",
   "owner": [
    201.75,
    -412.75
@@ -2327,10 +2327,10 @@
   "w": 9.146271115127355,
   "h": 9.146271115127355,
   "name": "Sign.089",
-  "text": "CARDON",
-  "mark": "bars",
-  "face": "#8f2a1c",
-  "ink": "#f7f3e8",
+  "text": "NODO",
+  "mark": "ring",
+  "face": "#e8532a",
+  "ink": "#22201c",
   "owner": [
    270.25,
    -412.75
@@ -2353,10 +2353,10 @@
   "w": 7.897134632533104,
   "h": 7.897134632533104,
   "name": "Sign.090",
-  "text": "NODO",
-  "mark": "ring",
-  "face": "#e8532a",
-  "ink": "#22201c",
+  "text": "ARROYO",
+  "mark": "disc",
+  "face": "#1a7f3c",
+  "ink": "#ffffff",
   "owner": [
    245.75,
    -377.25
@@ -2379,10 +2379,10 @@
   "w": 12.216178434145041,
   "h": 12.216178434145041,
   "name": "Sign.091",
-  "text": "ARROYO",
-  "mark": "disc",
-  "face": "#1a7f3c",
-  "ink": "#ffffff",
+  "text": "FARO",
+  "mark": "chevron",
+  "face": "#f2b705",
+  "ink": "#2b2f77",
   "owner": [
    270.25,
    -377.25
@@ -2405,10 +2405,10 @@
   "w": 8.936129989009368,
   "h": 8.936129989009368,
   "name": "Sign.092",
-  "text": "FARO",
-  "mark": "chevron",
-  "face": "#f2b705",
-  "ink": "#2b2f77",
+  "text": "RAMBLA",
+  "mark": "square",
+  "face": "#d9d5cc",
+  "ink": "#2f8f4e",
   "owner": [
    316.25,
    -412.75
@@ -2417,9 +2417,9 @@
   "built": [
    315.9,
    -413.41,
-   16.1,
+   16.12,
    8.94,
-   0.16
+   0.19
   ]
  },
  {
@@ -2431,10 +2431,10 @@
   "w": 8.65784365516554,
   "h": 8.65784365516554,
   "name": "Sign.093",
-  "text": "RAMBLA",
-  "mark": "square",
-  "face": "#d9d5cc",
-  "ink": "#2f8f4e",
+  "text": "CUARZO",
+  "mark": "triangle",
+  "face": "#5c3d8f",
+  "ink": "#e8e4da",
   "owner": [
    349.75,
    -412.75
@@ -2443,9 +2443,9 @@
   "built": [
    347.85,
    -413.81,
-   12.32,
+   12.3,
    8.66,
-   0.19
+   0.16
   ]
  },
  {

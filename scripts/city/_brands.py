@@ -89,8 +89,10 @@ CAMPUS = [
     ("REVAMOS",   "triangle", "#101820", "#00d9bd", "revamos.svg"),
     # Dedicated facade-only installation; EXTRA fixes the building and wall.
     ("SLA",       "bars",     "#101113", "#eaeaea", "sla.svg"),
-    # wordmark traced from the Commons PNG; isologo from the GitHub org avatar
-    # for square roofmarks/masts (see HERO). Pin keeps it on Sign.069.
+    # wordmark traced from the Commons PNG; the pin keeps it on Sign.069, whose
+    # parapet builds it through the ordinary path. `ripio_iso.svg` is traced and
+    # sitting in assets for a square site, and is deliberately NOT wired: see
+    # the note in HERO for what wiring it cost.
     ("RIPIO",     "disc",     "#f7f3e8", "#7908ff", "ripio.svg"),
     ("ETERMAX",   "bars",     "#f7f3e8", "#28292b", "etermax_word.svg"),
     ("OLX",       "ring",     "#f7f3e8", "#6e2fb8", None),
@@ -512,14 +514,19 @@ HERO = {
                  "facade_side": "left", "facade_at": (211.0, -303.4),
                  "facade_frac": 0.45, "facade_tall": 0.20,
                  "facade_z": 0.842, "facade_depth": 0.35},
-    # wordmark on the long parapet (Sign.069) and the square isologo on any
-    # roofmark/mast the brand still holds (Sign.022 is 7.9 m square). Without
-    # the iso the word got squeezed into a disc and read as a violet smudge.
-    # No roof_frac: the roofmark path only raises the symbol; hero_parapet
-    # still lays the word on the parapet building's deck via the default.
-    "RIPIO": {"iso": "ripio_iso.svg", "word": "ripio.svg",
-              "iso_frac": 0.86,
-              "iso_ink": "#7908ff", "word_ink": "#7908ff"},
+    # RIPIO IS NOT HERE, AND THAT IS THE ENTRY. It was, with an iso and an
+    # iso_frac of 0.86, and a HERO record on a parapet means hero_parapet: that
+    # path sizes the symbol against the BUILDING, not against the sign, because
+    # a hero symbol is meant to hang the full drop of the wall. Sign.069 is a
+    # parapet of 22 x 4.6 at z=20.65 and what came out was 41.85 x 18.09 at
+    # z=11.24 — the symbol ran down the whole facade and 99_check_overlap
+    # counted 860 triangle pairs inside the building.
+    #
+    # The plain parapet path is what this brand wants and it already does the
+    # job: `elif art` in 10_signs.build() extrudes ripio.svg at LOGO_CAP and
+    # hangs it off the same cap line as the built letters. The table's ink is
+    # already #7908ff, so word_ink said nothing either. A brand only belongs in
+    # HERO when it is going on a wall or a deck this file names.
     "AUTH0": {"iso": "auth0_iso.svg", "word": "auth0_word.svg",
               "iso_frac": 0.55, "roof_frac": 0.72},
     "LEMON": {"iso": "lemon_iso.svg", "word": "lemon_word.svg",
