@@ -612,16 +612,16 @@ HERO = {
                  # sliced into strips by them
                  "facade_frac": 0.80, "facade_tall": 0.20,
                  "facade_z": 0.93, "facade_depth": 0.55},
-    # Spot 68. Free building, 6 s of cover at 0.13 of the frame — the only
-    # free roof next to Vercel/Humand that clears 93's floor. `right` is the
-    # +Y face the camera sees whole; the kerb is 34 m off (courtyard), which
-    # is the trade for that cover. 8.3:1 wordmark, so width binds; white on
-    # Glass Dark / Patmos Black (the band at mid-wall is 100 % Glass Dark).
+    # Spot 68. Facade was the first placement; Vercel HQ (PR #6) now hides that
+    # wall from the hero camera, so the wordmark moved to the deck — centred on
+    # the Patmos Black building, readable in the shot.
     "PATMOS": {"word": "patmos.svg", "iso": "patmos.svg",
-               "facade": True, "facade_only": True, "facade_art": "word",
-               "facade_side": "right", "facade_at": (-113.75, 57.75),
-               "facade_frac": 0.62, "facade_shift": 0.05,
-               "facade_tall": 0.22, "facade_z": 0.85, "facade_depth": 0.40},
+               "facade": True, "facade_only": True, "facade_arts": [],
+               "roof_art": "word", "roof_at": (-113.75, 57.75),
+               "roof_readable_at": (-113.75, 57.75),
+               "word_roof_frac": 0.62, "word_roof_depth": 0.28,
+               "word_roof_shift": (0, 0),
+               "word_ink": "#f5f5f5"},
     # the triangle alone on the disc, small, and the whole logo on the wall.
     # White on black since the building went near-black: the cream panel read
     # as a hole in the facade. The camera-facing side keeps the triangle; the
