@@ -105,6 +105,9 @@ CAMPUS = [
     ("MURAL",     "disc",     "#f7f3e8", "#ff4b4b", "mural.svg"),
     ("MASLOW",    "triangle", "#101820", "#168bf6", "maslow.svg"),
     ("BIOCERES",  "ring",     "#f7f3e8", "#004676", "bioceres_word.svg"),
+    # Spot 68, west of Humand. Facade is Patmos Black (see 04); the white
+    # wordmark is what the landing publishes on dark ground.
+    ("PATMOS",    "bars",     "#1a1a1d", "#f5f5f5", "patmos.svg"),
 ]
 
 # The avenue: party walls and billboards. It talks to whoever is driving, not to
@@ -609,6 +612,16 @@ HERO = {
                  # sliced into strips by them
                  "facade_frac": 0.80, "facade_tall": 0.20,
                  "facade_z": 0.93, "facade_depth": 0.55},
+    # Spot 68. Free building, 6 s of cover at 0.13 of the frame — the only
+    # free roof next to Vercel/Humand that clears 93's floor. `right` is the
+    # +Y face the camera sees whole; the kerb is 34 m off (courtyard), which
+    # is the trade for that cover. 8.3:1 wordmark, so width binds; white on
+    # Glass Dark / Patmos Black (the band at mid-wall is 100 % Glass Dark).
+    "PATMOS": {"word": "patmos.svg", "iso": "patmos.svg",
+               "facade": True, "facade_only": True, "facade_art": "word",
+               "facade_side": "right", "facade_at": (-113.75, 57.75),
+               "facade_frac": 0.62, "facade_shift": 0.05,
+               "facade_tall": 0.22, "facade_z": 0.85, "facade_depth": 0.40},
     # the triangle alone on the disc, small, and the whole logo on the wall.
     # White on black since the building went near-black: the cream panel read
     # as a hole in the facade. The camera-facing side keeps the triangle; the
@@ -764,6 +777,11 @@ EXTRA = [
     # facade and leaves the studio roof clear for its own equipment.
     {"at": (-26.0, 153.0), "spot": "SLA", "brand": "SLA",
      "kind": "roofmark", "grow": 1.15},
+    # PATMOS IS NOT HERE. Spot 68 already has a sign record: Sign.046, the
+    # Decentraland anchor, whose art HERO moved to (66.2, -231.2). plan_extra
+    # only runs on a cell with no sign, so an anchor here prints NO ENTRARON
+    # and nothing more. Same shape as Cocos below: the pin holds the brand on a
+    # far record and facade_at in HERO puts the wordmark on the wall.
     # COCOS IS NOT HERE, and the reason is worth the six lines. Its wall —
     # (187, -75), the best free one in the city — is a building that already has
     # a sign record: Sign.002, the Mercado Libre anchor, whose own art HERO
@@ -875,6 +893,10 @@ PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        # on is the one in HERO. The pin only stops the allocation walking the
        # brand off to another roof the next time this table grows.
        "Sign.061": "BRUBANK",
+       # Patmos on spot 68. Sign.026 was ZONDA on the far south-west rim; the
+       # record stays so nothing renumbers, and nothing is built from it —
+       # facade_only. The wall is in HERO at (-113.75, 57.75).
+       "Sign.026": "PATMOS",
        "Sign.058": "ETERMAX",
        # THE FOUR THAT TAKE OVER A SIGN NOBODY WOULD MISS. Three were carrying
        # a company that does not exist and the fourth a duplicate drawn with a

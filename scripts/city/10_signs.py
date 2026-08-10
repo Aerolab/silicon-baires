@@ -628,6 +628,11 @@ def hero_facade(m, rec, hero, site, key="word"):
     wall = Matrix.Rotation(brot + ang + math.pi / 2, 4, "Z") @ \
         upright(0.0, -(half + par("facade_proud", 0.02)),
                 zc - rec["z"], 0.0)
+    # `facade_shift` slides along the face, in fractions of its run — the one
+    # knob for when a centred wordmark clears the wall but not the frame.
+    shift = par("facade_shift", 0.0)
+    if shift:
+        wall = wall @ Matrix.Translation(Vector((shift * run, 0.0, 0.0)))
     wall = Matrix.Translation(Vector((bx - rec["x"], by - rec["y"], 0.0))) @ wall
     logo(m, hero[key], run * par("facade_frac", 0.78),
          bz1 * par("facade_tall", 0.30),

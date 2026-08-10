@@ -154,6 +154,10 @@ TALL = {(1, 2): 18, (7, 6): 12, (7, 2): 8, (1, 5): 9}
 # A single art-directed building is more useful than relying on the lot RNG to
 # produce a dark facade: its wall, roof reservation and footprint stay stable.
 SLA_CELL = (4, 6)
+# Spot 68: free building west of Humand / behind Vercel. Art-directed to the
+# Patmos black of the landing after the lot RNG has drawn, so the rest of the
+# block keeps its previous massing.
+PATMOS_AT = (-113.75, 57.75)
 # The low standard building immediately screen-right of BUENOS AIRES in the
 # hero shot. Its generated "PUERTO" mark is not a real company logo, so SLA
 # replaces the whole ordinary building and its placeholder sign.
@@ -1162,6 +1166,16 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
             fam = look.get("fam", fam)
             deck = look.get("deck")
             trim = look.get("trim")
+        # Spot 68, materials only, and deliberately WITHOUT a compensating
+        # draw. This entry was written when `wing()` skipped the Roof
+        # Dark/Deck coin flip whenever `deck` was passed, so it spent an
+        # r.random() of its own to keep the stream honest. wing() always
+        # draws now — that is what HQ_LOOK's arrival fixed — so keeping the
+        # compensation would cost the shared stream one draw and re-place
+        # every lot generated after this one.
+        if abs(bx - PATMOS_AT[0]) < 1.0 and abs(by - PATMOS_AT[1]) < 1.0:
+            fam = ("Patmos Black", "Glass Dark")
+            deck = "Roof Dark"
         x = xf(bx, by, 0.0)
         top = 0.0
         for (ox, oy, ww, dd) in footprint(kindf, w, d):
@@ -1560,6 +1574,7 @@ def main():
     paint("Brick Warm")
     paint("Facade Teal")
     paint("Concrete Dark")
+    paint("Patmos Black")
     paint("Roof Deck")
     paint("Roof Dark")
 

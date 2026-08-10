@@ -64,6 +64,9 @@ PALETTE = {
     # Dedicated near-black facade for SLA's broadcast building. It is slightly
     # lighter than the asphalt so it holds its silhouette in the daylight shot.
     "SLA Black":        ("#121417", 0.62, 0.05),
+    # Patmos: the landing's surface black (#1a1a1d), a shade up from pure
+    # #000 so the volume still reads against the asphalt in daylight.
+    "Patmos Black":     ("#1a1a1d", 0.62, 0.05),
     "Brick Warm":       ("#a86a4c", 0.85, 0.0),
     "Facade Teal":      ("#2f7f74", 0.75, 0.0),
     "Glass Light":      ("#5f97a6", 0.12, 0.0),

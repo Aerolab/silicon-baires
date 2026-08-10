@@ -27,7 +27,7 @@ laid flat on a roof — so they have to be separate curves. The pairs below shar
 their parent's `viewBox`, which is what makes them a split rather than two
 downloads.
 
-## Vector (57 files)
+## Vector (59 files)
 
 | file | brand | source |
 |---|---|---|
@@ -71,6 +71,8 @@ downloads.
 | `openzeppelin_dark.svg` | OpenZeppelin | the site's own file, wordmark still near-black, for a pale wall |
 | `naranjax.svg` | Naranja X | Wikimedia Commons. Split by colour at runtime, not into files: the nine orange strokes are the word, the two violet ones the X |
 | `paisanos.svg` | Paisanos | inline SVG from paisanos.io. White wordmark plus lime symbol: needs a dark background |
+| `patmos.svg` | Patmos | wordmark from the Patmos landing (`landing-v2/public/patmos-logo.svg`), 656x79, 8.3:1. Fills inlined as **white**: the landing publishes it as `currentColor` on black, and spot 68 is Glass Dark / Patmos Black |
+| `patmos_dark.svg` | Patmos | the same file with `#0a0a0c` fills, for a pale wall. Unused today |
 | `pomelo.svg` | Pomelo | inline SVG from pomelo.la |
 | `preguntados.svg` | Preguntados (etermax) | **source not recorded**. 1788x1788. Laid flat on the Etermax roof: it is what that company puts on a building ahead of its own name |
 | `rebill.svg` | Rebill | inline SVG from rebill.com. Arrives as `currentColor`, i.e. with no colour: the table's `ink` wins |
