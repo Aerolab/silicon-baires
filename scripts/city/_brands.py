@@ -126,6 +126,11 @@ AVENUE = [
     # also pinned through EXTRA, so their place in this list decides nothing
     ("GALICIA",      "disc",     "#f7f3e8", "#ff7f00", "galicia_iso.svg"),
     ("CODERHOUSE",   "bars",     "#f7f3e8", "#1d1d1d", "coderhouse.svg"),
+    # the other arm of Coderhouse's L, declared in SHARED. Pinned, so its place
+    # in this list decides nothing; it is here so the brand exists with its
+    # colour. White, because the mark goes on a dark plate of its own — see the
+    # HERO entry for why that plate is not optional on this facade.
+    ("BERRY",        "disc",     "#0a0a0b", "#f5f5f7", "berry_iso.svg"),
     ("BELO",         "disc",     "#f7f3e8", "#5300da", "belo.svg"),
     ("COCOS",        "ring",     "#f7f3e8", "#002c65", "cocos.svg"),
     ("BRUBANK",      "disc",     "#f7f3e8", "#614ad9", "brubank.svg"),
@@ -227,6 +232,62 @@ HERO = {
                    # a flat word at mid-height comes out sliced into strips
                    "facade_frac": 0.86, "facade_tall": 0.22,
                    "facade_z": 0.93, "facade_depth": 0.55},
+    # THE OTHER ARM OF CODERHOUSE'S L, spot 147, and asked for. The cell at
+    # (201.75, -2.0) is two wings: Coderhouse is on (201.8, -14.8) and this is
+    # (194.95, 10.83), 14.5 x 26.6 and the same 32.05 m top. Two brands on one
+    # address, declared in SHARED with the same test the Ualá / Brubank pair
+    # passes — the two walls are two PLANES, 13.7 m apart in x and 25 in y, and
+    # the two logos sit at different heights (Coderhouse at 0.93 of the
+    # parapet, this at 0.718), which is what stops the eye reading them as one
+    # band of signage.
+    #
+    # THE +X FACE, AND THE KERB IS 16.8 m AWAY ON PURPOSE. Every other warning
+    # in this file about a wall that far from a street is about a courtyard,
+    # and this one is not: the strip in front was walked and it is empty —
+    # open ground out to the kerb of the street at x=225, `wall_seen` 1.00 at
+    # every height from 8 m up. The Revamos case exactly. The alternative, the
+    # +Y face, has the pavement 2.9 m off and only 14.5 m of run, which lands
+    # the symbol at 0.045 of the frame — under the 0.05 floor 93 measures, so
+    # the brand would be there and not delivered. This face runs 26.6 and
+    # clears it.
+    #
+    # AND IT NEEDS A PLATE, which is the whole reason this entry is not four
+    # lines. The mark is a rosette of THIN RINGS and this facade is banded
+    # every metre between `Glass Dark` #1c1e21 and `Concrete Warm` #e8dbbf.
+    # Sampled across the run at the band the sign occupies it is roughly 56 %
+    # glass and 44 % concrete, and no monochrome ink survives both — white is
+    # 16.1:1 on the glass and 1.2:1 on the concrete, black is the same numbers
+    # the other way round. The rule in CLAUDE.md says fit the logo inside one
+    # clean band; here the longest one is 2.5 m, which on a 32 m building is a
+    # symbol the shot cannot see. Mural's exception does not apply either —
+    # that logo is black-and-primary and reads on everything it crosses, and
+    # this one is one colour. So the mark brings its own ground, at 17.9:1, the
+    # way Berry's own app icon draws it. See `berry_plate.svg`.
+    #
+    # THE SIZE. 16.0 m of plate with a 12.5 m mark inside it, centred at
+    # z=23.0: the plate spans 15.0 to 31.0, which is 0.5 m clear of the
+    # parapet cap at 31.5 and 10 m clear of the ground floor's setback. Across
+    # the wall it is 16.0 on a run of 26.6 — and `run` is the PADDED footprint,
+    # so the real wall is nearer 24.7 and this leaves about 4.4 m of it at each
+    # end. That margin is the point: the fault this file keeps recording is a
+    # symbol hanging off the corner into open air, and nothing checks for it.
+    "BERRY": {"iso": "berry_iso.svg", "word": "berry_iso.svg",
+              "plate": "berry_plate.svg",
+              "facade": True, "facade_only": True,
+              "facade_arts": ["plate", "iso"],
+              "facade_side": "left", "facade_at": (194.95, 10.83),
+              # two arts, two depths. The plate 0.02..0.14 off the box and the
+              # mark 0.16..0.46, so there is 2 cm of air between them: coplanar
+              # is what 92_check_zfight fails on.
+              "plate_facade_proud": 0.02, "plate_facade_depth": 0.12,
+              "iso_facade_proud": 0.16, "iso_facade_depth": 0.30,
+              "plate_facade_frac": 0.603, "plate_facade_tall": 0.499,
+              "iso_facade_frac": 0.471, "iso_facade_tall": 0.390,
+              "facade_z": 0.718,
+              # both files carry these already; forcing them is what makes the
+              # colour a decision this table records rather than one buried in
+              # an asset somebody may re-download
+              "plate_ink": "#0a0a0b", "iso_ink": "#f5f5f7"},
     "BELO": {"word": "belo.svg", "iso": "belo.svg",
              "facade": True, "facade_only": True,
              "facade_side": "right", "facade_at": (172.2, -377.2),
@@ -845,6 +906,13 @@ SHARED = {
     # `right` was rendered as the alternative and is worse: 13.3 m of run
     # instead of 29.5, and the brown building next door eats the far half of it.
     (-12.75, -75.0): "Ualá on the south arm, Brubank on the north one, asked for",
+    # The L at spot 147 / 153, and it passes the same test as the pair above:
+    # the two walls are two PLANES, not one elevation. Coderhouse's wordmark is
+    # on the +X face of (201.8, -14.8) at 0.93 of the parapet; Berry's symbol is
+    # on the +X face of (194.95, 10.83), 13.7 m west and 25 m north, at 0.718.
+    # Different plane, different height, different format — a word and a symbol
+    # — which is three ways of not reading as one company with two brands.
+    (201.75, -2.0): "Coderhouse on the south arm, Berry on the north one, asked for",
     # THE U AT (33.75, -231.25) WAS HERE and no longer needs to be: it carried
     # Mural and Bioceres, one per arm, because the corridor had three free walls
     # and five brands to place. Bioceres moved to spot 155 and the U is down to
@@ -941,7 +1009,17 @@ PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        "Sign.046": "DECENTRALAND",  # was SALTO; the wall is at (66.2, -231.2)
        # Bioceres came off the U's west arm and onto spot 155, asked for.
        # 021 had been a walked Ripio disc before the brand got a real vector.
-       "Sign.021": "BIOCERES"}      # was RIPIO on spot 155, before that OLX
+       "Sign.021": "BIOCERES",      # was RIPIO on spot 155, before that OLX
+       # Berry, and the same shape as Cocos and Patmos: spot 147's cell already
+       # carries a sign record (Sign.097, the Coderhouse anchor), and
+       # `plan_extra` only runs on a cell with NO sign at all — so an EXTRA
+       # anchor here would print NO ENTRARON and place nothing. It does not need
+       # one. The record below is a roofmark on the far north-east rim that the
+       # shot never reaches, carrying the invented name MATE; it is never built,
+       # because the HERO entry is `facade_only`. All this pin does is keep the
+       # allocation from walking the brand off to another roof the next time
+       # this table grows. The wall it actually lands on is in HERO.
+       "Sign.078": "BERRY"}         # was MATE, an invented name
 DROP = {"Sign.054",          # retired placeholder on SLA's replaced lot; its
                               # record stays so existing signs are not renumbered
         # the RIPIO roof on 179, which is the Etermax building: its wordmark
