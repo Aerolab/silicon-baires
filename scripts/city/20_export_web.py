@@ -322,7 +322,17 @@ def roof_spots():
         who = owners.get(tuple(s_["at"]))
         if not who:
             continue
-        label = sorted(who)[0]
+        # EVERY brand on the building, not the alphabetically first one.
+        # `who` is a set because a building CAN carry two brands — the three
+        # addresses declared in `_brands.SHARED` — and taking [0] silently
+        # hid one of each pair. It went unnoticed while the pairs were Mercado
+        # Libre / Mercado Pago and Ualá / Brubank, where the survivor is the
+        # name a person would say anyway; it stopped being harmless when Berry
+        # landed on Coderhouse's other arm and BERRY sorted first, so the
+        # overlay stopped naming Coderhouse anywhere in the city. This is the
+        # tool somebody points at a building with, and a label that is wrong
+        # is worse than a label that is long.
+        label = " · ".join(sorted(who))
         for wx, wy, w, d in s_["wings"]:
             taken[(round(wx, 1), round(wy, 1))] = label
 

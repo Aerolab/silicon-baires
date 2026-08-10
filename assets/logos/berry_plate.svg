@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
+  <!-- NOT A LOGO. The dark ground the Berry mark sits on, kept as a file
+       because `logo()` is the only thing that puts flat artwork on a wall here
+       and it takes a filename. Same arrangement as `revamos_plate.svg`, and
+       for a stronger reason.
+
+       WHY BERRY NEEDS ONE. The mark is a rosette of thin rings, and the wall
+       of wing (194.95, 10.83) is banded every metre or so between `Glass Dark`
+       #1c1e21 and `Concrete Warm` #e8dbbf. No single ink survives both:
+
+           white  #f5f5f7  on Glass Dark     16.1:1     on Concrete Warm  1.2:1
+           black  #1d1d1f  on Concrete Warm  12.4:1     on Glass Dark     1.1:1
+
+       and the longest unbroken band on that facade is 2.5 m, which on a 32 m
+       building is a symbol nothing in the shot can see. So the mark carries its
+       own ground and reads white-on-near-black at 17.9:1 the whole way up.
+       Berry's own app icon is the mark on a solid ground, so this is the
+       brand's format rather than an invention of this city's.
+
+       WHY DARK AND NOT LIGHT. Both halves of the wall are about equally
+       represented across the band the sign occupies, so either plate merges
+       into half of it. A dark plate merges into the GLASS, which reads as more
+       glazing; a light one merges into the concrete and reads as a bright
+       panel with pieces missing.
+
+       IT IS A SEPARATE ART, NOT A SHAPE INSIDE berry_iso.svg. `logo()`
+       extrudes every piece of one artwork to the same depth off the same
+       plane, so a square drawn into the mark would occupy the same slab as the
+       rings and swallow them. `HERO.facade_arts` is a list and every entry
+       reads its own `<key>_facade_proud` and `<key>_facade_depth`: the plate
+       goes on at 0.02 and is 0.12 deep, the mark at 0.16, which leaves 2 cm of
+       air between the plate's front face and the mark's back face. Coplanar is
+       what 92_check_zfight fails on, and touching would be coplanar.
+
+       Square, with the corners rounded the way an app icon is, drawn as a path
+       with cubic corners rather than a <rect rx>: nothing here depends on how
+       much of SVG the importer implements. -->
+  <path fill="#0a0a0b" d="M22,0 L78,0 C90.15,0 100,9.85 100,22 L100,78 C100,90.15 90.15,100 78,100 L22,100 C9.85,100 0,90.15 0,78 L0,22 C0,9.85 9.85,0 22,0 Z"/>
+</svg>

@@ -27,7 +27,7 @@ laid flat on a roof — so they have to be separate curves. The pairs below shar
 their parent's `viewBox`, which is what makes them a split rather than two
 downloads.
 
-## Vector (64 files)
+## Vector (66 files)
 
 | file | brand | source |
 |---|---|---|
@@ -41,6 +41,8 @@ downloads.
 | `bioceres_iso.svg` | Bioceres Crop Solutions | the trefoil alone, traced from the left 88 px of the same PNG. Unused today; it is the format a roof would want |
 | `bioceres_word.svg` | Bioceres Crop Solutions | the name alone, traced from a 262x44 crop of the same PNG, 6:1. The full lockup was tried first and rendered as a blue smudge: on 7.8 m of wall the second line is 30 cm of serif text. **Unused since the brand moved to spot 155**: see the `_light` file below |
 | `bioceres_word_light.svg` | Bioceres Crop Solutions | the same trace with the `#004676` fill swapped for white, and **this is the one `_brands` uses.** Not a taste call: the wall on spot 155 is 64 % `Glass Dark` #15181b across the band the logo occupies, where the navy is 1.5:1 and white is 12:1. White is also what the brand itself uses on dark ground. Four brands in this list are white on warm concrete with no such answer available |
+| `berry_iso.svg` | Berry | inline SVG from the berry.app header, 28x28, one path. **Symbol only: this brand publishes no wordmark in vector anywhere.** berry.app and berryinvesting.com are the same page and it carries exactly two vector marks, this one and `/icon.svg`, which is the same path on a white square; there is no /brand, /press or /about, and the name on the site is set in type rather than drawn. Same situation as `galicia_iso.svg` and `decentraland.svg`. The path arrived as `fill="currentColor"`, which Blender imports as no colour at all, so it was given `#f5f5f7` — the brand's own `--berry-dark-label-primary` — and `_brands` forces the same value through `iso_ink` |
+| `berry_plate.svg` | Berry | **not a logo.** The dark ground the mark sits on, `#0a0a0b` — the brand's own `--berry-dark-bg-primary` — drawn here as a separate art because `logo()` extrudes one artwork to one depth off one plane. The mark is a rosette of thin rings and its wall alternates `Glass Dark` #1c1e21 with `Concrete Warm` #e8dbbf every metre: white reads 16.1:1 on one and 1.2:1 on the other, black is those numbers reversed, and the longest clean band is 2.5 m on a 32 m building. So the mark carries its own ground and holds 17.9:1 the whole way up. Berry's own app icon is the mark on a solid ground, so this is the brand's format. Second file of its kind after `revamos_plate.svg`, and the header of each explains the two-depth arrangement |
 | `belo.svg` | Belo | inline SVG from belo.app. The `fill` arrived as `var(--token-…, rgb(83,0,218))` and was replaced with `#5300da`: Blender does not resolve CSS variables and imported it black |
 | `brubank.svg` | Brubank | Webflow CDN, the footer logo of brubank.com, 135x28. Wordmark only, 4.8:1 — this brand has no separate symbol. The header file at the same CDN is the SAME lockup with 35 % of empty viewBox on its right, which would have sized the wall off dead space; both were rasterised and compared before choosing. The four bounding-box `mask` elements and the `clipPath` went out, for the reason recorded under `cocos.svg` |
 | `coderhouse.svg` | Coderhouse | Framer CDN, coderhouse.com, 811x236. Wordmark only, 8.4:1 |
