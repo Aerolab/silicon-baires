@@ -58,9 +58,15 @@ PALETTE = {
     "Concrete Cool":    ("#b6bcbd", 0.85, 0.0),
     "Concrete Cool2":   ("#8d9599", 0.85, 0.0),
     "Concrete Dark":    ("#6e7276", 0.85, 0.0),
+    # near-black, for the Vercel building: the SF-office look. Not in
+    # FAMILIES, so no other building can draw it.
+    "Concrete Ink":     ("#232528", 0.85, 0.0),
     # Dedicated near-black facade for SLA's broadcast building. It is slightly
     # lighter than the asphalt so it holds its silhouette in the daylight shot.
     "SLA Black":        ("#121417", 0.62, 0.05),
+    # Patmos: the landing's surface black (#1a1a1d), a shade up from pure
+    # #000 so the volume still reads against the asphalt in daylight.
+    "Patmos Black":     ("#1a1a1d", 0.62, 0.05),
     "Brick Warm":       ("#a86a4c", 0.85, 0.0),
     "Facade Teal":      ("#2f7f74", 0.75, 0.0),
     "Glass Light":      ("#5f97a6", 0.12, 0.0),
@@ -181,6 +187,14 @@ PALETTE = {
     # --- the title --------------------------------------------------------
     "Title Red":        ("#ac0300", 0.55, 0.0),
     "Title Edge":       ("#1a1210", 0.70, 0.0),
+
+    # --- the BOTR cube (06_landmarks) -------------------------------------
+    # Matte painted panel, not Glass Dark: at 0.08 roughness the sky comes
+    # back as a gloss stripe across the wordmark. The white is the same
+    # family as Roof Bright; the red is the dot and nothing else.
+    "BOTR Wall":        ("#211f20", 0.85, 0.0),
+    "BOTR Ink":         ("#f2efe8", 0.50, 0.0),
+    "BOTR Red":         ("#d63426", 0.50, 0.0),
 }
 
 

@@ -15,8 +15,8 @@ sys.path.insert(0, str(ROOT / "scripts" / "city"))
 import bpy, blib
 from mathutils import Matrix, Vector
 from _common import (Mesh, instance, mat, rng, counts,
-                     R, LOTS, SOLIDS, open_city, save_city, purge,
-                     preview, paint)
+                     R, LOTS, SOLIDS, SINK, open_city, save_city, purge,
+                     preview, paint, title_font)
 from _solids import Solids
 
 # NO GRID CONSTANTS HERE, and that is the point. This file used to open with
@@ -26,7 +26,9 @@ from _solids import Solids
 # 52 to 76 m and the streets 12, 22 or 70. Anything that needs a plot reads the
 # lots table, like main() does.
 
-CELLS = {"stadium": (6, 1), "blob": (1, 6), "garage": (7, 4)}
+CELLS = {"stadium": (6, 1), "blob": (1, 6), "garage": (7, 4),
+         "botr": (3, 3)}    # Revamos' block: the cube stands on its open NE
+                            # quadrant, where a jacaranda stood at the corner
 SITE = [(5, 7), (2, 0)]     # (4, 5) now carries the title
 
 
@@ -382,6 +384,142 @@ def construction(m, kit, coll, cx, cy, lift, r, frame=True):
                   mat("Metal Painted"))
 
 
+# --- the BOTR cube ----------------------------------------------------------
+# One client, one building: a matte black monolith on the park the camera
+# reads directly under the title, with the wordmark wrapped round the corner
+# the camera sees. The two visible faces of this camera are +X and +Y (same
+# fact 10_signs.hero_facade is built on), so "BO" takes the +X face and "TR"
+# the +Y one and the word reads across the corner. The O is not the font's O:
+# it is a ring with a heart in the counter, which is the logo. Letters are
+# real geometry in the title's convention — font curves — and every mark is
+# sunk SINK into its wall like everything else that lies flat on a surface.
+BOTR_W = 21.0                # footprint of the cube
+BOTR_H = 21.0                # parapet top; near enough a cube, like the brief
+BOTR_RELIEF = 0.10           # paint-thick relief. Sign-thick reads as letters
+                             # bolted on; this wordmark is painted on the wall
+BOTR_CAP = 8.2               # cap height of the wordmark
+BOTR_BASE = 6.4              # baseline over the ground
+
+
+def face_frame(px, py, pz, nx, ny):
+    """World matrix for artwork on a wall: local X runs along the wall in the
+    direction text reads for a viewer standing outside, local Y is up, local Z
+    is the outward normal. A proper rotation (det +1), so glyph windings
+    survive — 10_signs.letters needed a minus sign for exactly this fault."""
+    r = Vector((-ny, nx, 0.0))
+    return Matrix(((r.x, 0.0, nx, px),
+                   (r.y, 0.0, ny, py),
+                   (0.0, 1.0, 0.0, pz),
+                   (0.0, 0.0, 0.0, 1.0)))
+
+
+def glyph(ch, size):
+    """One character, as a mesh in XY on its baseline, extruded ±RELIEF/2."""
+    cu = bpy.data.curves.new(ch, type="FONT")
+    cu.body = ch
+    cu.font = title_font()
+    cu.size = size
+    cu.extrude = BOTR_RELIEF / 2
+    cu.align_x = "LEFT"
+    cu.align_y = "BOTTOM_BASELINE"
+    ob = bpy.data.objects.new(ch, cu)
+    bpy.context.scene.collection.objects.link(ob)
+    dg = bpy.context.evaluated_depsgraph_get()
+    me = bpy.data.meshes.new_from_object(ob.evaluated_get(dg))
+    bpy.data.objects.remove(ob, do_unlink=True)
+    return me
+
+
+def botr(m, cx, cy, lift):
+    wall, ink, red = mat("BOTR Wall"), mat("BOTR Ink"), mat("BOTR Red")
+    trim = mat("Roof Bright")
+    W, H, rel = BOTR_W, BOTR_H, BOTR_RELIEF
+    zoff = rel / 2 - SINK        # glyphs extrude about their plane: this puts
+                                 # the back face SINK under the wall, not half
+                                 # the relief inside it (see 10_signs.logo)
+
+    # the monolith, and a white coping round the roof edge, sunk into the cap.
+    # The coping OVERHANGS the wall by 3 cm, the way a real cap flashing does:
+    # flush, its outer face shares the wall's own plane over the full run and
+    # 92_check_zfight calls it, correctly, a fight. The strips along X stop
+    # short of the corners so no two copings overlap coplanar either.
+    m.box((cx, cy, lift + H / 2), (W, W, H), wall)
+    lip, cw = 0.03, 0.48
+    off = (W + lip * 2 - cw) / 2         # outer face at wall + lip
+    for sy in (-1, 1):
+        m.slab(cx, cy + sy * off, W + 2 * lip, cw,
+               lift + H - SINK, lift + H + 0.10, trim)
+        m.slab(cx + sy * off, cy, cw, W - 2 * (cw - lip),
+               lift + H - SINK, lift + H + 0.10, trim)
+
+    # rooftop plant: white boxes with a dark vent slat on each face the
+    # camera sees, standing on the cap, sunk by SINK like everything else
+    for bw, bd, bh, ox, oy in ((2.8, 2.8, 1.8, -3.2, 3.6),
+                               (2.2, 2.2, 1.5, 2.4, 4.6),
+                               (3.4, 2.4, 2.0, 3.4, -0.8),
+                               (2.0, 2.0, 1.4, -4.8, -1.6),
+                               (2.6, 2.0, 1.6, 0.0, -5.0)):
+        bx2, by2 = cx + ox, cy + oy
+        m.box((bx2, by2, lift + H - SINK + bh / 2), (bw, bd, bh), trim)
+        m.box((bx2 + bw / 2 + 0.035, by2, lift + H + bh * 0.45),
+              (0.07, bd * 0.55, bh * 0.36), mat("Metal Dark"))
+        m.box((bx2, by2 + bd / 2 + 0.035, lift + H + bh * 0.45),
+              (bw * 0.55, 0.07, bh * 0.36), mat("Metal Dark"))
+
+    # the wordmark. Measured, not assumed: cap height is not the font size
+    # and the difference is not a constant across weights (see 10_signs).
+    probe = {}
+    for ch in "BTR":
+        me = glyph(ch, 1.0)
+        xs = [v.co.x for v in me.vertices]
+        ys = [v.co.y for v in me.vertices]
+        probe[ch] = (min(xs), max(xs) - min(xs), max(ys))
+        bpy.data.meshes.remove(me)
+    size = BOTR_CAP / probe["B"][2]
+    wof = {ch: (lo * size, w * size) for ch, (lo, w, _c) in probe.items()}
+    gap = BOTR_CAP * 0.12
+    ro = BOTR_CAP / 2            # the O is a true circle, cap tall
+    ri = ro * 0.60
+
+    def letter(ch, fxm, cursor):
+        me = glyph(ch, size)
+        m.add_mesh(me, ink, fxm @ Matrix.Translation(
+            Vector((cursor - wof[ch][0], BOTR_BASE, zoff))))
+        bpy.data.meshes.remove(me)
+        return cursor + wof[ch][1] + gap
+
+    # +X face: B, then the ring-and-heart O, then the red dot up and left
+    fx = face_frame(cx + W / 2, cy, lift, 1.0, 0.0)
+    total = wof["B"][1] + gap + 2 * ro
+    cur = letter("B", fx, -total / 2)
+    oc = Matrix.Translation(Vector((cur + ro, BOTR_BASE + BOTR_CAP / 2, 0)))
+    for k in range(28):
+        a0, a1 = 2 * math.pi * k / 28, 2 * math.pi * (k + 1) / 28
+        m.prism(arc_poly(ri, ro, a0, a1, segs=2), -SINK, rel - SINK,
+                ink, fx @ oc)
+    # The counter stays EMPTY on purpose: the O is a plain ring. The first
+    # version carried a heart in it and the client took it out.
+    m.cyl((-total / 2 + 0.4, BOTR_BASE + BOTR_CAP + 1.6, -SINK), 0.95, rel,
+          red, segs=24, xform=fx)
+
+    # +Y face: TR, and the glass entry at street level, toward the corner
+    # the word wraps round
+    fy = face_frame(cx, cy + W / 2, lift, 0.0, 1.0)
+    total = wof["T"][1] + gap + wof["R"][1]
+    cur = letter("T", fy, -total / 2)
+    letter("R", fy, cur)
+    ex, ew, eh, et = -2.0, 5.6, 4.5, 0.28
+    for x0, x1, y0, y1, z1, piece in (
+            (ex - ew / 2 + et, ex + ew / 2 - et, 0.0, eh - et, 0.06,
+             mat("Glass Light")),                          # the glass, recessed
+            (ex - ew / 2, ex - ew / 2 + et, 0.0, eh, 0.20, trim),   # jambs
+            (ex + ew / 2 - et, ex + ew / 2, 0.0, eh, 0.20, trim),
+            (ex - ew / 2 + et, ex + ew / 2 - et, eh - et, eh, 0.20, trim),
+            (ex - 0.05, ex + 0.05, 0.0, eh - et, 0.14, trim)):      # mullion
+        m.prism([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], -SINK, z1,
+                piece, fy)
+
+
 def main():
     open_city(needs_collections=("KIT", "SITE"), needs_files=(LOTS,),
               hint="run 03_ground.py first")
@@ -412,6 +550,9 @@ def main():
     paint("Stadium Apron")
     paint("Stadium Ad Dark")
     paint("Roof Bright")
+    paint("BOTR Wall")
+    paint("BOTR Ink")
+    paint("BOTR Red")
 
     r = rng(777)
     m = Mesh()
@@ -448,6 +589,25 @@ def main():
         fn(lot)
         fw, fd, frot, fh = FOOT[name]
         sol.add(lot["x"], lot["y"], fw, fd, frot, 0.0, lot["lift"] + fh)
+
+    # the BOTR cube, off the +x+y corner of its lot: the open NE quadrant of
+    # Revamos' block, right at the junction corner where a jacaranda stood
+    # (Jacaranda1.i.019, which this building replaces). The corner is the one
+    # nearest the camera, so its two painted faces are the two this camera
+    # sees, and the free quadrant is real: Revamos' L ends at x -99.7 and the
+    # block's other building starts at y -79.1, measured off city_solids.
+    # Its centre is NOT the lot's, so it does not go through the loop above.
+    # It draws nothing from r on purpose: adding a client must not reshuffle
+    # the cranes and the garage.
+    lot = lot_of(*CELLS["botr"])
+    if lot is None:
+        print("  botr skipped: the arterial took its cell")
+    else:
+        bx = lot["x"] + lot["size"][0] / 2 - BOTR_W / 2 - 2.5
+        by = lot["y"] + lot["size"][1] / 2 - BOTR_W / 2 - 3.0
+        botr(m, bx, by, lot["lift"])
+        sol.add(bx, by, BOTR_W + 1.8, BOTR_W + 1.8, 0.0, 0.0,
+                lot["lift"] + BOTR_H + 0.5)
 
     for k, (i, j) in enumerate(SITE):
         lot = lot_of(i, j)
