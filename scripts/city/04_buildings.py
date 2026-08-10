@@ -1510,13 +1510,22 @@ def build_sla(m, kit, coll, sol, lots):
                deck="Roof Dark", sol=sol, wx=cx, wy=cy)
     # A shallow crown gives the building a studio silhouette without taking
     # away the broad facade the wordmark needs.
-    m.slab(0.0, 0.0, w + 0.75, d + 0.75, top - 1.15, top - 0.55,
+    #
+    # CROWN is the height of its top surface below `top`, and it is a number
+    # rather than a literal because the roof props have to stand on it. The
+    # crown is a solid plate over the WHOLE roof, so on this building the deck
+    # an ordinary lot has is 0.28 m of buried geometry: every prop that lands
+    # here at `top - DECK` is sunk into the crown, not resting on it. It went
+    # unseen while the allocation happened to leave this roof empty, and
+    # surfaced as 2 of 2 the first time it did not.
+    CROWN = 0.55
+    m.slab(0.0, 0.0, w + 0.75, d + 0.75, top - 1.15, top - CROWN,
            mat("SLA Black"), x)
     sol.add(cx, cy, w + 0.9, d + 0.9, 0.0, 0.0, top)
     keep = plan_extra(cx, cy, [(0.0, 0.0, w, d)], top, sol)
     SITES.append({"at": [round(cx, 2), round(cy, 2)], "top": round(top, 2),
                   "wings": [[round(cx, 2), round(cy, 2), w, d]]})
-    roof_props(kit, coll, cx, cy, w, d, top - DECK, 0.0, r, True,
+    roof_props(kit, coll, cx, cy, w, d, top - CROWN, 0.0, r, True,
                keep=keep)
     print(f"  SLA building: {w:.0f} x {d:.0f} m, {top:.1f} m high")
 
