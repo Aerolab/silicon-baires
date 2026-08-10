@@ -9,6 +9,7 @@ import { makePost, ENV_INTENSITY } from "./post.js";
 import { makeCamera, placeHero, shotAt, fitToAspect } from "./shot.js";
 import { measureFramebuffer, compare } from "./measure.js";
 import { makeSpots } from "./spots.js";
+import { makeDarkMode } from "./darkmode.js";
 import { TIER, TIER_WHY } from "./tier.js";
 import { createElement, Play, Pause, Orbit, Clapperboard } from "lucide";
 
@@ -283,6 +284,10 @@ const post = makePost(renderer, {
 // ?spots=1 — numbered roofs, for pointing at one. Off by default and not part
 // of the piece; see spots.js.
 const spots = flag("spots", 0) ? await makeSpots(camera) : null;
+// The easter egg. Not under a flag: it is part of the piece, and it does
+// nothing at all until somebody finds the disc and clicks it. Off during a
+// capture, where there is no pointer and the video must be reproducible.
+const darkMode = capturing ? null : makeDarkMode(city, { camera, renderer });
 Object.assign(window, { post, camera, controls });
 if (flags.has("ev")) post.uniforms.uExposure.value = num("ev", 0);
 if (flags.has("contrast")) post.uniforms.uContrast.value = num("contrast", 1);
@@ -391,8 +396,11 @@ addEventListener("resize", () => {
 // that was never going to resolve.
 let fps = 0, windowFrames = 0, windowStart = performance.now();
 
-function drawFrame(now) {
+function drawFrame(now, dt = 0) {
   city.setFrame(frame);
+  // Before the render and after setFrame: the tint is on the shared materials,
+  // so it costs one lerp per material whatever the city is doing.
+  if (darkMode) darkMode.update(dt);
 
   const [width, tx, ty] = shotAt(shot, frame);
   const aspect = viewW / viewH;
@@ -494,7 +502,7 @@ function tick(now) {
     }
     ui.scrub.value = String(Math.round(frame));
   }
-  drawFrame(now);
+  drawFrame(now, dt);
 }
 
 // window.measure(frame) draws that frame and reads the pixels straight back —

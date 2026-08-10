@@ -58,6 +58,9 @@ PALETTE = {
     "Concrete Cool":    ("#b6bcbd", 0.85, 0.0),
     "Concrete Cool2":   ("#8d9599", 0.85, 0.0),
     "Concrete Dark":    ("#6e7276", 0.85, 0.0),
+    # near-black, for the Vercel building: the SF-office look. Not in
+    # FAMILIES, so no other building can draw it.
+    "Concrete Ink":     ("#232528", 0.85, 0.0),
     # Dedicated near-black facade for SLA's broadcast building. It is slightly
     # lighter than the asphalt so it holds its silhouette in the daylight shot.
     "SLA Black":        ("#121417", 0.62, 0.05),

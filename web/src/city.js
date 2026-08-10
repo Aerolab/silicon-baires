@@ -133,6 +133,11 @@ export async function loadCity(v = "", onProgress = null) {
 
   return {
     root, movers, bbox, gltfScene: gltf.scene,
+    // The name -> (mesh, instance index) map the collapse already had to build.
+    // Published because it is the only way back from a Blender object name to
+    // something in the scene: after the grouping above there is no object per
+    // building any more. See darkmode.js, which hit-tests one sign with it.
+    byName,
     stats: { nodes: instances, drawCalls: groups.size, movers: movers.length },
 
     // Step 11 gives almost everything exactly two linear keyframes, so for

@@ -78,6 +78,20 @@ DROP = 0.7                # how far under the roof edge the letter tops sit
 LOGO_CAP = CAP * 1.45     # the box a real logo gets on a parapet. See build()
 MAST = 0.55               # mast height as a fraction of the disc diameter
 
+# Brands whose disc hangs in the air with no pole under it, by sign name.
+#
+# Empty, and kept because the mechanism is two lines and the question comes
+# back. The disc keeps the height the mast gave it and simply loses its
+# support, so nothing else in the composition moves.
+#
+# If it is ever used again: do NOT put the sign in the "AIR" collection to get
+# it past 98_check_floating. 11_animate does purge("AIR") to rebuild the
+# helicopter and runs AFTER this step, so the sign would be deleted from the
+# finished city. It does not need the exemption anyway — the record carries
+# mount="facade" (04 sets it for any HERO brand with a wall), which already
+# takes it out of TEST B's set.
+FLOATING = set()
+
 
 UNIQUE = ("billboard", "medianera")   # one material each, not one per brand
 
@@ -938,6 +952,21 @@ def build(rec, coll, site):
                                 depth=0.28)):
             mark(m, rec["mark"], s, ink, top)
     else:                                   # mast
+        if hero and hero.get("facade_only"):
+            # the mast is never raised: the brand lives on a wall. Parapet,
+            # billboard, party wall and roofmark already did this and it was
+            # missing here — the same gap the billboard branch documents. A
+            # facade_only brand lands on a mast record whenever thin() drops
+            # its usual anchor, and a bare pole with a blank disc is worse
+            # than nothing at all.
+            for k in hero.get("facade_arts",
+                              [hero.get("facade_art", "word")]):
+                hero_facade(m, rec, hero, site, key=k)
+            if hero.get("roof_art"):
+                hero_word(m, rec, hero, site, key=hero["roof_art"])
+            ob = m.build(rec["name"], coll)
+            ob.location = (rec["x"], rec["y"], rec["z"])
+            return ob
         s = rec["w"]
         # THE ONLY FORMAT THAT DID NOT KNOW ABOUT `facade_only`, and it is the
         # one where leaving the structure up is worst: a mast with the brand
@@ -957,7 +986,11 @@ def build(rec, coll, site):
             ob.location = (rec["x"], rec["y"], rec["z"])
             return ob
         h = s * MAST
-        m.cyl((0, 0, 0), 0.45, h, frame, segs=10, xform=x)
+        # no pole under a floating disc, and the disc does NOT move up to
+        # compensate: it keeps the centre height the mast gave it, so the only
+        # thing that changes in frame is that the support is gone.
+        if rec["name"] not in FLOATING:
+            m.cyl((0, 0, 0), 0.45, h, frame, segs=10, xform=x)
         # the disc is a flat cylinder stood on edge, so the mark sits on its
         # face and not on its rim
         up = x @ Matrix.Translation(Vector((0, 0, h + s / 2))) @ \
@@ -971,6 +1004,19 @@ def build(rec, coll, site):
             logo(m, hero["iso"], s * f, s * f,
                  hero.get("iso_ink", rec["ink"]), disc, depth=0.22,
                  force_ink="iso_ink" in hero, only_x=hero.get("iso_x"))
+            if hero.get("back"):
+                # a second mark on the FAR face of the disc. Rotated through
+                # pi about the disc's vertical so it reads forwards from
+                # behind — without the turn it is the front logo seen through
+                # the panel, mirrored. Only free orbit ever comes round here;
+                # the shot never does, which is why the far face is available
+                # at all.
+                back = up @ Matrix.Translation(Vector((0, 0, -0.2))) @ \
+                    Matrix.Rotation(math.pi, 4, "Y")
+                logo(m, hero["back"], s * f, s * f,
+                     hero.get("back_ink", hero.get("iso_ink", rec["ink"])),
+                     back, depth=0.22,
+                     force_ink="back_ink" in hero or "iso_ink" in hero)
             if hero.get("facade"):
                 for k in hero.get("facade_arts",
                                   [hero.get("facade_art", "word")]):

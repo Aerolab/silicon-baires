@@ -61,7 +61,7 @@ What NOT to re-derive — each one of these cost a render:
 CAMPUS = [
     ("GLOBANT",   "chevron",  "#f7f3e8", "#272425", "globant.svg"),
     ("AEROLAB",   "disc",     "#1c1c1c", "#ff510d", "aerolab.svg"),
-    ("VERCEL",    "triangle", "#f7f3e8", "#111111", "vercel.svg"),
+    ("VERCEL",    "triangle", "#111111", "#ffffff", "vercel.svg"),
     ("BASEMENT",  "square",   "#f7f3e8", "#111111", "basement.svg"),
     ("AUTH0",     "disc",     "#f7f3e8", "#ea5428", "auth0.svg"),
     ("SATELLOGIC", "ring",    "#f7f3e8", "#123a5e", "satellogic.svg"),
@@ -609,13 +609,19 @@ HERO = {
                  # sliced into strips by them
                  "facade_frac": 0.80, "facade_tall": 0.20,
                  "facade_z": 0.93, "facade_depth": 0.55},
-    # the triangle alone on the disc, small, and the whole logo on the wall
+    # the triangle alone on the disc, small, and the whole logo on the wall.
+    # White on black since the building went near-black: the cream panel read
+    # as a hole in the facade. The camera-facing side keeps the triangle; the
+    # far side carries the rabbit, which is the owner's mark and the one place
+    # in the city a back face is worth a logo — free orbit is the only camera
+    # that ever comes round there.
     "VERCEL": {"iso": "vercel_iso.svg", "word": "vercel.svg",
-               "iso_frac": 0.52,
+               "iso_frac": 0.52, "face": "#111111",
+               "back": "evilrabbit.svg", "back_ink": "#ffffff",
                "facade": True, "facade_side": "left",
                "facade_frac": 0.66, "facade_tall": 0.20, "facade_z": 0.74,
                "facade_depth": 0.30,
-               "iso_ink": "#111111", "word_ink": "#111111"},
+               "iso_ink": "#ffffff", "word_ink": "#ffffff"},
     # THE OTHER ARM OF UALA'S L, and that is the whole point of this entry.
     # Spots 100 and 101 are not two buildings: they are the two wings of one
     # cell at (-12.75, -75.0), same 20.65 m top, sharing a continuous west wall.

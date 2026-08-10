@@ -98,6 +98,57 @@ FAMILIES = [
     ("Concrete Dark", "Glass Dark"),
 ]
 
+# Hand-directed looks for single buildings, keyed by the coordinate the sign
+# manifest records as `owner` (rounded to 2 decimals). Applied AFTER the RNG
+# draws in place_on_lot, so the shared stream pays exactly what it always paid
+# and no other building in the city moves — the same discipline DRAW_WIDTH
+# documents above.
+#
+# VERCEL, (-84.25, 90.25): four floors over the draw and near-black all over,
+# like the SF offices. `fam` swaps facade+glass, `trim` darkens the parapet,
+# canopy and shade frames that would otherwise stay pale concrete.
+HQ_LOOK = {
+    # 3, not 4: the footprint is 27.85 x 30.44 m and 6 storeys come out at
+    # 28.25 m to the parapet, which is as close to a cube as whole floors get
+    (-84.25, 90.25): {"extra_floors": 3,
+                      "fam": ("Concrete Ink", "Glass Dark"),
+                      "deck": "Roof Dark",
+                      "trim": "Concrete Ink"},
+}
+
+# Owners whose sign survives thin()'s screen-crowding rule, by coordinate.
+#
+# (-84.25, 57.75) is the BASEMENT anchor: its brand is facade_only, so the
+# record renders NOTHING where it stands — the wordmark goes to the wall at
+# (66.25, 17.63) — and dropping it for being close to the raised Vercel mast
+# next door measures a sign that will never be built. Worse, the drop happens
+# BEFORE renumbering, so it shifts every Sign.NNN after 003 and lands every
+# PIN one record off. That is exactly the failure the comment on renaming
+# warns about, found here as a KeyError in step 10.
+THIN_KEEP = {(-84.25, 57.75)}
+
+# Masts placed by hand instead of by the jitter, by the wing they stand on.
+#
+# The value is a pair of fractions of the wing's HALF extent: (0, 0) is the
+# middle of the roof, and 1.0 would be the parapet. Fractions rather than
+# metres because it is the ROOF's middle that is meant, and a hardcoded
+# coordinate stops being the middle the day the footprint changes.
+#
+# The ordinary placement is a small random offset either side of centre, which
+# is right for a skyline of thirteen masts and wrong for the one the shot
+# settles on: off-centre by a couple of metres on a roof this size reads as a
+# mistake rather than as variety. This one is nailed to the middle.
+#
+# It was out at the +x/+y corner for a while, the corner nearest the camera,
+# with the disc clear of the parapet. It looked wrong — a disc pushed into a
+# corner with a roof of empty deck behind it — and centring it is the whole
+# reason this table still exists.
+#
+# APPLIED AFTER THE DRAWS, like HQ_LOOK: the two r.uniform calls still happen
+# and still cost the shared stream exactly what they cost before, so no other
+# building in the city moves. The result is overwritten, not skipped.
+MAST_AT = {(-84.25, 90.25): (0.0, 0.0)}        # VERCEL, dead centre
+
 # cells that get something other than a plain low-rise campus
 TALL = {(1, 2): 18, (7, 6): 12, (7, 2): 8, (1, 5): 9}
 # A single art-directed building is more useful than relying on the lot RNG to
@@ -346,7 +397,7 @@ def mullions(m, ox, oy, w, d, z0, h, material, xform, pitch=3.0):
 
 
 def wing(m, ox, oy, w, d, floors, style, fam, xform, r, deep=False,
-         deck=None, sol=None, wx=0.0, wy=0.0):
+         deck=None, sol=None, wx=0.0, wy=0.0, trim=None):
     conc, glass = mat(fam[0]), mat(fam[1])
     # ground floor: recessed glass with an entrance canopy poking out. The
     # comparison against the reference showed my facades had 0.2-0.5 m of
@@ -358,7 +409,8 @@ def wing(m, ox, oy, w, d, floors, style, fam, xform, r, deep=False,
             cx0 = ox + r.uniform(-w * 0.2, w * 0.2)
             cw = min(w * 0.42, 11.0)
             m.slab(cx0, oy + sy * (d / 2 + 1.1), cw, 3.4,
-                   GROUND - 1.5, GROUND - 1.1, mat("Concrete Cool"), xform)
+                   GROUND - 1.5, GROUND - 1.1, mat(trim or "Concrete Cool"),
+                   xform)
             # the canopy reaches 2.8 m past the wall, over the pavement, and
             # the street tree row runs at 1.25 m: this was the single largest
             # source of trees growing through solid geometry. It is published
@@ -403,14 +455,20 @@ def wing(m, ox, oy, w, d, floors, style, fam, xform, r, deep=False,
                      conc, xform, 3.0)
             if deep and f % 2 == 0:             # projecting shade frame
                 facade_ring(m, ox, oy, w + 0.9, d + 0.9, z + FLOOR - 0.55,
-                            0.5, 0.45, mat("Concrete Cool"), xform)
+                            0.5, 0.45, mat(trim or "Concrete Cool"), xform)
         z += FLOOR
 
     # parapet ring and roof plate. The deck is always a light concrete: in the
     # reference roofs read pale whatever colour the facade is.
-    pick = deck or ("Roof Dark" if r.random() < 0.45 else "Roof Deck")
+    # the draw happens whether or not `deck` overrides it: skipping it would
+    # cost the shared stream one draw and move every building placed after
+    # this one. Same failure DRAW_WIDTH documents.
+    pick = "Roof Dark" if r.random() < 0.45 else "Roof Deck"
+    if deck:
+        pick = deck
     m.quad(ox, oy, w, d, z + ROOF_PLATE, mat(pick), xform)
-    facade_ring(m, ox, oy, w, d, z, PARAPET, 0.55, mat("Concrete Cool"), xform)
+    facade_ring(m, ox, oy, w, d, z, PARAPET, 0.55,
+                mat(trim or "Concrete Cool"), xform)
     return z + PARAPET
 
 
@@ -790,8 +848,22 @@ def shape_sign(kind, bx, by, w, d, top, r, sol, grow):
         # the edge and thin air everywhere the pole actually is, so twelve of
         # the thirteen masts hovered 0.83 m over their own roof and the
         # thirteenth balanced on a neighbouring wing's parapet.
-        rec = dict(kind=kind, x=bx + r.uniform(-w * 0.2, w * 0.2),
-                   y=by + r.uniform(-d * 0.2, d * 0.2), z=top - DECK,
+        # BOTH DRAWS HAPPEN EITHER WAY. The override replaces the result and
+        # never the call: skipping them would cost the shared stream two draws
+        # and re-place every lot after this one. See MAST_AT.
+        jx, jy = r.uniform(-w * 0.2, w * 0.2), r.uniform(-d * 0.2, d * 0.2)
+        # `is not None`, because the value that means "centre this one" is
+        # (0, 0) and the obvious truth test throws it away.
+        at = MAST_AT.get((round(bx, 2), round(by, 2)))
+        if at is not None:
+            # measured in from the parapet by the disc's own diagonal reach, so
+            # a fraction of 1 puts the rim ON the parapet and cannot overhang:
+            # at rot 135 the rim reaches 0.707 * disc/2 along each axis.
+            reach = disc * 0.354 + 0.55
+            jx = at[0] * max(0.0, w / 2 - reach)
+            jy = at[1] * max(0.0, d / 2 - reach)
+        rec = dict(kind=kind, x=bx + jx,
+                   y=by + jy, z=top - DECK,
                    # +135, not -45. The disc is a cylinder stood on edge, so
                    # its face points along local -Y, and the camera is out at
                    # azimuth 45: at -45 the face pointed exactly away and every
@@ -1078,11 +1150,24 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
         style = r.choice(["banded", "banded", "banded", "louvre", "punched"])
         fam = FAMILIES[r.randrange(len(FAMILIES))]
         kindf = r.choice(["rect", "rect", "L", "U", "T", "bar"])
+        # the hand-directed looks, AFTER every draw above so the stream is
+        # untouched: the override changes this building and nothing else
+        look = HQ_LOOK.get((round(bx, 2), round(by, 2)))
+        deck = trim = None
+        floors0 = floors        # what the stream drew: the sign planner keeps
+        # seeing this one, because plan_sign's conditions consume draws only
+        # when `floors >= 3`, and a boosted count would shift the stream
+        if look:
+            floors += look.get("extra_floors", 0)
+            fam = look.get("fam", fam)
+            deck = look.get("deck")
+            trim = look.get("trim")
         x = xf(bx, by, 0.0)
         top = 0.0
         for (ox, oy, ww, dd) in footprint(kindf, w, d):
             t = wing(m, ox, oy, ww, dd, floors, style, fam, x, r,
-                     deep=(floors >= 4), sol=sol, wx=bx, wy=by)
+                     deep=(floors >= 4), sol=sol, wx=bx, wy=by,
+                     deck=deck, trim=trim)
             top = max(top, t)
         for (ox, oy, ww, dd) in footprint(kindf, w, d):
             # +0.9: the projecting shade frame on a deep facade stands 0.45 m
@@ -1119,12 +1204,12 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
             # the wall that looks at the avenue. On a rectangle these are the
             # same wing and nothing changes; on an L or a U they are not.
             planned, keep = plan_avenue(bank, bx + hx, by + hy, hw, hd, top,
-                                        floors, r, signs, sol, wings, hx, hy,
+                                        floors0, r, signs, sol, wings, hx, hy,
                                         board=max(wings,
                                                   key=lambda s: s[2] * s[3]),
                                         owner=(bx, by))
         if not planned:
-            keep = plan_sign(bx + hx, by + hy, hw, hd, top, floors, r, signs,
+            keep = plan_sign(bx + hx, by + hy, hw, hd, top, floors0, r, signs,
                              sol, owner=(bx, by))
         if keep is not None:
             keep = (keep[0] + hx, keep[1] + hy, keep[2], keep[3])
@@ -1286,7 +1371,7 @@ def thin(signs):
                         mine[f] for f in shared):
                     crowded = True
                     break
-            if crowded:
+            if crowded and tuple(rec.get("owner") or ()) not in THIN_KEEP:
                 lost_gap += 1
                 continue
             tracks[rec["name"]] = (sx, sy, mine)

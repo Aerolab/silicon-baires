@@ -86,7 +86,8 @@ downloads.
 | `tiendanube_word.svg` | Tiendanube | split of `tiendanube.svg` — the wordmark |
 | `uala.svg` | Ualá | Wikimedia Commons |
 | `uala2.svg` | Ualá | **source not recorded**. 1820x420. This is the one `_brands` uses |
-| `vercel.svg` | Vercel | worldvectorlogo |
+| `evilrabbit.svg` | evilrabbit | the owner's rabbit, provided by the owner, 77x80. On the back of the Vercel disc |
+| `vercel.svg` | Vercel | current lockup, provided by the brand (2026 wordmark), 711x205 |
 | `vercel_iso.svg` | Vercel | the triangle alone, 24x24 — source not recorded |
 
 ## Raster (5 files)
