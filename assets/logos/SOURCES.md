@@ -27,7 +27,7 @@ laid flat on a roof — so they have to be separate curves. The pairs below shar
 their parent's `viewBox`, which is what makes them a split rather than two
 downloads.
 
-## Vector (59 files)
+## Vector (64 files)
 
 | file | brand | source |
 |---|---|---|
@@ -76,6 +76,10 @@ downloads.
 | `pomelo.svg` | Pomelo | inline SVG from pomelo.la |
 | `preguntados.svg` | Preguntados (etermax) | **source not recorded**. 1788x1788. Laid flat on the Etermax roof: it is what that company puts on a building ahead of its own name |
 | `rebill.svg` | Rebill | inline SVG from rebill.com. Arrives as `currentColor`, i.e. with no colour: the table's `ink` wins |
+| `ripio.svg` | Ripio | **traced, not downloaded.** The company publishes no SVG: the public wordmark is the Commons PNG (`Ripio_logo.png`, 5000×2292, source ripio.com). Monochrome violet `#7908ff` on transparency; cropped to the ink bbox, thresholded on alpha and run through `potrace`, then filled with the sampled ink. Wordmark only, ~2.1:1. Hung off Sign.069's parapet by the plain `elif art` path in `10_signs.build()`, not through `HERO` — see the note where the HERO entry used to be |
+| `ripio_iso.svg` | Ripio | **traced.** Square isologo from the GitHub org avatar ([u/31717286](https://avatars.githubusercontent.com/u/31717286?s=1024&v=4), 460×460). Same violet, same potrace recipe at 6×. **Unused today**: it was written for a `HERO.iso` that hung the symbol down the whole facade and buried it in the building. Here for the day the brand gets a square site — a roofmark or a mast — which is the only format that wants it |
+| `ripio_iso_light.svg` | Ripio | the isologo with the fill swapped for white. Unused today |
+| `ripio_light.svg` | Ripio | the wordmark with the fill swapped for white, for a dark facade. Unused today: the parapet on Sign.069 sits on the cream face `#f7f3e8` where the violet is the brand colour |
 | `revamos.svg` | Revamos | supplied by the client, the full lockup, 7.9:1. Arrived as `fill="currentColor"` with the colours in the page's `text-white` / `text-turquoise` classes; both **inlined** as `#ffffff` and `#00d9bd`, because Blender resolves neither `currentColor` nor a `<style>` block — and for the `<style>` form it does not import colourless, it imports **black**, which beats the brand's `ink`. `width`/`height` added from the `viewBox`. **White wordmark**: mounted against the glazing band on spot 75 rather than on the spandrel, see `_brands.HERO` |
 | `revamos_plate.svg` | Revamos | **not a logo**: the black backing plate the Revamos sign sits on, 6.41:1. Drawn here, not sourced. It is a separate file rather than a rectangle inside `revamos.svg` because `logo()` extrudes one artwork's pieces to a single depth — see the note in the file |
 | `satellogic.svg` | Satellogic | satellogic.com WordPress |
@@ -92,14 +96,15 @@ downloads.
 | `vercel.svg` | Vercel | current lockup, provided by the brand (2026 wordmark), 711x205 |
 | `vercel_iso.svg` | Vercel | the triangle alone, 24x24 — source not recorded |
 
-## Raster (5 files)
+## Raster (6 files)
 
 | file | brand | source and size |
 |---|---|---|
 | `etermax.png` | Etermax | Commons, 3735x2377 |
 | `modo.png` | MODO | Storyblok CDN, modo.com.ar, 436x96. **The smallest of the lot** |
 | `olx.png` | OLX | Commons, 1000x1000 |
-| `ripio.png` | Ripio | Commons, 5000x2292 |
+| `ripio.png` | Ripio | Commons, [Ripio_logo.png](https://upload.wikimedia.org/wikipedia/en/e/ee/Ripio_logo.png), 5000×2292, violet `#7908ff`. Source of the wordmark trace; `_brands` mounts `ripio.svg` |
+| `ripio_iso.png` | Ripio | GitHub org avatar [u/31717286](https://avatars.githubusercontent.com/u/31717286?s=1024&v=4), 460×460. Source of the isologo trace; `_brands` mounts `ripio_iso.svg` |
 | `uala_iso.png` | Ualá | Commons, 4501x4501 combination mark |
 
 `_contact.png` is the contact sheet, for looking at them together. It is not a
