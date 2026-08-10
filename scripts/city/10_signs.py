@@ -506,7 +506,11 @@ def hero_word(m, rec, hero, site, key="word"):
     flat = Matrix.Translation(Vector((px - rec["x"], py - rec["y"],
                                       top - rec["z"])))
     flat = flat @ Matrix.Rotation(brot + turn, 4, "Z")
-    flat = flat @ readable(rec, rot=brot + turn)
+    anchor = rec
+    ra = hero.get("roof_readable_at")
+    if ra:
+        anchor = {"x": ra[0], "y": ra[1], "z": top, "rot": rec["rot"]}
+    flat = flat @ readable(anchor, rot=brot + turn)
     # a quarter turn by hand, for when the orientation that fits the roof best
     # is not the one the brand wants. In degrees and anticlockwise seen from
     # above, which is how it gets asked for while looking at the plan.
@@ -515,10 +519,13 @@ def hero_word(m, rec, hero, site, key="word"):
         flat = flat @ Matrix.Rotation(math.radians(spin), 4, "Z")
     w = along * frac
     d = across * frac
+    depth = hero.get(f"{key}_roof_depth", hero.get("roof_depth", 0.45))
     logo(m, hero[key], w, d, hero.get(f"{key}_ink", rec["ink"]), flat,
-         depth=0.45, lift=0.01, force_ink=f"{key}_ink" in hero,
+         depth=depth, lift=0.01, force_ink=f"{key}_ink" in hero,
          only=hero.get(f"{key}_only"), only_x=hero.get(f"{key}_x"))
     clear_roof(bx, by, w, d, brot + turn)
+    if rec["text"] == "PATMOS":
+        clear_roof(bx, by, along, across, brot + turn)
 
 
 def wall_out(cx, cy, z, ang, fallback, run=0.0, tall=5.0):
