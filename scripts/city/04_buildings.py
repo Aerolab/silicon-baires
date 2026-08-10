@@ -103,6 +103,10 @@ TALL = {(1, 2): 18, (7, 6): 12, (7, 2): 8, (1, 5): 9}
 # A single art-directed building is more useful than relying on the lot RNG to
 # produce a dark facade: its wall, roof reservation and footprint stay stable.
 SLA_CELL = (4, 6)
+# Spot 68: free building west of Humand / behind Vercel. Art-directed to the
+# Patmos black of the landing after the lot RNG has drawn, so the rest of the
+# block keeps its previous massing.
+PATMOS_AT = (-113.75, 57.75)
 # The low standard building immediately screen-right of BUENOS AIRES in the
 # hero shot. Its generated "PUERTO" mark is not a real company logo, so SLA
 # replaces the whole ordinary building and its placeholder sign.
@@ -1078,11 +1082,25 @@ def place_on_lot(m, kit, coll, sol, signs, cx, cy, size, lift, kind, r,
         style = r.choice(["banded", "banded", "banded", "louvre", "punched"])
         fam = FAMILIES[r.randrange(len(FAMILIES))]
         kindf = r.choice(["rect", "rect", "L", "U", "T", "bar"])
+        # AFTER the draws: materials only. Changing `style` here (e.g. to
+        # curtain) keeps the RNG intact — the floor loops do not draw from
+        # `r` — but it does change how far the facade stands out, and a tree
+        # that cleared the banded shade frame failed 99 against the curtain
+        # mullions. Patmos Black on the rolled style is the landing colour
+        # without moving the envelope. Forcing `deck` still has to consume the
+        # Roof Dark/Deck coin flip wing() would have drawn.
+        patmos = abs(bx - PATMOS_AT[0]) < 1.0 and abs(by - PATMOS_AT[1]) < 1.0
+        if patmos:
+            fam = ("Patmos Black", "Glass Dark")
         x = xf(bx, by, 0.0)
         top = 0.0
         for (ox, oy, ww, dd) in footprint(kindf, w, d):
+            deck = None
+            if patmos:
+                r.random()
+                deck = "Roof Dark"
             t = wing(m, ox, oy, ww, dd, floors, style, fam, x, r,
-                     deep=(floors >= 4), sol=sol, wx=bx, wy=by)
+                     deep=(floors >= 4), deck=deck, sol=sol, wx=bx, wy=by)
             top = max(top, t)
         for (ox, oy, ww, dd) in footprint(kindf, w, d):
             # +0.9: the projecting shade frame on a deep facade stands 0.45 m
@@ -1466,6 +1484,7 @@ def main():
     paint("Brick Warm")
     paint("Facade Teal")
     paint("Concrete Dark")
+    paint("Patmos Black")
     paint("Roof Deck")
     paint("Roof Dark")
 
