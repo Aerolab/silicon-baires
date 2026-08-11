@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="280" height="100" viewBox="0 0 280 100">
+  <!-- NOT A LOGO. The dark ground the Conexa lockup sits on, kept as a file
+       because `logo()` is the only thing that puts flat artwork on a wall here
+       and it takes a filename. Third file of its kind, after
+       `revamos_plate.svg` and `berry_plate.svg`.
+
+       WHY CONEXA NEEDS ONE. The lockup is a WHITE wordmark beside a cyan
+       symbol, and the wall of wing (349.75, -184.25) is a curtain of `Glass
+       Light` #5f97a6 in a grid of `Facade Teal` #2f7f74 frames — 69 % glass,
+       31 % teal sampled across the run at the band the sign occupies. Neither
+       ink survives both:
+
+           white    #ffffff  on Facade Teal   4.8:1     on Glass Light   3.3:1
+           cyan     #00c9f4  on Facade Teal   2.4:1     on Glass Light   1.7:1
+
+       The white is thin and the cyan is the Bioceres number — 1.5:1 was the
+       one that shipped wrong. And the clean teal bands are the frames at
+       z = 16, 20 and 24 m, none of them a metre deep, so there is no unbroken
+       band on this facade to fit a 3.4:1 lockup into. So the lockup carries its
+       own ground: on #101820 the wordmark holds 17.9:1 and the symbol 9.1:1,
+       the whole way across.
+
+       `#101820` IS THIS CITY'S NEUTRAL DARK, not a Conexa colour. It is
+       already the `face` of Paisanos and Revamos in `_brands`. The brand
+       publishes its wordmark in white, which is a dark ground by implication,
+       but conexa.ai was not serving when this was added and no brand-dark hex
+       could be read off it. See SOURCES.md.
+
+       TWO ARTS, TWO DEPTHS. `logo()` extrudes one artwork's pieces to a single
+       depth off one plane, so a rectangle drawn into `conexa.svg` would occupy
+       the same slab as the letters and swallow them. `HERO.facade_arts` is a
+       list and every entry reads its own `<key>_facade_proud` and
+       `<key>_facade_depth`: the plate goes on at 0.02 and is 0.12 deep, the
+       lockup at 0.16, which leaves 2 cm of air between the plate's front face
+       and the lockup's back face. Coplanar is what 92_check_zfight fails on,
+       and touching would be coplanar.
+
+       2.80:1, drawn as a path rather than a <rect> so nothing depends on how
+       much of SVG the importer implements. The ratio is set against the
+       lockup's 3.389:1: at the same width the plate is 21 % taller, which is
+       the margin the lockup gets above and below — the same rule
+       `revamos_plate.svg` was drawn to. -->
+  <path fill="#101820" d="M0,0 L280,0 L280,100 L0,100 Z"/>
+</svg>

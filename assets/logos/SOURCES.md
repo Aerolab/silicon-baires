@@ -27,7 +27,7 @@ laid flat on a roof — so they have to be separate curves. The pairs below shar
 their parent's `viewBox`, which is what makes them a split rather than two
 downloads.
 
-## Vector (66 files)
+## Vector (68 files)
 
 | file | brand | source |
 |---|---|---|
@@ -51,6 +51,8 @@ downloads.
 | `cocos_word.svg` | Cocos Capital | split of `cocos.svg` — the five letters, 5:1. **This is the one `_brands` uses**: the lockup is 2.2:1 and its wall is bound by the height |
 | `complif.svg` | Complif | Webflow CDN, complif.com, 690x189. **White**: needs a dark facade |
 | `complif_dark.svg` | Complif | the same file with the `fill` at `#1c1c1c`, for when the brand moves to a light wall. Unused today: the facade it landed on is dark brick |
+| `conexa.svg` | Conexa | **supplied by the brand**, not sourced off the web — the `Gradient/Conexa-Logo_GW-H` horizontal lockup out of Conexa's own logo kit, 486x208, so this is the one file here that needs no note about being the best public approximation. conexa.ai resolves to Vercel and refused the connection while this was added, which is also why no brand-dark hex could be read off it: the plate uses this city's neutral dark instead. The one `linearGradient` on the hexagon symbol — `#00CBF5` to `#BE72FF` — was flattened to its leading stop `#00CBF5`, because Blender resolves no gradient and imports the path black; same treatment as `decentraland.svg`, and at 250 m the ramp was never going to survive anyway. The wordmark is **white**, so it needs a dark ground: it has one, see `conexa_plate.svg`. **The aspect is 3.389, not the 2.337 of the viewBox** — the file carries padding the geometry does not, and the `HERO` entry is sized against the measured curves |
+| `conexa_plate.svg` | Conexa | **not a logo.** The dark ground the lockup sits on, `#101820` — **this city's neutral dark, not a Conexa colour**: it is already the `face` of Paisanos and Revamos in `_brands`, and the brand's own site was offline when this was drawn. Needed because the wall of Takenos' south arm is `Glass Light` #5f97a6 panes in a `Facade Teal` #2f7f74 grid, 69/31 across the band: the white wordmark reads 4.8:1 on the teal and 3.3:1 on the glass, the cyan symbol 2.4:1 and 1.7:1, and 1.5:1 is what Bioceres shipped wrong. There is no clean band to fit into either — the teal runs are the frames at z = 16, 20 and 24 m, none a metre deep. On the plate the lockup holds 17.9:1 and 9.1:1 the whole way across. 2.80:1 against the lockup's 3.389:1, so at the same width the plate is 21 % taller — the rule `revamos_plate.svg` was drawn to. Third file of its kind, and the header of each explains the two-depth arrangement |
 | `decentraland.svg` | Decentraland | inline SVG from the decentraland.org header, 90x90. The three `linearGradient` fills were flattened to solid colours — `#FF6A55` for the disc, `#D22884` for the two peaks — because Blender resolves no gradient and imports the paths black. **The icon is the whole logo**: this brand publishes no wordmark in vector form, on its own site or anywhere else |
 | `despegar.svg` | Despegar | Wikimedia Commons |
 | `digitalhouse.svg` | Digital House | Prismic CDN, digitalhouse.com |

@@ -111,6 +111,12 @@ CAMPUS = [
     # Spot 68, west of Humand. Facade is Patmos Black (see 04); the white
     # wordmark is what the landing publishes on dark ground.
     ("PATMOS",    "bars",     "#1a1a1d", "#f5f5f5", "patmos.svg"),
+    # Pinned to Sign.025 — an OMBU roofmark, an invented name — and hung on the
+    # south arm of Takenos' L, declared in SHARED. `ink` is a fallback nothing
+    # reads: `conexa.svg` carries BOTH its colours, the white wordmark and the
+    # flattened cyan symbol, and a forced ink would collapse the two into one.
+    # See HERO for the wall and `conexa_plate.svg` for why it carries a ground.
+    ("CONEXA",    "ring",     "#101820", "#00c9f4", "conexa.svg"),
 ]
 
 # The avenue: party walls and billboards. It talks to whoever is driving, not to
@@ -288,6 +294,80 @@ HERO = {
               # colour a decision this table records rather than one buried in
               # an asset somebody may re-download
               "plate_ink": "#0a0a0b", "iso_ink": "#f5f5f7"},
+    # THE SOUTH ARM OF TAKENOS' L, and it is the wall CLAUDE.md already names:
+    # "the best free wall in the city — 34.5 m, on Takenos' building". 90 does
+    # not offer it any more, and correctly — `brand_addresses` claims the whole
+    # cell for Takenos — so it is taken the declared way instead, through
+    # SHARED. It passes the Ualá / Brubank test by a wider margin than either
+    # pair already there: the two faces are two PLANES 15.5 m apart in x and
+    # 34.5 in y, the two logos sit at 0.60 and 0.72 of the same parapet, and the
+    # formats differ — a bare wordmark up there, a plated lockup down here.
+    #
+    # THE WALL IS UNAMBIGUOUS, which is rare here and worth recording: sampled
+    # every 2 m from z=8 to z=26, `wall_seen` is 1.00 at EVERY height and
+    # `shot_cover` is flat at 2.3 s / 0.081. The tower problem in CLAUDE.md —
+    # the two curves pulling apart up the wall — does not arise, so `facade_z`
+    # is free and is spent on the separation from Takenos rather than on
+    # sightlines. The kerb is 3.3 m off the +X face.
+    #
+    # AND IT NEEDS A PLATE, for the Berry reason and not a weaker version of it.
+    # This facade is `Glass Light` #5f97a6 panes in a `Facade Teal` #2f7f74
+    # grid, 69/31 across the run at the band the sign occupies, and the lockup
+    # is white letters beside a cyan symbol: white is 4.8:1 on the teal and
+    # 3.3:1 on the glass, the cyan 2.4:1 and 1.7:1 — and 1.5:1 is the number
+    # Bioceres shipped wrong. Fitting inside one band is not on the table
+    # either: the clean teal runs are the frames at z = 16, 20 and 24 and none
+    # is a metre deep. So the lockup carries its own ground, 17.9:1 and 9.1:1.
+    #
+    # SIZE. `run` here is the PADDED box, 35.40, and the plan wing is 34.5, so
+    # the plate at 0.734 is 26.0 m — about 79 % of the real wall, leaving some
+    # 3.5 m at each end. That is deliberately short of Berry's 0.603-of-a-small-
+    # wall and of the 0.945 Revamos needed: this wall has the width to spare and
+    # the corner is the fault nothing checks for.
+    "CONEXA": {"word": "conexa.svg", "iso": "conexa.svg",
+               "plate": "conexa_plate.svg",
+               "facade": True, "facade_only": True,
+               "facade_arts": ["plate", "word"],
+               "facade_side": "left", "facade_at": (349.75, -184.25),
+               # two arts, two depths. The plate 0.02..0.14 off the box and the
+               # lockup 0.16..0.46, so there is 2 cm of air between them:
+               # coplanar is what 92_check_zfight fails on.
+               "plate_facade_proud": 0.02, "plate_facade_depth": 0.12,
+               "word_facade_proud": 0.16, "word_facade_depth": 0.30,
+               # plate 26.0 x 9.29, lockup 24.0 x 7.08 — a margin of 0.99 m at
+               # the sides and 1.10 above and below. The lockup's aspect is
+               # 3.389 measured off the imported curves, NOT the 2.337 of its
+               # viewBox: the file has padding the geometry does not.
+               "plate_facade_frac": 0.734, "plate_facade_tall": 0.329,
+               "word_facade_frac": 0.678, "word_facade_tall": 0.251,
+               # 0.72 puts the plate between 15.7 and 25.0 m: clear of the 5 m
+               # setback, under the 28.25 parapet, and 3.4 m above Takenos'
+               # 0.60 on the other arm, which is what stops the two reading as
+               # one band of signage.
+               "facade_z": 0.72,
+               # only the plate's colour is forced. `conexa.svg` carries its own
+               # two — see the CAMPUS note — and `force_ink` is all-or-nothing.
+               "plate_ink": "#101820"},
+    # AND IT COSTS ONE OF 93's GAP PAIRS, 0.069 against Rebill where the floor
+    # is 0.10, for the first 0.7 s of the shot. It is recorded rather than
+    # quietly shipped, and it is not a placement that was left unmeasured:
+    # `facade_z` was swept 0.62..0.80 against `facade_shift` -0.08..0.08 and
+    # NOTHING on this wall reaches 0.10. The two best readings both cost more
+    # than they buy — 0.078 at `facade_z` 0.62 pairs with TAKENOS instead, and
+    # 0.62 is also 0.02 off Takenos' own height, which is the separation the
+    # SHARED entry rests on; `facade_shift` 0.08 buys 0.005 and spends 2.83 m
+    # of the north margin, leaving 0.93 m to the corner where there is now
+    # 3.76 m. The corner is the fault nothing checks for, so it keeps the
+    # margin. Measured on the mesh: the wall runs y -201.0..-167.5 at this
+    # height and the plate -197.24..-171.26, symmetric.
+    #
+    # WHAT THE PAIR ACTUALLY LOOKS LIKE, because 0.069 is a number about
+    # centres and the rule is about reading as one patch: Rebill is dark type
+    # laid flat on a WHITE roof deck and this is a white-and-cyan lockup on a
+    # near-black plate on a teal wall — different plane, different format,
+    # opposite value. Rendered and looked at. The check already reports 6 such
+    # pairs on main at 0.067..0.070, so this is the band it lives in rather
+    # than a new kind of fault.
     "BELO": {"word": "belo.svg", "iso": "belo.svg",
              "facade": True, "facade_only": True,
              "facade_side": "right", "facade_at": (172.2, -377.2),
@@ -913,6 +993,13 @@ SHARED = {
     # Different plane, different height, different format — a word and a symbol
     # — which is three ways of not reading as one company with two brands.
     (201.75, -2.0): "Coderhouse on the south arm, Berry on the north one, asked for",
+    # The L at (349.75, -167.0), and it passes the same test with more room to
+    # spare than either pair above. Takenos' wordmark is on the +X face of the
+    # north arm (342.0, -149.75) at 0.60 of the parapet; Conexa's plated lockup
+    # is on the +X face of the south arm (349.75, -184.25), 15.5 m east and
+    # 34.5 m south, at 0.72. Different plane, different height, different
+    # format — a bare wordmark against a lockup on its own dark ground.
+    (349.75, -167.0): "Takenos on the north arm, Conexa on the south one",
     # THE U AT (33.75, -231.25) WAS HERE and no longer needs to be: it carried
     # Mural and Bioceres, one per arm, because the corridor had three free walls
     # and five brands to place. Bioceres moved to spot 155 and the U is down to
@@ -1019,7 +1106,21 @@ PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        # because the HERO entry is `facade_only`. All this pin does is keep the
        # allocation from walking the brand off to another roof the next time
        # this table grows. The wall it actually lands on is in HERO.
-       "Sign.078": "BERRY"}         # was MATE, an invented name
+       "Sign.078": "BERRY",         # was MATE, an invented name
+       # Conexa, and the same shape as Cocos, Patmos and Berry: the cell it
+       # lands on — Takenos' L at (349.75, -167.0) — already carries a sign
+       # record, so an EXTRA anchor there would print NO ENTRARON and place
+       # nothing. It does not need one; `facade_at` decides where the art goes.
+       #
+       # THE RECORD IT TAKES IS THE TRADE, and this one is the version of it
+       # that pays. Sign.025 is a roofmark carrying OMBU, an invented name, and
+       # unlike Berry's MATE it is not off camera: it is BUILT and in frame for
+       # 7.0 s at 0.023 of the frame width — under 93's 0.05 floor, so it is a
+       # made-up company delivered as a smudge. It is the last such record the
+       # shot still reaches; the only other two are ZONDA at 0.016 and YERBA,
+       # which is in DROP. Pinning Conexa here retires it and puts a real brand
+       # on a wall at 0.081, which is the trade the video wants.
+       "Sign.025": "CONEXA"}        # was OMBU, an invented name
 DROP = {"Sign.054",          # retired placeholder on SLA's replaced lot; its
                               # record stays so existing signs are not renumbered
         # the RIPIO roof on 179, which is the Etermax building: its wordmark
