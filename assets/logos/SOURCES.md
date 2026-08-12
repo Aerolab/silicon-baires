@@ -27,7 +27,7 @@ laid flat on a roof — so they have to be separate curves. The pairs below shar
 their parent's `viewBox`, which is what makes them a split rather than two
 downloads.
 
-## Vector (66 files)
+## Vector (68 files)
 
 | file | brand | source |
 |---|---|---|
@@ -51,6 +51,8 @@ downloads.
 | `cocos_word.svg` | Cocos Capital | split of `cocos.svg` — the five letters, 5:1. **This is the one `_brands` uses**: the lockup is 2.2:1 and its wall is bound by the height |
 | `complif.svg` | Complif | Webflow CDN, complif.com, 690x189. **White**: needs a dark facade |
 | `complif_dark.svg` | Complif | the same file with the `fill` at `#1c1c1c`, for when the brand moves to a light wall. Unused today: the facade it landed on is dark brick |
+| `conexa.svg` | Conexa | the only inline SVG on conexa.ai, 138x40 — the horizontal lockup, hexagon beside wordmark, seven paths. Every one arrived as `fill="currentColor"` under a `color="#FFFFFF"` on the parent, which Blender imports as no colour at all, so `conexa_lockup.svg` below carries explicit hexes. Same situation as `berry_iso.svg`. This is the untouched download, and `_brands` names it for `iso` and `word` the way SLA's, Belo's and Mural's entries name one file for both — those keys are read unconditionally on three of `10_signs`' paths |
+| `conexa_lockup.svg` | Conexa | the same seven paths with the mark at `#00cbf5` and the name at white, and **this is the one `_brands` uses.** It is the brand's own dark-ground lockup, and the facade was built for it rather than the other way round: `Conexa Navy` #1e212d with `Glass Dark` #15181b puts the cyan at 9.2:1 and the white at 17.8:1 up the whole height. Horizontal and not stacked, which is a measurement rather than a preference — `frac` is a function of a sign's width and the seconds follow the frac, so on this wall the stacked arrangement gave 3.0 s at 0.084 and this one 5.7 s at 0.130 |
 | `decentraland.svg` | Decentraland | inline SVG from the decentraland.org header, 90x90. The three `linearGradient` fills were flattened to solid colours — `#FF6A55` for the disc, `#D22884` for the two peaks — because Blender resolves no gradient and imports the paths black. **The icon is the whole logo**: this brand publishes no wordmark in vector form, on its own site or anywhere else |
 | `despegar.svg` | Despegar | Wikimedia Commons |
 | `digitalhouse.svg` | Digital House | Prismic CDN, digitalhouse.com |

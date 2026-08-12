@@ -67,6 +67,11 @@ PALETTE = {
     # Patmos: the landing's surface black (#1a1a1d), a shade up from pure
     # #000 so the volume still reads against the asphalt in daylight.
     "Patmos Black":     ("#1a1a1d", 0.62, 0.05),
+    # Conexa's own navy, and on this facade it is doing a job the other
+    # darks cannot: the brand's cyan mark is 1.4:1 against pale concrete
+    # and 9.7:1 against this, so a building in the brand's colour is what
+    # lets the logo keep its own without a plate behind it.
+    "Conexa Navy":      ("#1e212d", 0.62, 0.05),
     "Brick Warm":       ("#a86a4c", 0.85, 0.0),
     "Facade Teal":      ("#2f7f74", 0.75, 0.0),
     "Glass Light":      ("#5f97a6", 0.12, 0.0),

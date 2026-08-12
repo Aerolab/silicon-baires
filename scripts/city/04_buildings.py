@@ -154,6 +154,36 @@ TALL = {(1, 2): 18, (7, 6): 12, (7, 2): 8, (1, 5): 9}
 # A single art-directed building is more useful than relying on the lot RNG to
 # produce a dark facade: its wall, roof reservation and footprint stay stable.
 SLA_CELL = (4, 6)
+# Conexa's own building, on a corner of the plaza at (5, 5). A cell rather than
+# a wall, because there is no free WALL left in this city: 90_brand_sites
+# measures 130 of them and 128 are at 0.0 s on camera.
+#
+# AND "FREE LOT" HAD TO BE MEASURED AGAINST THE SOLIDS, NOT THE SITES. The
+# first pass at this read `city_buildings.json` and came back with four empty
+# cells, one of them the car park at (7, 2). That file is written by
+# `place_on_lot` and the TALL cells never go through it — (7, 2) is `TALL[8]`
+# and carries an 8-floor tower with Despegar's parapet on it. The manifest that
+# knows about every building is `city_solids.json`.
+#
+# THE LOT WAS CHOSEN BY WHAT IT HIDES, WHICH IS NOT A QUESTION ANY CHECK ASKS.
+# Two other lots were built on first and both had to be undone. On the park at
+# (7, 3) the building stood in front of Cocos; on the open strip east of
+# Mercado Libre it took that brand's +X wall from 100 % seen to 19 %, and its
+# 45 m wordmark is the largest sign in the city. NEITHER SHOWED UP IN THE
+# NUMBERS: `shot_cover` projects a sign into the frame and knows nothing about
+# what stands in front of it, so Mercado Libre kept all three of its figures —
+# 45.0 m, 12.7 s, 0.208 — while being hidden. `wall_seen` casts rays and does
+# know. Running it over every facade brand in the city, with and without this
+# building, is what picked this lot: the diff is empty.
+#
+# WHAT IT COSTS is a corner of the largest plaza in the corridor, which is
+# public space and not an empty plot — there are no empty plots here, only
+# plazas, a car park and the Floralis. 34 x 34 on a 65 x 65 lot leaves the
+# greater part of it planted.
+CONEXA_CELL = (5, 5)
+# Offset from the lot centre, so the building takes a corner rather than
+# sitting in the middle of the plaza with green left over on every side.
+CONEXA_OFFSET = (10.0, 10.0)
 # Spot 68: free building west of Humand / behind Vercel. Art-directed to the
 # Patmos black of the landing after the lot RNG has drawn, so the rest of the
 # block keeps its previous massing.
@@ -1544,6 +1574,49 @@ def build_sla(m, kit, coll, sol, lots):
     print(f"  SLA building: {w:.0f} x {d:.0f} m, {top:.1f} m high")
 
 
+def build_conexa(m, kit, coll, sol, lots):
+    """Conexa's building, on the car park cell, in the brand's own navy.
+
+    Same shape as `build_sla`: it stays in 04 rather than being a hand-edited
+    Blender object, so its wing is published to the solids and building
+    manifests and every later life, overlap and floating check treats it as
+    part of the city.
+
+    THE FACADE IS THE BRAND COLOUR, and that is not decoration. On the pale
+    wall this brand sat on before, its cyan measured 1.4:1 and needed a dark
+    plate of its own to survive. Against `Conexa Navy` the same cyan is 9.7:1,
+    so the building carries the mark instead of a panel doing it.
+
+    NO CROWN. SLA has one and it costs that building a documented bug: the
+    crown is a solid plate over the whole roof, so every prop landing at
+    `top - DECK` is sunk into it rather than resting on it. There is nothing
+    here that a crown would buy, so this takes the ordinary deck.
+    """
+    lot = next((l for l in lots if tuple(map(int, l["key"])) == CONEXA_CELL),
+               None)
+    if lot is None:
+        print("  Conexa building skipped: its lot does not exist")
+        return
+    cx = lot["x"] + CONEXA_OFFSET[0]
+    cy = lot["y"] + CONEXA_OFFSET[1]
+    # a square, and about half the lot: the plaza keeps the rest
+    w, d, floors = 34.0, 34.0, 7
+    # Private stream, for the reason SLA's carries one: an art-directed
+    # building must not move the towers, the south rim, or anything else
+    # generated after this lot.
+    r = rng(41902)
+    x = xf(cx, cy, 0.0)
+    top = wing(m, 0.0, 0.0, w, d, floors, "curtain",
+               ("Conexa Navy", "Glass Dark"), x, r, deep=True,
+               deck="Roof Dark", sol=sol, wx=cx, wy=cy)
+    sol.add(cx, cy, w + 0.9, d + 0.9, 0.0, 0.0, top)
+    keep = plan_extra(cx, cy, [(0.0, 0.0, w, d)], top, sol)
+    SITES.append({"at": [round(cx, 2), round(cy, 2)], "top": round(top, 2),
+                  "wings": [[round(cx, 2), round(cy, 2), w, d]]})
+    roof_props(kit, coll, cx, cy, w, d, top - DECK, 0.0, r, True, keep=keep)
+    print(f"  Conexa building: {w:.0f} x {d:.0f} m, {top:.1f} m high")
+
+
 def consume_replaced_lot_rng(kit, lot, r, av, sol, signs):
     """Advance the shared stream as if the replaced ordinary lot still existed.
 
@@ -1620,6 +1693,10 @@ def main():
     # Last so its hand-placed anchor is appended after every existing EXTRA;
     # adding SLA must not change any established Sign.NNN identity.
     build_sla(m, kit, pcoll, sol, lots)
+    # After SLA, for the same reason SLA goes after everything else: a
+    # hand-placed anchor is appended, and appending it last is what keeps every
+    # established Sign.NNN identity where it was.
+    build_conexa(m, kit, pcoll, sol, lots)
     m.build("buildings", bcoll)
 
     # Second pass over the words. A sign is planned in the same loop that
