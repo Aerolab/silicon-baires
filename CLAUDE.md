@@ -207,7 +207,7 @@ existing instance orphaned, so it **must** be followed by the whole chain from
 `03_ground.py`, and `02b_porteno_kit.py` has to run again too because its assets
 live in the same collection.
 
-Nine standing checks, because none of these failures raise an exception:
+Ten standing checks, because none of these failures raise an exception:
 
 ```bash
 ./bl scripts/city/99_check_overlap.py           # nothing is standing inside a building
@@ -218,8 +218,32 @@ Nine standing checks, because none of these failures raise an exception:
 ./bl scripts/city/93_check_signs.py             # how many brands the shot delivers
 ./bl scripts/city/92_check_zfight.py            # nothing fights for the same plane
 ./bl scripts/city/91_check_crowd.py             # and nobody is driven through
+./bl scripts/city/89_check_blocking.py          # nothing is built in front of a logo
 python3 scripts/city/97_check_title.py renders/city_08_title_only.png
 ```
+
+`89_check_blocking.py` asks the one question the sign report cannot.
+`shot_cover` PROJECTS: it works out how much of the frame a sign covers and for
+how long, and knows nothing about what stands between it and the camera. So a
+wordmark with a tower in front of it keeps every number it had — Mercado
+Libre's went on reading 45.0 m, 12.7 s and 0.208 of the frame with about a
+fifth of it visible, and 93 called that the largest sign in the city. Nothing
+failed; the render is what caught it, and the render only catches the one you
+happen to be looking at.
+
+It samples the band the artwork ACTUALLY occupies, read out of `built`, rather
+than the wall at mid-height the way `90_brand_sites` does — a wall can be 80 %
+clear and have the clear part above the sign. `built` is written per SIGN, so a
+brand with two installations arrives as one box around both and the rectangle
+is clamped to the face before it is sampled: Takenos' is 55.5 m wide because it
+wraps a facade logo and a roof panel on the wing next door, and reading it raw
+reports that brand as two thirds hidden.
+
+**It is not a check about the brand being added.** A logo placed today passes
+it trivially — its wall was chosen with `wall_seen` in the first place. It
+earns its keep on the change that comes AFTER: a building on a free lot, a wing
+made taller, a landmark moved. Roof signs are not asked; the ray leaves those
+in a different direction.
 
 `93_check_signs.py` counts the thing the video is actually for. The signs are
 planned for a camera that crosses the city on one diagonal, so "77 signs built"

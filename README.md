@@ -66,7 +66,7 @@ carriageway; one tree in a wall was 917. So the first move on a defect is not to
 fix it, it is to write the thing that counts how many there are. The count is
 the scope.
 
-That is what the nine standing checks are, and none of the failures they find
+That is what the ten standing checks are, and none of the failures they find
 raises an exception:
 
 ```bash
@@ -78,6 +78,7 @@ raises an exception:
 ./bl scripts/city/93_check_signs.py      # how many brands the shot delivers
 ./bl scripts/city/92_check_zfight.py     # nothing fights for the same plane
 ./bl scripts/city/91_check_crowd.py      # and nobody is driven through
+./bl scripts/city/89_check_blocking.py   # nothing is built in front of a logo
 python3 scripts/city/97_check_title.py renders/city_08_title_only.png
 ```
 
