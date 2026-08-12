@@ -111,6 +111,11 @@ CAMPUS = [
     # Spot 68, west of Humand. Facade is Patmos Black (see 04); the white
     # wordmark is what the landing publishes on dark ground.
     ("PATMOS",    "bars",     "#1a1a1d", "#f5f5f5", "patmos.svg"),
+    # Its own building, on the plaza at (5, 5) — see `build_conexa` in 04.
+    # Pinned, so its place in this list decides nothing; it is here so the
+    # brand exists with its colour, and the colour is the brand's own accent
+    # because the facade was built dark enough to carry it.
+    ("CONEXA",    "ring",     "#1e212d", "#00cbf5", "conexa.svg"),
 ]
 
 # The avenue: party walls and billboards. It talks to whoever is driving, not to
@@ -575,6 +580,112 @@ HERO = {
                  "facade_side": "left", "facade_at": (211.0, -303.4),
                  "facade_frac": 0.45, "facade_tall": 0.20,
                  "facade_z": 0.842, "facade_depth": 0.35},
+    # THE CORRIDOR IS FULL, AND ALL THREE DOORS WERE MEASURED BEFORE THIS ONE
+    # WAS PICKED. 90_brand_sites reports 38 free buildings and not one usable
+    # wall: 130 free walls, 128 of them at 0.0 s, and the two the camera does
+    # pass are seen 14 % and 0 % behind their neighbours. The takeover door is
+    # shut too — six invented signs sit on a building nobody has claimed, and
+    # not one of those buildings has a wall that passes. So this is the third
+    # arrangement, the one the Ualá / Brubank pair documents: a second wall on
+    # a building that already has a brand, declared in SHARED.
+    #
+    # AN INVENTED NAME IS NOT A FREE BUILDING, and that cost the first version
+    # of this entry. Ranking the made-up signs by the wall they come with put
+    # YERBA / Sign.013 first, on 32 m seen 100 % — and that wall is Etermax's,
+    # whose facade_at is (316.25, -149.69), the same wing and the same face.
+    # The sign record and the facade art are two separate claims on one
+    # address and only the second one shows up in the render.
+    #
+    # AND NEITHER IS A FREE WALL, WHICH COST THE SECOND VERSION. This started
+    # on the 34.5 m south wing of Takenos' building — the biggest wall left,
+    # 24.8 m of wordmark, and it passed every gate including SHARED's own test
+    # of being on a different plane from the incumbent. It still read wrong,
+    # because Takenos is TWO installations: the facade logo on the north wing
+    # AND the Sign.014 roof panel, which lands on the SOUTH wing. A logo with
+    # somebody else's mark on the deck above it is that company's building with
+    # your sign on it, whatever the declaration says.
+    #
+    # SO THE QUESTION A WALL HAS TO ANSWER IS WHAT IS ON ITS ROOF, and it is
+    # not one 90_brand_sites asks. Eleven walls in this city pass all three
+    # gates and 93's 0.05 floor. NINE of them carry another brand's mark on
+    # the deck directly above — Pomelo, Globant, Vercel, Satellogic, Naranja X,
+    # Maslow — including the three biggest, at 0.243, 0.166 and 0.143. Two have
+    # a clean roof, and one of those is the Ualá / Brubank building, which
+    # already declares two brands. That leaves exactly one.
+    #
+    # THIS ONE: the +X face of Basement's wing, 12.7 m of run, seen 100 % with
+    # the kerb at 3.1 m. Basement holds the OTHER face — its `facade_side` is
+    # `wide`, which is not a side but the longer of the two the camera sees, so
+    # it resolves to the 30.5 m +Y wall and reading the table literally leaves
+    # this one looking free when it is only half free.
+    #
+    # WHAT IT COSTS AND WHAT IT BUYS. 8.9 m of wordmark against the 24.8 m on
+    # Takenos' wall — and 13.3 seconds on camera against 2.0. This wall is in
+    # frame for half the shot. The corner is the thing to look at on a wall
+    # this short: 0.70 of a 12.7 m run is 75 % of the real wall once the 0.9 m
+    # of footprint padding comes off, which leaves about 1.4 m at each end.
+    #
+    # THE NAVY, AND HERE IT IS NOT CLOSE. Sampled across the run every half
+    # metre the wall alternates `Concrete Warm` #e9dcc0 with `Glass Light`
+    # #5f97a6 in half-metre bands. White is 1.4:1 on the concrete and the
+    # brand's own cyan is 1.4:1 — both vanish on every other band. The navy is
+    # 4.9:1 at its worst and 11.8:1 on the concrete.
+    #
+    # WHICH IS WHY IT SPANS THE BANDS. Nothing clean here is more than half a
+    # metre tall and the wordmark is 1.5, so fitting inside one band is not on
+    # the table. Same call as Mural: the ink reads on every band it crosses, so
+    # the ink decides it and not the wall.
+    #
+    # HEIGHT. Free on visibility — measured at 6, 9, 12, 15 and 18 m the wall
+    # is seen 100 % and delivers 13.7 s at 0.051 every time. So it went on the
+    # step instead, which is what the Ualá pair says to look at: Basement sits
+    # at 0.93 of this same wing and Conexa at 0.55, eight metres below it, and
+    # 11.4 m clears the 9.1 m street lamps and the pavement trees.
+    #
+    # ITS OWN BUILDING, AND THE COLOUR PROBLEM DISAPPEARS WITH IT. On a
+    # borrowed wall this brand had neither: the pale facade it could reach put
+    # its cyan at 1.4:1, so the mark needed a dark plate of its own the way
+    # Berry's does, and the name had to go navy — which on this brand is
+    # R30 G33 B45 and reads black. `build_conexa` in 04 puts the facade in
+    # `Conexa Navy`, so the wall is 100 % `Glass Dark` #15181b and
+    # `Conexa Navy` #1e212d up its whole height: the cyan is 9.2:1 and the
+    # white 17.8:1. One art, the brand's own dark-ground lockup, no plate, and
+    # no band to cross — the only facade in this city that asks a logo to trade
+    # nothing.
+    #
+    # A SQUARE BUILDING, SO BOTH FACES ARE THE SAME OFFER: 34.0 m of run each,
+    # seen 100 %, kerb 7.5 m away, 8.7 s at 0.154 of the frame. That 0.154 is
+    # the largest facade number in this city — Cocos is 0.142 and Basement
+    # 0.145 — and it comes from a building shaped for it rather than from a
+    # wall that happened to be free.
+    #
+    # AND HERE THE HEIGHT IS THE DECISION. Swept at 6, 9, 12, 15, 18, 21, 24
+    # and 27 m the wall is seen 100 % throughout, but it delivers 1.3 s at 6 m,
+    # 9.0 s at 18 and 15.3 s from 21 m up, where it flattens: the block in
+    # front cuts the low band out of the shot. 0.748 centres the sign at 24 m,
+    # on the plateau, four metres clear of the parapet.
+    #
+    # THE HORIZONTAL LOCKUP, WHICH IS THE OPPOSITE CALL FROM THE ONE MADE ON
+    # BASEMENT'S WALL, and the reason is the shape of the wall rather than a
+    # change of mind. `frac` is a function of the sign's WIDTH and the seconds
+    # follow the frac, so on a short wall bound by its width, stacking the mark
+    # over the name costs nothing — the word sets the width either way. On a
+    # wall with room in both directions it costs everything: the stacked
+    # lockup measured 3.0 s at 0.084 against the horizontal one's 5.7 s at
+    # 0.130, on the same wall, on the same day. This is also the lockup
+    # conexa.ai actually publishes.
+    # `iso` and `word` point at the same artwork, the way SLA's, Belo's,
+    # Complif's and Mural's do. They are not decoration: `10_signs` reads
+    # `hero["iso"]` unconditionally on the medianera, mast and roofmark paths,
+    # and this brand is pinned to a roofmark — it returns early on
+    # `facade_only` today, and the day it does not, a missing key is the
+    # KeyError this file already records once.
+    "CONEXA": {"lockup": "conexa_lockup.svg", "iso": "conexa.svg",
+               "word": "conexa.svg",
+               "facade": True, "facade_only": True, "facade_art": "lockup",
+               "facade_side": "left", "facade_at": (60.0, 84.0),
+               "facade_frac": 0.800, "facade_tall": 0.280,
+               "facade_z": 0.748, "facade_depth": 0.40},
     # RIPIO IS NOT HERE, AND THAT IS THE ENTRY. It was, with an iso and an
     # iso_frac of 0.86, and a HERO record on a parapet means hero_parapet: that
     # path sizes the symbol against the BUILDING, not against the sign, because
@@ -985,6 +1096,13 @@ PIN = {"Sign.023": "LEMON", "Sign.014": "TAKENOS",
        # facade_only. The wall is in HERO at (-113.75, 57.75).
        "Sign.026": "PATMOS",
        "Sign.058": "ETERMAX",
+       # Conexa, and the same shape as Cocos: Sign.083 is a TANGO roofmark out
+       # at (-267, 74) that the shot never reaches, `facade_only` means it is
+       # never raised, and the wall the brand actually lands on is in HERO —
+       # here, its own building. The record stays out there because the pin is
+       # what stops the allocation walking the brand off to another roof the
+       # next time this table grows; one made-up name fewer either way.
+       "Sign.083": "CONEXA",
        # THE FOUR THAT TAKE OVER A SIGN NOBODY WOULD MISS. Three were carrying
        # a company that does not exist and the fourth a duplicate drawn with a
        # generic symbol, and all four brands below are `facade_only`, so what
