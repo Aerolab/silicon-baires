@@ -1,0 +1,48 @@
+{
+  "_meta": {
+    "title": "Piezas del objeto landmarks que llevan año",
+    "description": "upstream funde el Obelisco, la Floralis, el estadio y varios props en un solo objeto llamado 'landmarks'. Esto declara las piezas que tienen fecha, con el punto y el radio que las separa del resto.",
+    "como_se_ubicaron": "Por raycast desde la cámara congelada contra el pixel donde se ve cada pieza en el render, así que la coordenada es medida y no estimada a ojo.",
+    "compiled": "2026-08-13"
+  },
+  "piezas": [
+    {
+      "id": "botr",
+      "name": "BOTR",
+      "at": [-72.0, -48.8],
+      "radius": 26.0,
+      "appears": 2026,
+      "obras": [],
+      "confidence": "user_provided",
+      "sources": [],
+      "note": "Año indicado por el autor del repo. No figura como marca en los datos de Aerolab: no está en _brands.py, ni en city_signs.json, ni en assets/logos. Es un prop dentro de 'landmarks', ubicado por raycast en (-72,0, -48,8)."
+    },
+    {
+      "id": "monumental",
+      "name": "EL MONUMENTAL",
+      "at": [174.0, -252.0],
+      "radius": 58.0,
+      "appears": null,
+      "obras": [
+        {
+          "year": 2020,
+          "texto": "césped híbrido, campo bajado y capacidad a 85.018",
+          "confidence": "reported",
+          "sources": ["https://es.wikipedia.org/wiki/Estadio_Monumental_(River_Plate)"]
+        },
+        {
+          "year": 2026,
+          "texto": "arranca el techado y la quinta bandeja: a 101.000",
+          "confidence": "reported",
+          "sources": [
+            "https://www.infobae.com/deportes/2026/06/24/comenzaron-las-obras-en-el-monumental-de-cara-al-mundial-2030-los-detalles/",
+            "https://www.infobae.com/deportes/2026/01/28/las-8-claves-de-la-ampliacion-y-el-techado-del-estadio-monumental/"
+          ]
+        }
+      ],
+      "confidence": "reported",
+      "sources": ["https://es.wikipedia.org/wiki/Estadio_Monumental_(River_Plate)"],
+      "note": "El estadio está desde el primer fotograma: es de 1938, muy anterior a la ventana. Lo que se anima son las dos obras. Cada una lo agranda un escalón, que es lo que las obras efectivamente hicieron con la capacidad — no es una reconstrucción de la geometría real del techo."
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "_meta": {
+    "title": "Las que no llegaron",
+    "description": "Empresas tecnológicas argentinas que existieron y dejaron de existir. Ninguna tiene cartel en la ciudad de Aerolab, así que la capa de tiempo les da un terreno libre, les construye el edificio en su año de fundación y se lo derrumba el año en que cerraron.",
+    "por_que_estan_aparte": "brand_years.json le pone año a marcas que YA están en la ciudad de upstream. Estas no están: hay que crearles el cartel. Por eso van en su propio archivo y con su propio mecanismo.",
+    "criterio": "Acá entra sólo lo que efectivamente terminó. Una adquisición no cuenta: Auth0, Technisys, Despegar y OLX se vendieron bien y sus edificios quedan en pie, con la compra anotada como hito.",
+    "compiled": "2026-08-13"
+  },
+  "empresas": [
+    {
+      "id": "deremate",
+      "name": "DEREMATE",
+      "founded": 1999,
+      "closed": 2005,
+      "que_era": "Subastas online, el rival directo de Mercado Libre",
+      "como_termino": "Mercado Libre se la compró y la marca desapareció",
+      "confidence": "reported",
+      "sources": [
+        "https://defonline.com.ar/ciencia-tecnologia/unicornios-argentinos-olx-la-empresa-de-ecommerce-que-construyo-el-embajador-alec-oxenford/",
+        "https://en.wikipedia.org/wiki/Alec_Oxenford"
+      ],
+      "note": "La fundó Alec Oxenford en 1999, el mismo año que Mercado Libre y Despegar, y el mismo que después fundó OLX. Perdió la guerra del marketplace argentino."
+    },
+    {
+      "id": "sonico",
+      "name": "SONICO",
+      "founded": 2007,
+      "closed": 2014,
+      "que_era": "La red social argentina; llegó a 40 millones de usuarios en la región",
+      "como_termino": "Facebook se llevó el mercado; la compró Twoo a fines de 2014",
+      "confidence": "reported",
+      "sources": [
+        "https://es.wikipedia.org/wiki/Sonico",
+        "https://en.wikipedia.org/wiki/Sonico.com"
+      ],
+      "note": "Fundada el 28 de julio de 2007 en Buenos Aires por Rodrigo Teijeiro, con un millón de dólares iniciales. Entre sus inversores estaban Fabrice Grinda y Alec Oxenford, los de OLX."
+    },
+    {
+      "id": "taringa",
+      "name": "TARINGA!",
+      "founded": 2004,
+      "closed": 2024,
+      "que_era": "La primera red social argentina, pionera en el país y en la región",
+      "como_termino": "Anunció su cierre después de veinte años",
+      "confidence": "reported",
+      "sources": [
+        "https://www.pagina12.com.ar/720293-adios-a-taringa-cierra-la-primera-red-social-argentina-tras-",
+        "https://abcnoticias.mx/tendencia/2024/3/12/taringa-por-que-cerro-la-red-social-argentina-211546.html"
+      ],
+      "note": "Veinte años en pie es la vida más larga de las tres, y por eso su edificio es el que más tiempo queda parado antes de caerse."
+    }
+  ]
+}

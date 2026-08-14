@@ -1,0 +1,233 @@
+{
+  "_meta": {
+    "title": "Año de fundación de las marcas que ya están en la ciudad de silicon-baires",
+    "description": "silicon-baires reparte 72 marcas sobre los techos y las medianeras de su ciudad. Este archivo le pone año a las que existen de verdad. La clave es exactamente el campo 'text' de upstream/renders/city_signs.json.",
+    "regla": "Sin año citable no hay línea de tiempo. Una marca que no está acá no se anima: queda visible desde el primer fotograma como parte del tejido de la ciudad, igual que en el render original.",
+    "upstream": "https://github.com/Aerolab/silicon-baires @ 963da3133d7cfd7cc30239cb57dca2696067d242",
+    "compiled": "2026-08-13"
+  },
+  "years": {
+    "TECHNISYS": {
+      "year": 1995,
+      "confidence": "reported",
+      "sources": ["https://www.cbinsights.com/company/technisys", "https://defonline.com.ar/ciencia-tecnologia/unicornios-argentinos-technisys-una-oferta-de-banca-digital-adelantada-a-los-tiempos/"],
+      "hito": "2022: la compra SoFi por US$1.100 M",
+      "hito_sources": ["https://www.lanacion.com.ar/economia/la-fintech-technisys-fue-adquirida-por-us1100-millones-nid22022022/", "https://www.forbesargentina.com/negocios/technisys-fintech-argentina-fue-vendida-us-1100-millones-estadounidense-sofi-technologies-n12963"]
+    },
+    "MERCADO LIBRE": {
+      "year": 1999,
+      "confidence": "confirmed",
+      "sources": ["https://en.wikipedia.org/wiki/Mercado_Libre"],
+      "hito": "2007: primera tecnológica latinoamericana en Nasdaq"
+    },
+    "DESPEGAR": {
+      "year": 1999,
+      "confidence": "confirmed",
+      "sources": ["https://en.wikipedia.org/wiki/Despegar"],
+      "hito": ["2017: sale a la NYSE", "2025: la compra Prosus por ~US$1.700 M"]
+    },
+    "BIOCERES": {
+      "year": 2001,
+      "confidence": "confirmed",
+      "sources": ["https://es.wikipedia.org/wiki/Bioceres"],
+      "note": "Fundada en Rosario, no en Buenos Aires. Se anima igual porque el cartel ya estaba en la ciudad de silicon-baires."
+    },
+    "GLOBANT": {
+      "year": 2003,
+      "confidence": "confirmed",
+      "sources": ["https://en.wikipedia.org/wiki/Globant"],
+      "hito": "2014: sale a la NYSE"
+    },
+    "ALEPH": {
+      "year": 2005,
+      "confidence": "reported",
+      "sources": ["https://www.bloomberglinea.com/english/argentinas-next-unicorns-the-startups-that-could-be-joining-the-1b-club/"]
+    },
+    "OLX": {
+      "year": 2006,
+      "confidence": "confirmed",
+      "sources": ["https://en.wikipedia.org/wiki/OLX"],
+      "hito": ["2010: Naspers toma el control", "2014: Naspers llega al 95%"]
+    },
+    "ETERMAX": {
+      "year": 2009,
+      "confidence": "confirmed",
+      "sources": ["https://es.wikipedia.org/wiki/M%C3%A1ximo_Cavazzani", "https://www.endeavor.org.ar/emprendedores/maximo-cavazzani/"],
+      "hito": "2013: lanza Preguntados"
+    },
+    "SATELLOGIC": {
+      "year": 2010,
+      "confidence": "confirmed",
+      "sources": ["https://en.wikipedia.org/wiki/Satellogic"],
+      "hito": "2013: CubeBug-1, 'El Capitán Beto'"
+    },
+    "MURAL": {
+      "year": 2011,
+      "confidence": "reported",
+      "sources": ["https://www.forbes.com/companies/mural/"]
+    },
+    "TIENDANUBE": {
+      "year": 2011,
+      "confidence": "conflicting_sources",
+      "sources": ["https://www.cbinsights.com/company/tienda-nube-nuvem-shop", "https://www.crunchbase.com/organization/nuvemshop-tiendanube"],
+      "note": "Las bases consultadas dicen 2010 en unos casos y 2011 en otros. Se usa 2011 y queda constancia."
+    },
+    "AEROLAB": {
+      "year": 2012,
+      "confidence": "reported",
+      "sources": ["https://aerolab.co/"],
+      "note": "Los autores de silicon-baires. Su propio sitio dice 'lifting companies since 2012'."
+    },
+    "AUTH0": {
+      "year": 2013,
+      "confidence": "confirmed",
+      "sources": ["https://auth0.com/blog/okta-acquisition-announcement/"],
+      "hito": "2021: la compra Okta por US$6.500 M"
+    },
+    "RIPIO": {
+      "year": 2013,
+      "confidence": "reported",
+      "sources": ["https://en.wikipedia.org/wiki/Ripio"]
+    },
+    "CODERHOUSE": {
+      "year": 2014,
+      "confidence": "reported",
+      "sources": ["https://www.cbinsights.com/company/coderhouse"]
+    },
+    "VERCEL": {
+      "year": 2015,
+      "confidence": "reported",
+      "sources": ["https://en.wikipedia.org/wiki/Vercel"],
+      "diaspora": true,
+      "note": "Fundada por el argentino Guillermo Rauch, pero fuera del país."
+    },
+    "DIGITAL HOUSE": {
+      "year": 2016,
+      "confidence": "reported",
+      "sources": ["https://www.cbinsights.com/compare/coderhouse-vs-digital-house"]
+    },
+    "UALA": {
+      "year": 2017,
+      "confidence": "confirmed",
+      "sources": ["https://en.wikipedia.org/wiki/Ual%C3%A1"],
+      "hito": "2026: valuación de US$3.200 M"
+    },
+    "BRUBANK": {
+      "year": 2017,
+      "confidence": "reported",
+      "sources": ["https://en.wikipedia.org/wiki/Brubank", "https://pitchbook.com/profiles/company/432661-87"]
+    },
+    "LEMON": {
+      "year": 2019,
+      "confidence": "reported",
+      "sources": ["https://lemon.me/en/blog/serie-b-20-m"]
+    },
+    "POMELO": {
+      "year": 2021,
+      "confidence": "reported",
+      "sources": ["https://www.bloomberglinea.com/2021/10/21/la-fintech-argentina-pomelo-recaudo-us35m-para-desembarcar-en-brasil-y-mexico/"],
+      "hito": "2026: levanta US$55 M"
+    },
+    "GALICIA": {
+      "year": 1905,
+      "confidence": "confirmed",
+      "sources": ["https://en.wikipedia.org/wiki/Grupo_Financiero_Galicia"],
+      "note": "Anterior a la ventana de la pieza: su edificio esta desde el primer fotograma, pero por fecha documentada y no por falta de dato."
+    },
+    "NARANJA X": {
+      "year": 1985,
+      "confidence": "confirmed",
+      "sources": ["https://en.wikipedia.org/wiki/Naranja_X"],
+      "note": "Nace en Cordoba como Tarjeta Naranja. Tambien anterior a la ventana."
+    },
+    "MERCADO PAGO": {
+      "year": 2004,
+      "confidence": "reported",
+      "sources": ["https://en.wikipedia.org/wiki/Mercado_Libre", "https://payatlas.com/payment-method/mercado-pago-5109"],
+      "note": "Brazo de pagos de Mercado Libre, lanzado en 2004."
+    },
+    "DECENTRALAND": {
+      "year": 2017,
+      "confidence": "reported",
+      "sources": ["https://en.wikipedia.org/wiki/Decentraland"],
+      "note": "Se fecha por su ICO de 2017, que es lo que la fuente documenta."
+    },
+    "HUMAND": {
+      "year": 2019,
+      "confidence": "reported",
+      "sources": ["https://www.forbesargentina.com/innovacion/tras-perseguir-marcos-galperin-dos-argentinos-sub-25-crearon-humand-app-crear-comunidades-digitales-corporativas-n37336"],
+      "hito": "2026: ronda de US$66 M"
+    },
+    "REBILL": {
+      "year": 2020,
+      "confidence": "reported",
+      "sources": ["https://www.crunchbase.com/organization/rebill"]
+    },
+    "PAISANOS": {
+      "year": 2012,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "PATMOS": {
+      "year": 2013,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "OPENZEPPELIN": {
+      "year": 2015,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "BASEMENT": {
+      "year": 2018,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "COMPLIF": {
+      "year": 2020,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "MODO": {
+      "year": 2020,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "BELO": {
+      "year": 2021,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "MASLOW": {
+      "year": 2021,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "REVAMOS": {
+      "year": 2021,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "TAKENOS": {
+      "year": 2022,
+      "confidence": "user_provided",
+      "sources": []
+    },
+    "SLA": {
+      "year": 2026,
+      "confidence": "user_provided",
+      "sources": [],
+      "note": "Año indicado por el autor del repo, no verificado contra una fuente publicada. Es el edificio más nuevo de la ciudad: se construye recién en el último año de la pieza."
+    },
+    "COCOS": {
+      "year": 2021,
+      "confidence": "reported",
+      "sources": ["https://startupsargentinas.com/startups/cocos-capital", "https://www.latamfintech.co/articles/cocos-la-fintech-argentina-que-busca-democratizar-el-acceso-al-mercado-de-capitales-en-latinoamerica"]
+    }
+  },
+  "sin_ano": {
+    "nota": "El resto de las 72 marcas del manifiesto no se anima. Son dos grupos distintos y ninguno recibe una fecha inventada.",
+    "inventadas": "silicon-baires declara en scripts/city/_brands.py que las últimas de su tabla son marcas inventadas para llenar la ciudad: ANDA, ARROYO, AUSTRAL, BERRY, CARDON, CEIBO, CUARZO, FARO, FERNET, KETZAL, LINCE, LUMA, MATE, NODO, NUBE, OMBU, PAMPA, PILAR, PUERTO, QUILME, RAMBLA, RIACHO, SALTO, SEIBO, SUR, TALA, TANGO, TIMBO, TRAMA, VELA, VELOX, YERBA, ZONDA. No existen, así que no tienen año.",
+    "reales_sin_fuente": "Otras son reales pero no encontramos año citable: BASEMENT, BELO, COCOS, COMPLIF, DECENTRALAND, GALICIA, HUMAND, MASLOW, MERCADO PAGO, MODO, NARANJA X, OPENZEPPELIN, PAISANOS, PATMOS, REBILL, REVAMOS, SLA, TAKENOS. Quedan en la ciudad desde el primer fotograma."
+  }
+}
