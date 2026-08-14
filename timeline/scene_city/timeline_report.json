@@ -1,0 +1,711 @@
+{
+  "upstream": "https://github.com/Aerolab/silicon-baires",
+  "upstream_commit": "963da3133d7cfd7cc30239cb57dca2696067d242",
+  "year_start": 1995,
+  "year_end": 2026,
+  "frames_per_year": 9,
+  "fps": 24,
+  "warnings": [
+    "5 entradas del manifiesto no tienen objeto en el .blend",
+    "1 carteles quedaron sin edificio propio: su 'owner' no matchea ningun sitio de city_buildings.json (son anclajes de fachada). El cartel se anima igual, el edificio no."
+  ],
+  "frame_end": 288,
+  "cerraron": [
+    {
+      "empresa": "DEREMATE",
+      "founded": 1999,
+      "closed": 2005,
+      "como_termino": "Mercado Libre se la compró y la marca desapareció",
+      "edificio": "TL_bld_cerro_deremate",
+      "sitio": [
+        66.25,
+        11.25
+      ]
+    },
+    {
+      "empresa": "SONICO",
+      "founded": 2007,
+      "closed": 2014,
+      "como_termino": "Facebook se llevó el mercado; la compró Twoo a fines de 2014",
+      "edificio": "TL_bld_cerro_sonico",
+      "sitio": [
+        -12.75,
+        -75.0
+      ]
+    },
+    {
+      "empresa": "TARINGA!",
+      "founded": 2004,
+      "closed": 2024,
+      "como_termino": "Anunció su cierre después de veinte años",
+      "edificio": "TL_bld_cerro_taringa",
+      "sitio": [
+        66.25,
+        -254.75
+      ]
+    }
+  ],
+  "tejido_animado": 84,
+  "tejido_nota": "Puesta en escena, no dato: los edificios que no son de ninguna empresa se reparten a lo largo del periodo con un sesgo hacia los anos tardios, para que la ciudad arranque casi vacia. El reparto es determinista, asi que siempre se construye en el mismo orden.",
+  "landmarks": [
+    {
+      "pieza": "BOTR",
+      "appears": 2026,
+      "obras": [],
+      "caras": 986
+    },
+    {
+      "pieza": "EL MONUMENTAL",
+      "appears": null,
+      "obras": [
+        2020,
+        2026
+      ],
+      "caras": 6530
+    }
+  ],
+  "transito": {
+    "total": 1972,
+    "escalonados": 1762,
+    "presentes_desde_1995": 210
+  },
+  "gente": {
+    "total": 2511,
+    "escalonados": 2273,
+    "presentes_desde_1995": 238
+  },
+  "titulo_letras": 24,
+  "signs_animated": [
+    {
+      "sign": "Sign.000",
+      "brand": "GLOBANT",
+      "year": 2003,
+      "frame_in": 73,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_globant_000",
+      "sitio": [
+        -26.0,
+        -167.0
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.001",
+      "brand": "VERCEL",
+      "year": 2015,
+      "frame_in": 181,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_vercel_001",
+      "sitio": [
+        -84.25,
+        90.25
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.002",
+      "brand": "MERCADO LIBRE",
+      "year": 1999,
+      "frame_in": 37,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_mercado_libre_002",
+      "sitio": [
+        187.0,
+        -75.0
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.003",
+      "brand": "BASEMENT",
+      "year": 2018,
+      "frame_in": 208,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_basement_003",
+      "sitio": [
+        -84.25,
+        57.75
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.004",
+      "brand": "UALA",
+      "year": 2017,
+      "frame_in": 199,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_uala_004",
+      "sitio": [
+        66.25,
+        -231.25
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.005",
+      "brand": "AUTH0",
+      "year": 2013,
+      "frame_in": 163,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_auth0_005",
+      "sitio": [
+        33.75,
+        -15.25
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.006",
+      "brand": "SATELLOGIC",
+      "year": 2010,
+      "frame_in": 136,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_satellogic_006",
+      "sitio": [
+        258.0,
+        -298.25
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.007",
+      "brand": "DESPEGAR",
+      "year": 1999,
+      "frame_in": 37,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": null,
+      "sitio": null,
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.008",
+      "brand": "NARANJA X",
+      "year": 1985,
+      "frame_in": -89,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_naranja_x_008",
+      "sitio": [
+        66.25,
+        -15.25
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.009",
+      "brand": "POMELO",
+      "year": 2021,
+      "frame_in": 235,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_pomelo_009",
+      "sitio": [
+        -84.25,
+        -2.0
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.010",
+      "brand": "TECHNISYS",
+      "year": 1995,
+      "frame_in": 1,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_technisys_010",
+      "sitio": [
+        -113.75,
+        -2.0
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.011",
+      "brand": "ALEPH",
+      "year": 2005,
+      "frame_in": 91,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_aleph_011",
+      "sitio": [
+        -39.25,
+        -75.0
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.012",
+      "brand": "GALICIA",
+      "year": 1905,
+      "frame_in": -809,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_galicia_012",
+      "sitio": [
+        172.25,
+        -2.0
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.014",
+      "brand": "TAKENOS",
+      "year": 2022,
+      "frame_in": 244,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_takenos_014",
+      "sitio": [
+        349.75,
+        -167.0
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.015",
+      "brand": "REBILL",
+      "year": 2020,
+      "frame_in": 226,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_rebill_015",
+      "sitio": [
+        333.0,
+        -243.0
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.016",
+      "brand": "MERCADO PAGO",
+      "year": 2004,
+      "frame_in": 82,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_mercado_pago_016",
+      "sitio": [
+        33.75,
+        -167.0
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.017",
+      "brand": "BELO",
+      "year": 2021,
+      "frame_in": 235,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_belo_017",
+      "sitio": [
+        172.25,
+        -377.25
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.018",
+      "brand": "TIENDANUBE",
+      "year": 2011,
+      "frame_in": 145,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_tiendanube_018",
+      "sitio": [
+        172.25,
+        -167.0
+      ],
+      "confidence": "conflicting_sources"
+    },
+    {
+      "sign": "Sign.019",
+      "brand": "MASLOW",
+      "year": 2021,
+      "frame_in": 235,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_maslow_019",
+      "sitio": [
+        270.25,
+        -243.0
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.020",
+      "brand": "AEROLAB",
+      "year": 2012,
+      "frame_in": 154,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_aerolab_020",
+      "sitio": [
+        33.75,
+        11.25
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.021",
+      "brand": "BIOCERES",
+      "year": 2001,
+      "frame_in": 55,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_bioceres_021",
+      "sitio": [
+        201.75,
+        -313.0
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.022",
+      "brand": "OLX",
+      "year": 2006,
+      "frame_in": 100,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_olx_022",
+      "sitio": [
+        245.75,
+        -243.0
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.023",
+      "brand": "LEMON",
+      "year": 2019,
+      "frame_in": 217,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_lemon_023",
+      "sitio": [
+        172.25,
+        -313.0
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.026",
+      "brand": "PATMOS",
+      "year": 2013,
+      "frame_in": 163,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_patmos_026",
+      "sitio": [
+        -351.75,
+        -327.75
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.046",
+      "brand": "DECENTRALAND",
+      "year": 2017,
+      "frame_in": 199,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_decentraland_046",
+      "sitio": [
+        -113.75,
+        57.75
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.052",
+      "brand": "HUMAND",
+      "year": 2019,
+      "frame_in": 217,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_humand_052",
+      "sitio": [
+        -84.25,
+        309.0
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.057",
+      "brand": "MURAL",
+      "year": 2011,
+      "frame_in": 145,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_mural_057",
+      "sitio": [
+        33.75,
+        -254.75
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.058",
+      "brand": "ETERMAX",
+      "year": 2009,
+      "frame_in": 127,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_etermax_058",
+      "sitio": [
+        33.75,
+        153.0
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.059",
+      "brand": "DIGITAL HOUSE",
+      "year": 2016,
+      "frame_in": 190,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_digital_house_059",
+      "sitio": [
+        66.25,
+        153.0
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.060",
+      "brand": "COCOS",
+      "year": 2021,
+      "frame_in": 235,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_cocos_060",
+      "sitio": [
+        50.0,
+        309.0
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.061",
+      "brand": "BRUBANK",
+      "year": 2017,
+      "frame_in": 199,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_brubank_061",
+      "sitio": [
+        172.25,
+        74.0
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.062",
+      "brand": "MODO",
+      "year": 2020,
+      "frame_in": 226,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_modo_062",
+      "sitio": [
+        187.0,
+        138.25
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.069",
+      "brand": "RIPIO",
+      "year": 2013,
+      "frame_in": 163,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_ripio_069",
+      "sitio": [
+        333.0,
+        -89.75
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.070",
+      "brand": "OLX",
+      "year": 2006,
+      "frame_in": 100,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_olx_070",
+      "sitio": [
+        333.0,
+        -60.25
+      ],
+      "confidence": "confirmed"
+    },
+    {
+      "sign": "Sign.094",
+      "brand": "OPENZEPPELIN",
+      "year": 2015,
+      "frame_in": 181,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_openzeppelin_094",
+      "sitio": [
+        -84.25,
+        -89.75
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.095",
+      "brand": "REVAMOS",
+      "year": 2021,
+      "frame_in": 235,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_revamos_095",
+      "sitio": [
+        -113.75,
+        -60.25
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.096",
+      "brand": "PAISANOS",
+      "year": 2012,
+      "frame_in": 154,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_paisanos_096",
+      "sitio": [
+        201.75,
+        -167.0
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.097",
+      "brand": "CODERHOUSE",
+      "year": 2014,
+      "frame_in": 172,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_coderhouse_097",
+      "sitio": [
+        201.75,
+        -2.0
+      ],
+      "confidence": "reported"
+    },
+    {
+      "sign": "Sign.098",
+      "brand": "COMPLIF",
+      "year": 2020,
+      "frame_in": 226,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_complif_098",
+      "sitio": [
+        201.75,
+        -377.25
+      ],
+      "confidence": "user_provided"
+    },
+    {
+      "sign": "Sign.099",
+      "brand": "SLA",
+      "year": 2026,
+      "frame_in": 280,
+      "end_year": null,
+      "end_reason": null,
+      "edificio": "TL_bld_sla_099",
+      "sitio": [
+        -26.0,
+        153.0
+      ],
+      "confidence": "user_provided"
+    }
+  ],
+  "edificios_animados": 39,
+  "signs_sin_ano": [
+    "ANDA",
+    "ARROYO",
+    "AUSTRAL",
+    "BERRY",
+    "CARDON",
+    "CEIBO",
+    "CUARZO",
+    "FARO",
+    "FERNET",
+    "KETZAL",
+    "LINCE",
+    "LUMA",
+    "MATE",
+    "NODO",
+    "NUBE",
+    "OMBU",
+    "PAMPA",
+    "PILAR",
+    "PUERTO",
+    "QUILME",
+    "RAMBLA",
+    "RIACHO",
+    "SALTO",
+    "SEIBO",
+    "SUR",
+    "TALA",
+    "TANGO",
+    "TIMBO",
+    "TRAMA",
+    "VELA",
+    "VELOX",
+    "YERBA",
+    "ZONDA"
+  ],
+  "signs_sin_ano_atados_a_su_edificio": 55,
+  "objetos_del_manifiesto_ausentes": [
+    "Sign.013",
+    "Sign.053",
+    "Sign.054",
+    "Sign.055",
+    "Sign.056"
+  ],
+  "camera": {
+    "congelada_en_frame": 1,
+    "location": [
+      888.1,
+      821.4,
+      742.9
+    ],
+    "rotation_deg": [
+      59.4,
+      -0.0,
+      135.0
+    ],
+    "ortho_scale": 1013.6,
+    "ciudad_ancho_m": 984.1,
+    "ciudad_alto_m": 522.5,
+    "keyframes": 0,
+    "nota": "Se limpio la animacion del objeto Y la del dato de camara (upstream anima ortho_scale de 306 a 170)."
+  },
+  "suelo_extendido": {
+    "lado_m": 2230.0,
+    "z": -0.05,
+    "material": "TL_asfalto_fondo",
+    "color_derivado_de": "site",
+    "factor_oscurecido": 0.45
+  },
+  "hud": {
+    "anos": 32,
+    "titulares": 25
+  },
+  "orientacion": "apaisado 1920x1080"
+}
